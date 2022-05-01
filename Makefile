@@ -9,13 +9,14 @@ EXTRA_CFLAGS += -DCLX_EN_HOST_32_BIT_LITTLE_ENDIAN
 endif
 
 DRIVER_MODULE_NAME         := clx_nb
-BUILD_OUTPUT_DIR    := $(shell pwd)/build
+BUILD_OUTPUT_DIR           := $(shell pwd)/build
 
 obj-m:=$(DRIVER_MODULE_NAME).o
 DRIVER_OBJS_TOTAL          += ./src/clx_nb.o
 $(DRIVER_MODULE_NAME)-objs := $(DRIVER_OBJS_TOTAL)
 
-OS_PATH=/lib/modules/$(shell uname -r)/build/
+KVERSION ?= 5.10.0-6-amd64
+OS_PATH=/lib/modules/$(KVERSION)/build/
 all:
 	test -d $(BUILD_OUTPUT_DIR) || mkdir $(BUILD_OUTPUT_DIR)
 	test -d $(BUILD_OUTPUT_DIR)/src || mkdir $(BUILD_OUTPUT_DIR)/src
@@ -24,5 +25,6 @@ all:
 
 clean:
 	make -C $(OS_PATH) M=$(BUILD_OUTPUT_DIR) clean
+	rm -rf $(BUILD_OUTPUT_DIR)
 
 .PHONY: all clean
