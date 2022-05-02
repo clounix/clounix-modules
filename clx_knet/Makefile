@@ -65,6 +65,7 @@ NETIF_OBJS_TOTAL           := ./src/clx_netif/netif_knl.o
 NETIF_OBJS_TOTAL           += ./src/clx_netif/netif_osal.o
 NETIF_OBJS_TOTAL           += ./src/clx_netif/netif_perf.o
 NETIF_OBJS_TOTAL           += ./src/clx_netif/netif_nl.o
+NETIF_OBJS_TOTAL           += ./src/clx_netif/netif_procfs.o
 NETIF_OBJS_TOTAL           += ./src/clx_netif/hal_dawn_pkt_knl.o
 NETIF_OBJS_TOTAL           += ./src/clx_netif/hal_lightning_pkt_knl.o
 

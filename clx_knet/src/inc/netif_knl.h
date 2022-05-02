@@ -24,6 +24,13 @@
 #include <clx_types.h>
 #include <clx_knl.h>
 
+#define NETIF_KNL_SUPPORT_CHIP          "Lightning/Dawn"
+#define NETIF_KNL_MODULE_DESC           "NETIF Kernel Module (" NETIF_KNL_SUPPORT_CHIP ")"
+
+#define NETIF_KNL_DRIVER_MINOR_NUM      (252)
+#define NETIF_KNL_DRIVER_NAME           "clx_netif"
+
+
 #define CLX_NETIF_NAME_LEN              (16)
 #define CLX_NETIF_PROFILE_NUM_MAX       (256)
 #define CLX_NETIF_PROFILE_PATTERN_NUM   (4)
