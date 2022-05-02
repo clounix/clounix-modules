@@ -43,14 +43,6 @@
 #include <osal/osal_mdc.h>
 #include <netif_osal.h>
 
-#define NETIF_KNL_SUPPORT_CHIP          "Lightning/Dawn"
-#define NETIF_KNL_MODULE_DESC           "NETIF Kernel Module (" NETIF_KNL_SUPPORT_CHIP ")"
-
-#define NETIF_KNL_DRIVER_MINOR_NUM      (252)
-#define NETIF_KNL_DRIVER_NAME           "clx_netif"
-
-#define NETIF_KNL_IO_ERROR_RC           (-1)
-
 typedef ssize_t
 (*NETIF_KNL_DEV_TX_FUNC_T)(
     struct file             *file,
@@ -173,7 +165,7 @@ _netif_knl_dev_tx(
     size_t                  count,
     loff_t                  *pos)
 {
-    long ret = NETIF_KNL_IO_ERROR_RC;
+    long ret = CLX_E_OTHERS;
 
     if (_netif_knl_cb.ops.tx != NULL)
     {
@@ -199,7 +191,7 @@ _netif_knl_dev_ioctl(
     unsigned int            cmd,
     unsigned long           arg)
 {
-    long ret = NETIF_KNL_IO_ERROR_RC;
+    long ret = CLX_E_OTHERS;
 
     if (_netif_knl_cb.ops.ioctl != NULL)
     {
@@ -240,12 +232,19 @@ static struct miscdevice _netif_knl_dev =
     .fops     = &_netif_knl_dev_ops,
 };
 
+extern int char_proc_init(void);
+extern  void cleanup_procfs(void);
 static int __init
 netif_knl_init(void)
 {
     misc_register(&_netif_knl_dev);
 
     osal_memset(&_netif_knl_cb, 0x0, sizeof(NETIF_KNL_CB_T));
+    if (char_proc_init() != 0) {
+        HAL_KNL_DBG(HAL_KNL_ERR, "Create procfs failed\n");
+        misc_deregister(&_netif_knl_dev);
+        return -ENOMEM;
+    }
 
     return (0);
 }
@@ -259,7 +258,8 @@ netif_knl_exit(void)
     {
         _netif_knl_cb.ops.exit(unit);
     }
-
+    
+    cleanup_procfs();
     misc_deregister(&_netif_knl_dev);
 }
 
