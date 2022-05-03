@@ -325,10 +325,12 @@ osal_io_copyFromUser(
 /* dma */
 void *
 osal_dma_alloc(
+    struct device           *ptr_dev,
     const UI32_T            size);
 
 CLX_ERROR_NO_T
 osal_dma_free(
+    struct device           *ptr_dev,
     void                    *ptr_dma_mem);
 
 dma_addr_t

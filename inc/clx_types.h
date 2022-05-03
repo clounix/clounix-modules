@@ -326,4 +326,31 @@ typedef struct CLX_FDL_INFO_S
 /* EXPORTED SUBPROGRAM SPECIFICATIONS
  */
 
+
+#define clx_fmt(fmt) "%s:%s: " fmt, KBUILD_MODNAME, __func__
+enum log_level
+{
+    LOG_ERR = 0x01,
+    LOG_WARNING = 0x02,
+    LOG_INFO = 0x04,
+    LOG_DEBUG = 0x08,
+};
+
+#define clx_print(level, fmt, ...)                         \
+    do                                                     \
+    {                                                      \
+        if (LOG_##level & loglevel)                        \
+            printk(KERN_DEBUG pr_fmt(fmt), ##__VA_ARGS__); \
+    } while (0)
+
+
+#define CLX_CHECK_NULL_POINTER(__ptr__) do                  \
+    {                                                       \
+        if (NULL == __ptr__) {                              \
+            clx_print(ERR, #__ptr__" is null pointer");     \
+            return CLX_E_BAD_PARAMETER;                     \
+        }                                                   \
+    } while(0)
+
+
 #endif  /* CLX_TYPES_H */
