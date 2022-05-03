@@ -12,7 +12,7 @@ DRIVER_MODULE_NAME         := clx_nb
 BUILD_OUTPUT_DIR           := $(shell pwd)/build
 
 obj-m:=$(DRIVER_MODULE_NAME).o
-DRIVER_OBJS_TOTAL          += ./src/clx_nb.o
+DRIVER_OBJS_TOTAL          += ./src/clx_nb.o ./src/clx_pub.o
 $(DRIVER_MODULE_NAME)-objs := $(DRIVER_OBJS_TOTAL)
 
 KVERSION ?= 5.10.0-6-amd64
