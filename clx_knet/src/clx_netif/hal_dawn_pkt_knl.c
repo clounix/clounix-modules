@@ -1480,7 +1480,7 @@ _hal_dawn_pkt_allocRxPayloadBuf(
         phy_addr = osal_skb_mapDma(ptr_skb, DMA_FROM_DEVICE);
         if (0x0 == phy_addr)
         {
-            HAL_KNL_DBG(HAL_KNL_ERR,
+            DIAG_PRINT(HAL_DBG_ERR,
                             "u=%u, rxch=%u, skb dma map err, size=%u\n",
                             unit, channel, ptr_skb->len);
             osal_skb_free(ptr_skb);
@@ -2139,7 +2139,7 @@ _hal_dawn_pkt_comparePatternWithPayload(
         /* per-byte comparison  */
         if ((ptr_virt_addr[offset+idx] & ptr_mask[idx]) != (ptr_pattern[idx] & ptr_mask[idx]))
         {
-            HAL_KNL_DBG(HAL_KNL_PROFILE,
+            DIAG_PRINT(HAL_DBG_PROFILE,
                             "prof match failed, byte idx=%d, pattern=0x%02X != 0x%02X, mask=0x%02X\n",
                             offset+idx, ptr_pattern[idx], ptr_virt_addr[offset+idx], ptr_mask[idx]);
             return (FALSE);
@@ -2178,7 +2178,7 @@ _hal_dawn_pkt_rxCheckPattern(
 
     for (idx=0; idx<CLX_NETIF_PROFILE_PATTERN_NUM; idx++)
     {
-        HAL_KNL_DBG(HAL_KNL_PROFILE,
+        DIAG_PRINT(HAL_DBG_PROFILE,
                         "compare pattern id=%d\n", idx);
         if (0 != (ptr_profile->flags & (HAL_DAWN_PKT_NETIF_PROFILE_FLAGS_PATTERN_0 << idx)))
         {
@@ -2217,14 +2217,14 @@ _hal_dawn_pkt_matchUserProfile(
         _hal_dawn_pkt_rxCheckReason(ptr_rx_gpd, ptr_curr_node->ptr_profile, &hit);
         if (TRUE == hit)
         {
-            HAL_KNL_DBG(HAL_KNL_PROFILE,
+            DIAG_PRINT(HAL_DBG_PROFILE,
                             "rx prof matched by reason\n");
 
             /* Then, check pattern */
             _hal_dawn_pkt_rxCheckPattern(ptr_rx_gpd, ptr_curr_node->ptr_profile, &hit);
             if (TRUE == hit)
             {
-                HAL_KNL_DBG(HAL_KNL_PROFILE,
+                DIAG_PRINT(HAL_DBG_PROFILE,
                                 "rx prof matched by pattern\n");
 
                 *pptr_profile_hit = ptr_curr_node->ptr_profile;
@@ -2384,7 +2384,7 @@ _hal_dawn_pkt_rxEnQueue(
         /* if the packet is composed of multiple gpd (skb), need to merge it into a single skb */
         if (NULL != ptr_sw_first_gpd->ptr_next)
         {
-            HAL_KNL_DBG(HAL_KNL_RX,
+            DIAG_PRINT(HAL_DBG_RX,
                             "u=%u, rxch=%u, rcv pkt size=%u > gpd buf size=%u\n",
                             unit, channel, total_len, ptr_rx_cb->buf_len);
             ptr_merge_skb = osal_skb_alloc(total_len - ETH_FCS_LEN);
@@ -2395,7 +2395,7 @@ _hal_dawn_pkt_rxEnQueue(
                 while (NULL != ptr_sw_gpd)
                 {
                     ptr_skb = (struct sk_buff *)ptr_sw_gpd->ptr_cookie;
-                    HAL_KNL_DBG(HAL_KNL_RX,
+                    DIAG_PRINT(HAL_DBG_RX,
                                     "u=%u, rxch=%u, copy size=%u to buf offset=%u\n",
                                     unit, channel, ptr_skb->len, copy_offset);
 
@@ -2409,7 +2409,7 @@ _hal_dawn_pkt_rxEnQueue(
             }
             else
             {
-                HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_RX),
+                DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
                                 "u=%u, rxch=%u, alloc skb failed, size=%u\n",
                                 unit, channel, (total_len - ETH_FCS_LEN));
             }
@@ -2428,7 +2428,7 @@ _hal_dawn_pkt_rxEnQueue(
         {
             ptr_rx_cb->cnt.channel[channel].netdev_miss++;
             osal_skb_free(ptr_skb);
-            HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_RX),
+            DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
                             "u=%u, rxch=%u, find netdev failed\n",
                             unit, channel);
             return;
@@ -2455,7 +2455,7 @@ _hal_dawn_pkt_rxEnQueue(
 #if defined(NETIF_EN_NETLINK)
         else
         {
-            HAL_KNL_DBG(HAL_KNL_PROFILE,
+            DIAG_PRINT(HAL_DBG_PROFILE,
                             "hit profile dest=netlink, name=%s, mcgrp=%s\n",
                             ((NETIF_NL_RX_DST_NETLINK_T *)ptr_dest)->name,
                             ((NETIF_NL_RX_DST_NETLINK_T *)ptr_dest)->mc_group_name);
@@ -2481,7 +2481,7 @@ _hal_dawn_pkt_rxEnQueue(
     }
     else
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_RX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
                         "u=%u, rxch=%u, invalid pkt dest=%d\n",
                         unit, channel, dest_type);
     }
@@ -2825,7 +2825,7 @@ hal_dawn_pkt_sendGpd(
 
                     if (HAL_DAWN_PKT_HWO_HW_OWN == ptr_tx_gpd->hwo)
                     {
-                        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_TX),
+                        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
                                         "u=%u, txch=%u, free gpd idx out-of-sync\n",
                                         unit, channel);
                         rc = CLX_E_TABLE_FULL;
@@ -2862,7 +2862,7 @@ hal_dawn_pkt_sendGpd(
 #define HAL_DAWN_PKT_KNL_TX_RING_AVBL_GPD_LOW      (HAL_DAWN_PORT_NUM)
                 if (ptr_tx_pdma->free_gpd_num < HAL_DAWN_PKT_KNL_TX_RING_AVBL_GPD_LOW)
                 {
-                    HAL_KNL_DBG(HAL_KNL_TX,
+                    DIAG_PRINT(HAL_DBG_TX,
                                     "u=%u, txch=%u, tx avbl gpd < %d, suspend all netdev\n",
                                     unit, channel, HAL_DAWN_PKT_KNL_TX_RING_AVBL_GPD_LOW);
                     _hal_dawn_pkt_suspendAllIntf(unit);
@@ -2875,7 +2875,7 @@ hal_dawn_pkt_sendGpd(
         }
         else
         {
-            HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_TX),
+            DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
                             "u=%u, txch=%u, pdma hw err\n",
                             unit, channel);
             rc = CLX_E_OTHERS;
@@ -2885,7 +2885,7 @@ hal_dawn_pkt_sendGpd(
     }
     else
     {
-        HAL_KNL_DBG(HAL_KNL_ERR,
+        DIAG_PRINT(HAL_DBG_ERR,
                         "Tx failed, task already deinit\n");
         rc = CLX_E_OTHERS;
     }
@@ -2909,7 +2909,7 @@ _hal_dawn_pkt_rxStop(
     /* Check if Rx is already stopped*/
     if (0 == (ptr_cb->init_flag & HAL_DAWN_PKT_INIT_RX_START))
     {
-        HAL_KNL_DBG((HAL_KNL_RX | HAL_KNL_ERR),
+        DIAG_PRINT((HAL_DBG_RX | HAL_DBG_ERR),
                         "u=%u, rx stop failed, not started\n", unit);
         return (CLX_E_OK);
     }
@@ -2919,7 +2919,7 @@ _hal_dawn_pkt_rxStop(
     if ((0 == (ptr_cb->init_flag & HAL_DAWN_PKT_INIT_TASK)) ||
         (0 == (ptr_cb->init_flag & HAL_DAWN_PKT_INIT_DRV)))
     {
-        HAL_KNL_DBG((HAL_KNL_RX | HAL_KNL_ERR),
+        DIAG_PRINT((HAL_DBG_RX | HAL_DBG_ERR),
                         "u=%u, rx stop failed, pkt task & pkt drv not init\n", unit);
         return (CLX_E_OK);
     }
@@ -2947,7 +2947,7 @@ _hal_dawn_pkt_rxStop(
     ptr_rx_cb->running = FALSE;
     ptr_cb->init_flag &= (~HAL_DAWN_PKT_INIT_RX_START);
 
-    HAL_KNL_DBG(HAL_KNL_RX,
+    DIAG_PRINT(HAL_DBG_RX,
                     "u=%u, rx stop done, init flag=0x%x\n", unit, ptr_cb->init_flag);
 
     osal_triggerEvent(&ptr_rx_cb->sync_sema);
@@ -2967,7 +2967,7 @@ _hal_dawn_pkt_rxStart(
 
     if (0 != (ptr_cb->init_flag & HAL_DAWN_PKT_INIT_RX_START))
     {
-        HAL_KNL_DBG((HAL_KNL_RX | HAL_KNL_ERR),
+        DIAG_PRINT((HAL_DBG_RX | HAL_DBG_ERR),
                         "u=%u, rx start failed, already started\n", unit);
         return (CLX_E_OK);
     }
@@ -2993,7 +2993,7 @@ _hal_dawn_pkt_rxStart(
     /* set the flag to record init state */
     ptr_cb->init_flag |= HAL_DAWN_PKT_INIT_RX_START;
 
-    HAL_KNL_DBG(HAL_KNL_RX,
+    DIAG_PRINT(HAL_DBG_RX,
                     "u=%u, rx start done, init flag=0x%x\n", unit, ptr_cb->init_flag);
     return (rc);
 }
@@ -3035,7 +3035,7 @@ hal_dawn_pkt_setRxKnlConfig(
         /* To prevent buffer size from being on-the-fly changed */
         if (0 != (ptr_cb->init_flag & HAL_DAWN_PKT_INIT_RX_START))
         {
-            HAL_KNL_DBG((HAL_KNL_RX | HAL_KNL_ERR),
+            DIAG_PRINT((HAL_DBG_RX | HAL_DBG_ERR),
                              "u=%u, rx stop failed, not started\n", unit);
             return (CLX_E_OK);
         }
@@ -3104,7 +3104,7 @@ hal_dawn_pkt_deinitTask(
 
     if (0 == (ptr_cb->init_flag & HAL_DAWN_PKT_INIT_TASK))
     {
-        HAL_KNL_DBG((HAL_KNL_RX | HAL_KNL_ERR),
+        DIAG_PRINT((HAL_DBG_RX | HAL_DBG_ERR),
                         "u=%u, rx stop failed, not started\n", unit);
         return (CLX_E_OK);
     }
@@ -3112,7 +3112,7 @@ hal_dawn_pkt_deinitTask(
     /* Need to stop Rx before de-init Task */
     if (0 != (ptr_cb->init_flag & HAL_DAWN_PKT_INIT_RX_START))
     {
-        HAL_KNL_DBG((HAL_KNL_RX | HAL_KNL_ERR),
+        DIAG_PRINT((HAL_DBG_RX | HAL_DBG_ERR),
                         "u=%u, pkt task deinit failed, rx not stop\n", unit);
 
         _hal_dawn_pkt_rxStop(unit);
@@ -3152,7 +3152,7 @@ hal_dawn_pkt_deinitTask(
     /* Set the flag to record init state */
     ptr_cb->init_flag &= (~HAL_DAWN_PKT_INIT_TASK);
 
-    HAL_KNL_DBG(HAL_KNL_RX,
+    DIAG_PRINT(HAL_DBG_RX,
                     "u=%u, pkt task deinit done, init flag=0x%x\n",
                     unit, ptr_cb->init_flag);
 
@@ -3433,7 +3433,7 @@ hal_dawn_pkt_deinitPktDrv(
 
     if (0 == (ptr_cb->init_flag & HAL_DAWN_PKT_INIT_DRV))
     {
-        HAL_KNL_DBG((HAL_KNL_RX | HAL_KNL_ERR),
+        DIAG_PRINT((HAL_DBG_RX | HAL_DBG_ERR),
                         "u=%u, pkt drv deinit failed, not inited\n", unit);
         return (CLX_E_OK);
     }
@@ -3460,7 +3460,7 @@ hal_dawn_pkt_deinitPktDrv(
     ptr_cb->init_flag &= (~HAL_DAWN_PKT_INIT_DRV);
 
 
-    HAL_KNL_DBG(HAL_KNL_COMMON,
+    DIAG_PRINT(HAL_DBG_COMMON,
                     "u=%u, pkt drv deinit done, init flag=0x%x\n",
                     unit, ptr_cb->init_flag);
     return (rc);
@@ -3565,7 +3565,7 @@ _hal_dawn_pkt_handleTxL2Isr(
 
     if (0 != (isr_status & HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_HWO_ERROR))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_TX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
                         "u=%u, txch=%u, pdma gpd hwo err\n", unit, channel);
         _hal_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_HWO_ERROR);
         ptr_tx_cb->cnt.channel[channel].gpd_hwo_err++;
@@ -3573,7 +3573,7 @@ _hal_dawn_pkt_handleTxL2Isr(
     }
     if (0 != (isr_status & HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_TX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
                         "u=%u, txch=%u, pdma gpd chksum err\n", unit, channel);
         _hal_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR);
         ptr_tx_cb->cnt.channel[channel].gpd_chksm_err++;
@@ -3581,7 +3581,7 @@ _hal_dawn_pkt_handleTxL2Isr(
     }
     if (0 != (isr_status & HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_NO_OVFL_ERROR))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_TX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
                         "u=%u, txch=%u, pdma gpd num overflow err\n", unit, channel);
         _hal_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_NO_OVFL_ERROR);
         ptr_tx_cb->cnt.channel[channel].gpd_no_ovfl_err++;
@@ -3589,7 +3589,7 @@ _hal_dawn_pkt_handleTxL2Isr(
     }
     if (0 != (isr_status & HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_DMA_READ_ERROR))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_TX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
                         "u=%u, txch=%u, pdma gpd dma read err\n", unit, channel);
         _hal_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_DMA_READ_ERROR);
         ptr_tx_cb->cnt.channel[channel].gpd_dma_read_err++;
@@ -3597,7 +3597,7 @@ _hal_dawn_pkt_handleTxL2Isr(
     }
     if (0 != (isr_status & HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_BUF_SIZE_ERROR))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_TX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
                         "u=%u, txch=%u, pdma buf size err\n", unit, channel);
         _hal_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_BUF_SIZE_ERROR);
         ptr_tx_cb->cnt.channel[channel].buf_size_err++;
@@ -3605,28 +3605,28 @@ _hal_dawn_pkt_handleTxL2Isr(
     }
     if (0 != (isr_status & HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_RUNT_ERROR))
     {
-        HAL_KNL_DBG(HAL_KNL_TX,
+        DIAG_PRINT(HAL_DBG_TX,
                         "u=%u, txch=%u, pdma pkt runt\n", unit, channel);
         _hal_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_RUNT_ERROR);
         ptr_tx_cb->cnt.channel[channel].runt_err++;
     }
     if (0 != (isr_status & HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_OVSZ_ERROR))
     {
-        HAL_KNL_DBG(HAL_KNL_TX,
+        DIAG_PRINT(HAL_DBG_TX,
                         "u=%u, txch=%u, pdma pkt over size\n", unit, channel);;
         _hal_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_OVSZ_ERROR);
         ptr_tx_cb->cnt.channel[channel].ovsz_err++;
     }
     if (0 != (isr_status & HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_LEN_MISMATCH_ERROR))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_TX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
                         "u=%u, txch=%u, pdma len mismatch err\n", unit, channel);
         _hal_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_LEN_MISMATCH_ERROR);
         ptr_tx_cb->cnt.channel[channel].len_mismatch_err++;
     }
     if (0 != (isr_status & HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_PKTPL_DMA_READ_ERROR))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_TX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
                         "u=%u, txch=%u, pdma pkt buf dma read err\n", unit, channel);
         _hal_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_PKTPL_DMA_READ_ERROR);
         ptr_tx_cb->cnt.channel[channel].pktpl_dma_read_err++;
@@ -3634,14 +3634,14 @@ _hal_dawn_pkt_handleTxL2Isr(
     }
     if (0 != (isr_status & HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_COS_ERROR))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_TX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
                         "u=%u, txch=%u, pdma tx cos err\n", unit, channel);
         _hal_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_COS_ERROR);
         ptr_tx_cb->cnt.channel[channel].cos_err++;
     }
     if (0 != (isr_status & HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_GT255_ERROR))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_TX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
                         "u=%u, txch=%u, pdma gpd num > 255 err\n", unit, channel);
         _hal_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_GT255_ERROR);
         ptr_tx_cb->cnt.channel[channel].gpd_gt255_err++;
@@ -3649,14 +3649,14 @@ _hal_dawn_pkt_handleTxL2Isr(
     }
     if (0 != (isr_status & HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_PFC))
     {
-        HAL_KNL_DBG(HAL_KNL_TX,
+        DIAG_PRINT(HAL_DBG_TX,
                         "u=%u, txch=%u, pdma flow ctrl\n", unit, channel);
         _hal_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_PFC);
         ptr_tx_cb->cnt.channel[channel].pfc++;
     }
     if (0 != (isr_status & HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_CREDIT_UDFL_ERROR))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_TX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
                         "u=%u, txch=%u, pdma credit underflow err\n", unit, channel);
         _hal_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_CREDIT_UDFL_ERROR);
         ptr_tx_cb->cnt.channel[channel].credit_udfl_err++;
@@ -3664,7 +3664,7 @@ _hal_dawn_pkt_handleTxL2Isr(
     }
     if (0 != (isr_status & HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_DMA_WRITE_ERROR))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_TX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
                         "u=%u, txch=%u, pdma dma write err\n", unit, channel);
         _hal_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_DMA_WRITE_ERROR);
         ptr_tx_cb->cnt.channel[channel].dma_write_err++;
@@ -3672,7 +3672,7 @@ _hal_dawn_pkt_handleTxL2Isr(
     }
     if (0 != (isr_status & HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_STOP_CMD_CPLT))
     {
-        HAL_KNL_DBG(HAL_KNL_TX,
+        DIAG_PRINT(HAL_DBG_TX,
                         "u=%u, txch=%u, pdma stop done\n", unit, channel);
         _hal_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_TX_CHANNEL_L2_ISR_STOP_CMD_CPLT);
         ptr_tx_cb->cnt.channel[channel].sw_issue_stop++;
@@ -3714,21 +3714,21 @@ _hal_dawn_pkt_handleRxL2Isr(
 
     if (0 != (isr_status & HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_LOW))
     {
-        HAL_KNL_DBG(HAL_KNL_RX,
+        DIAG_PRINT(HAL_DBG_RX,
                         "u=%u, rxch=%u, pdma avbl gpd low\n", unit, channel);
         _hal_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_LOW);
         ptr_rx_cb->cnt.channel[channel].avbl_gpd_low++;
     }
     if (0 != (isr_status & HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_EMPTY))
     {
-        HAL_KNL_DBG(HAL_KNL_RX,
+        DIAG_PRINT(HAL_DBG_RX,
                         "u=%u, rxch=%u, pdma avbl gpd empty\n", unit, channel);
         _hal_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_EMPTY);
         ptr_rx_cb->cnt.channel[channel].avbl_gpd_empty++;
     }
     if (0 != (isr_status & HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_ERROR))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_RX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
                         "u=%u, rxch=%u, pdma avbl gpd err\n", unit, channel);
         _hal_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_ERROR);
         ptr_rx_cb->cnt.channel[channel].avbl_gpd_err++;
@@ -3736,7 +3736,7 @@ _hal_dawn_pkt_handleRxL2Isr(
     }
     if (0 != (isr_status & HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_RX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
                         "u=%u, rxch=%u, pdma gpd chksum err\n", unit, channel);
         _hal_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR);
         ptr_rx_cb->cnt.channel[channel].gpd_chksm_err++;
@@ -3744,7 +3744,7 @@ _hal_dawn_pkt_handleRxL2Isr(
     }
     if (0 != (isr_status & HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_DMA_READ_ERROR))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_RX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
                         "u=%u, rxch=%u, pdma dma read err\n", unit, channel);
         _hal_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_DMA_READ_ERROR);
         ptr_rx_cb->cnt.channel[channel].dma_read_err++;
@@ -3752,7 +3752,7 @@ _hal_dawn_pkt_handleRxL2Isr(
     }
     if (0 != (isr_status & HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_DMA_WRITE_ERROR))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_RX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
                         "u=%u, rxch=%u, pdma dma write err\n", unit, channel);
         _hal_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_DMA_WRITE_ERROR);
         ptr_rx_cb->cnt.channel[channel].dma_write_err++;
@@ -3760,14 +3760,14 @@ _hal_dawn_pkt_handleRxL2Isr(
     }
     if (0 != (isr_status & HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_STOP_CMD_CPLT))
     {
-        HAL_KNL_DBG(HAL_KNL_RX,
+        DIAG_PRINT(HAL_DBG_RX,
                         "u=%u, rxch=%u, pdma stop done\n", unit, channel);
         _hal_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_STOP_CMD_CPLT);
         ptr_rx_cb->cnt.channel[channel].sw_issue_stop++;
     }
     if (0 != (isr_status & HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_GPD_GT255_ERROR))
     {
-         HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_RX),
+         DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
                         "u=%u, rxch=%u, pdma gpd num > 255 err\n", unit, channel);
         _hal_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_GPD_GT255_ERROR);
         ptr_rx_cb->cnt.channel[channel].gpd_gt255_err++;
@@ -3775,7 +3775,7 @@ _hal_dawn_pkt_handleRxL2Isr(
     }
     if (0 != (isr_status & HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_TOD_UNINIT))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_RX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
                         "u=%u, rxch=%u, pdma tod ununit err\n", unit, channel);
         _hal_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_TOD_UNINIT);
         ptr_rx_cb->cnt.channel[channel].tod_uninit++;
@@ -3783,35 +3783,35 @@ _hal_dawn_pkt_handleRxL2Isr(
     }
     if (0 != (isr_status & HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_PKT_ERROR_DROP))
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_RX),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
                         "u=%u, rxch=%u, pdma pkt err drop\n", unit, channel);
         _hal_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_PKT_ERROR_DROP);
         ptr_rx_cb->cnt.channel[channel].pkt_err_drop++;
     }
     if (0 != (isr_status & HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_UDSZ_DROP))
     {
-        HAL_KNL_DBG(HAL_KNL_RX,
+        DIAG_PRINT(HAL_DBG_RX,
                         "u=%u, rxch=%u, pdma pkt under size\n", unit, channel);
         _hal_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_UDSZ_DROP);
         ptr_rx_cb->cnt.channel[channel].udsz_drop++;
     }
     if (0 != (isr_status & HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_OVSZ_DROP))
     {
-        HAL_KNL_DBG(HAL_KNL_RX,
+        DIAG_PRINT(HAL_DBG_RX,
                         "u=%u, rxch=%u, pdma pkt over size\n", unit, channel);
         _hal_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_OVSZ_DROP);
         ptr_rx_cb->cnt.channel[channel].ovsz_drop++;
     }
     if (0 != (isr_status & HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_CMDQ_OVF_DROP))
     {
-        HAL_KNL_DBG(HAL_KNL_RX,
+        DIAG_PRINT(HAL_DBG_RX,
                         "u=%u, rxch=%u, pdma cmdq overflow\n", unit, channel);
         _hal_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_CMDQ_OVF_DROP);
         ptr_rx_cb->cnt.channel[channel].cmdq_ovf_drop++;
     }
     if (0 != (isr_status & HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_FIFO_OVF_DROP))
     {
-        HAL_KNL_DBG(HAL_KNL_RX,
+        DIAG_PRINT(HAL_DBG_RX,
                         "u=%u, rxch=%u, pdma fifo overflow\n", unit, channel);
         _hal_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_DAWN_PKT_RX_CHANNEL_L2_ISR_FIFO_OVF_DROP);
         ptr_rx_cb->cnt.channel[channel].fifo_ovf_drop++;
@@ -3850,7 +3850,7 @@ _hal_dawn_pkt_handleErrorTask(
         osal_waitEvent(HAL_DAWN_PKT_ERR_EVENT(unit));
         if (CLX_E_OK != osal_isRunThread())
         {
-            HAL_KNL_DBG(HAL_KNL_COMMON,
+            DIAG_PRINT(HAL_DBG_COMMON,
                             "u=%u, err task destroyed\n", unit);
             break; /* deinit-thread */
         }
@@ -3861,60 +3861,60 @@ _hal_dawn_pkt_handleErrorTask(
 
         if (0 != (HAL_DAWN_PKT_L2_ISR_RCH0 & isr_status))
         {
-            HAL_KNL_DBG(HAL_KNL_COMMON, "u=%u, rxch=0, rcv err isr, status=0x%x\n",
+            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, rxch=0, rcv err isr, status=0x%x\n",
                             unit, isr_status);
             _hal_dawn_pkt_handleRxL2Isr(unit, HAL_DAWN_PKT_RX_CHANNEL_0);
         }
         if (0 != (HAL_DAWN_PKT_L2_ISR_RCH1 & isr_status))
         {
-            HAL_KNL_DBG(HAL_KNL_COMMON, "u=%u, rxch=1, rcv err isr, status=0x%x\n",
+            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, rxch=1, rcv err isr, status=0x%x\n",
                             unit, isr_status);
             _hal_dawn_pkt_handleRxL2Isr(unit, HAL_DAWN_PKT_RX_CHANNEL_1);
         }
         if (0 != (HAL_DAWN_PKT_L2_ISR_RCH2 & isr_status))
         {
-            HAL_KNL_DBG(HAL_KNL_COMMON, "u=%u, rxch=2, rcv err isr, status=0x%x\n",
+            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, rxch=2, rcv err isr, status=0x%x\n",
                             unit, isr_status);
             _hal_dawn_pkt_handleRxL2Isr(unit, HAL_DAWN_PKT_RX_CHANNEL_2);
         }
         if (0 != (HAL_DAWN_PKT_L2_ISR_RCH3 & isr_status))
         {
-            HAL_KNL_DBG(HAL_KNL_COMMON, "u=%u, rxch=3, rcv err isr, status=0x%x\n",
+            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, rxch=3, rcv err isr, status=0x%x\n",
                             unit, isr_status);
             _hal_dawn_pkt_handleRxL2Isr(unit, HAL_DAWN_PKT_RX_CHANNEL_3);
         }
         if (0 != (HAL_DAWN_PKT_L2_ISR_TCH0 & isr_status))
         {
-            HAL_KNL_DBG(HAL_KNL_COMMON, "u=%u, txch=0, rcv err isr, status=0x%x\n",
+            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, txch=0, rcv err isr, status=0x%x\n",
                             unit, isr_status);
             _hal_dawn_pkt_handleTxL2Isr(unit, HAL_DAWN_PKT_TX_CHANNEL_0);
         }
         if (0 != (HAL_DAWN_PKT_L2_ISR_TCH1 & isr_status))
         {
-            HAL_KNL_DBG(HAL_KNL_COMMON, "u=%u, txch=1, rcv err isr, status=0x%x\n",
+            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, txch=1, rcv err isr, status=0x%x\n",
                             unit, isr_status);
             _hal_dawn_pkt_handleTxL2Isr(unit, HAL_DAWN_PKT_TX_CHANNEL_1);
         }
         if (0 != (HAL_DAWN_PKT_L2_ISR_TCH2 & isr_status))
         {
-            HAL_KNL_DBG(HAL_KNL_COMMON, "u=%u, txch=2, rcv err isr, status=0x%x\n",
+            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, txch=2, rcv err isr, status=0x%x\n",
                             unit, isr_status);
             _hal_dawn_pkt_handleTxL2Isr(unit, HAL_DAWN_PKT_TX_CHANNEL_2);
         }
         if (0 != (HAL_DAWN_PKT_L2_ISR_TCH3 & isr_status))
         {
-            HAL_KNL_DBG(HAL_KNL_COMMON, "u=%u, txch=3, rcv err isr, status=0x%x\n",
+            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, txch=3, rcv err isr, status=0x%x\n",
                             unit, isr_status);
             _hal_dawn_pkt_handleTxL2Isr(unit, HAL_DAWN_PKT_TX_CHANNEL_3);
         }
         if (0 != (HAL_DAWN_PKT_L2_ISR_RX_QID_MAP_ERR & isr_status))
         {
-            HAL_KNL_DBG(HAL_KNL_COMMON, "u=%u, rcv rx qid map err isr, status=0x%x\n",
+            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, rcv rx qid map err isr, status=0x%x\n",
                             unit, isr_status);
         }
         if (0 != (HAL_DAWN_PKT_L2_ISR_RX_FRAME_ERR & isr_status))
         {
-            HAL_KNL_DBG(HAL_KNL_COMMON, "u=%u, rcv rx frame err isr, status=0x%x\n",
+            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, rcv rx frame err isr, status=0x%x\n",
                             unit, isr_status);
         }
         if (0 != isr_status)
@@ -3967,7 +3967,7 @@ _hal_dawn_pkt_handleTxDoneTask(
         osal_waitEvent(HAL_DAWN_PKT_TCH_EVENT(unit, channel));
         if (CLX_E_OK != osal_isRunThread())
         {
-            HAL_KNL_DBG(HAL_KNL_TX,
+            DIAG_PRINT(HAL_DBG_TX,
                             "u=%u, txch=%u, tx done task destroyed\n", unit, channel);
             break; /* deinit-thread */
         }
@@ -4018,7 +4018,7 @@ _hal_dawn_pkt_handleTxDoneTask(
                     }
                     else
                     {
-                        HAL_KNL_DBG((HAL_KNL_TX | HAL_KNL_ERR),
+                        DIAG_PRINT((HAL_DBG_TX | HAL_DBG_ERR),
                                         "u=%u, txch=%u, err recover failed\n",
                                         unit, channel);
                     }
@@ -4131,7 +4131,7 @@ _hal_dawn_pkt_handleRxDoneTask(
         osal_waitEvent(HAL_DAWN_PKT_RCH_EVENT(unit, channel));
         if (CLX_E_OK != osal_isRunThread())
         {
-            HAL_KNL_DBG(HAL_KNL_RX,
+            DIAG_PRINT(HAL_DBG_RX,
                             "u=%u, rxch=%u, rx done task destroyed\n", unit, channel);
             break; /* deinit-thread */
         }
@@ -4139,7 +4139,7 @@ _hal_dawn_pkt_handleRxDoneTask(
         /* check if Rx-system is inited */
         if (0 == ptr_rx_cb->buf_len)
         {
-            HAL_KNL_DBG((HAL_KNL_RX | HAL_KNL_ERR),
+            DIAG_PRINT((HAL_DBG_RX | HAL_DBG_ERR),
                             "u=%u, rxch=%u, rx gpd buf len=0\n",
                             unit, channel);
             continue;
@@ -4181,7 +4181,7 @@ _hal_dawn_pkt_handleRxDoneTask(
                     }
                     else
                     {
-                        HAL_KNL_DBG((HAL_KNL_RX | HAL_KNL_ERR),
+                        DIAG_PRINT((HAL_DBG_RX | HAL_DBG_ERR),
                                         "u=%u, rxch=%u, err recover failed\n",
                                         unit, channel);
                     }
@@ -4205,7 +4205,7 @@ _hal_dawn_pkt_handleRxDoneTask(
                 else
                 {
                     ptr_rx_cb->cnt.no_memory++;
-                    HAL_KNL_DBG((HAL_KNL_RX | HAL_KNL_ERR),
+                    DIAG_PRINT((HAL_DBG_RX | HAL_DBG_ERR),
                                     "u=%u, rxch=%u, alloc 1st sw gpd failed, size=%zu\n",
                                     unit, channel, sizeof(HAL_DAWN_PKT_RX_SW_GPD_T));
                     break;
@@ -4222,7 +4222,7 @@ _hal_dawn_pkt_handleRxDoneTask(
                 else
                 {
                     ptr_rx_cb->cnt.no_memory++;
-                    HAL_KNL_DBG((HAL_KNL_RX | HAL_KNL_ERR),
+                    DIAG_PRINT((HAL_DBG_RX | HAL_DBG_ERR),
                                     "u=%u, rxch=%u, alloc mid sw gpd failed, size=%zu\n",
                                     unit, channel, sizeof(HAL_DAWN_PKT_RX_SW_GPD_T));
                     break;
@@ -4330,7 +4330,7 @@ hal_dawn_pkt_initTask(
 
     if (0 != (ptr_cb->init_flag & HAL_DAWN_PKT_INIT_TASK))
     {
-        HAL_KNL_DBG(HAL_KNL_ERR,
+        DIAG_PRINT(HAL_DBG_ERR,
                         "u=%u, pkt task init failed, not inited\n", unit);
         return (rc);
     }
@@ -4372,7 +4372,7 @@ hal_dawn_pkt_initTask(
 
     ptr_cb->init_flag |= HAL_DAWN_PKT_INIT_TASK;
 
-    HAL_KNL_DBG(HAL_KNL_COMMON,
+    DIAG_PRINT(HAL_DBG_COMMON,
                     "u=%u, pkt task init done, init flag=0x%x\n", unit, ptr_cb->init_flag);
 
     /* For some specail case in warmboot, the netifs are not destroyed during sdk deinit
@@ -4816,7 +4816,7 @@ _hal_dawn_pkt_addProfToList(
     /* Create the 1st node in the interface profile list */
     if (NULL == *pptr_profile_list)
     {
-        HAL_KNL_DBG(HAL_KNL_PROFILE,
+        DIAG_PRINT(HAL_DBG_PROFILE,
                         "prof list empty\n");
         *pptr_profile_list = ptr_new_prof_node;
         ptr_new_prof_node->ptr_next_node = NULL;
@@ -4830,7 +4830,7 @@ _hal_dawn_pkt_addProfToList(
         {
             if (ptr_curr_node->ptr_profile->priority <= ptr_new_profile->priority)
             {
-                HAL_KNL_DBG(HAL_KNL_PROFILE,
+                DIAG_PRINT(HAL_DBG_PROFILE,
                                 "find prof id=%d (%s) higher priority=%d, search next\n",
                                 ptr_curr_node->ptr_profile->id,
                                 ptr_curr_node->ptr_profile->name,
@@ -4843,7 +4843,7 @@ _hal_dawn_pkt_addProfToList(
             {
                 /* Insert intermediate node */
                 ptr_new_prof_node->ptr_next_node = ptr_curr_node;
-                HAL_KNL_DBG(HAL_KNL_PROFILE,
+                DIAG_PRINT(HAL_DBG_PROFILE,
                                 "insert prof id=%d (%s) before prof id=%d (%s) (priority=%d >= %d)\n",
                                 ptr_new_prof_node->ptr_profile->id,
                                 ptr_new_prof_node->ptr_profile->name,
@@ -4856,7 +4856,7 @@ _hal_dawn_pkt_addProfToList(
                 {
                     /* There is no previous node: change the root */
                     *pptr_profile_list = ptr_new_prof_node;
-                    HAL_KNL_DBG(HAL_KNL_PROFILE,
+                    DIAG_PRINT(HAL_DBG_PROFILE,
                                     "insert prof id=%d (%s) to head (priority=%d)\n",
                                     ptr_new_prof_node->ptr_profile->id,
                                     ptr_new_prof_node->ptr_profile->name,
@@ -4865,7 +4865,7 @@ _hal_dawn_pkt_addProfToList(
                 else
                 {
                     ptr_prev_node->ptr_next_node = ptr_new_prof_node;
-                    HAL_KNL_DBG(HAL_KNL_PROFILE,
+                    DIAG_PRINT(HAL_DBG_PROFILE,
                                     "insert prof id=%d (%s) after prof id=%d (%s) (priority=%d <= %d)\n",
                                     ptr_new_prof_node->ptr_profile->id,
                                     ptr_new_prof_node->ptr_profile->name,
@@ -4882,7 +4882,7 @@ _hal_dawn_pkt_addProfToList(
         /* Insert node to the tail of list */
         ptr_prev_node->ptr_next_node = ptr_new_prof_node;
         ptr_new_prof_node->ptr_next_node = NULL;
-        HAL_KNL_DBG(HAL_KNL_PROFILE,
+        DIAG_PRINT(HAL_DBG_PROFILE,
                         "insert prof id=%d (%s) to tail, after prof id=%d (%s) (priority=%d <= %d)\n",
                         ptr_new_prof_node->ptr_profile->id,
                         ptr_new_prof_node->ptr_profile->name,
@@ -4936,14 +4936,14 @@ _hal_dawn_pkt_delProfFromListById(
 
             if (NULL != ptr_temp_node->ptr_next_node)
             {
-                HAL_KNL_DBG(HAL_KNL_PROFILE,
+                DIAG_PRINT(HAL_DBG_PROFILE,
                                 "choose prof id=%d (%s) as new head\n",
                                 ptr_temp_node->ptr_next_node->ptr_profile->id,
                                 ptr_temp_node->ptr_next_node->ptr_profile->name);
             }
             else
             {
-                HAL_KNL_DBG(HAL_KNL_PROFILE,
+                DIAG_PRINT(HAL_DBG_PROFILE,
                                 "prof list is empty\n");
             }
 
@@ -4964,7 +4964,7 @@ _hal_dawn_pkt_delProfFromListById(
                 }
                 else
                 {
-                    HAL_KNL_DBG(HAL_KNL_PROFILE,
+                    DIAG_PRINT(HAL_DBG_PROFILE,
                                     "find prof id=%d, free done\n", id);
 
                     ptr_profile = ptr_curr_node->ptr_profile;
@@ -4978,7 +4978,7 @@ _hal_dawn_pkt_delProfFromListById(
 
     if (NULL == ptr_profile)
     {
-        HAL_KNL_DBG((HAL_KNL_PROFILE | HAL_KNL_ERR),
+        DIAG_PRINT((HAL_DBG_PROFILE | HAL_DBG_ERR),
                         "find prof failed, id=%d\n", id);
     }
 
@@ -5016,7 +5016,7 @@ _hal_dawn_pkt_allocProfEntry(
     {
         if (NULL == _ptr_hal_dawn_pkt_profile_entry[idx])
         {
-            HAL_KNL_DBG(HAL_KNL_PROFILE,
+            DIAG_PRINT(HAL_DBG_PROFILE,
                             "alloc prof entry failed, id=%d\n", idx);
             _ptr_hal_dawn_pkt_profile_entry[idx] = ptr_profile;
             ptr_profile->id = idx;
@@ -5054,7 +5054,7 @@ _hal_dawn_pkt_destroyAllIntf(
         ptr_port_db = HAL_DAWN_PKT_GET_PORT_DB(port);
         if (NULL != ptr_port_db->ptr_net_dev)       /* valid intf */
         {
-            HAL_KNL_DBG(HAL_KNL_INTF,
+            DIAG_PRINT(HAL_DBG_INTF,
                             "u=%u, find intf %s (id=%d) on phy port=%d, destroy done\n",
                             unit,
                             ptr_port_db->meta.name,
@@ -5094,7 +5094,7 @@ _hal_dawn_pkt_delProfListOnAllIntf(
             ptr_curr_node = ptr_port_db->ptr_profile_list;
             while (NULL != ptr_curr_node)
             {
-                HAL_KNL_DBG(HAL_KNL_PROFILE,
+                DIAG_PRINT(HAL_DBG_PROFILE,
                                 "u=%u, del prof id=%d on phy port=%d\n",
                                 unit, ptr_curr_node->ptr_profile->id, port);
 
@@ -5122,7 +5122,7 @@ _hal_dawn_pkt_destroyAllProfile(
         ptr_profile = _hal_dawn_pkt_freeProfEntry(prof_id);
         if (NULL != ptr_profile)
         {
-            HAL_KNL_DBG(HAL_KNL_PROFILE,
+            DIAG_PRINT(HAL_DBG_PROFILE,
                             "u=%u, destroy prof id=%d, name=%s, priority=%d, flag=0x%x\n",
                             unit,
                             ptr_profile->id,
@@ -5174,31 +5174,31 @@ hal_dawn_pkt_initPktDrv(
      */
     if (0 != (ptr_cb->init_flag & HAL_DAWN_PKT_INIT_DRV))
     {
-        HAL_KNL_DBG(HAL_KNL_ERR,
+        DIAG_PRINT(HAL_DBG_ERR,
                         "u=%u, init pkt drv failed, inited\n", unit);
 
-        HAL_KNL_DBG(HAL_KNL_ERR,
+        DIAG_PRINT(HAL_DBG_ERR,
                         "u=%u, stop rx pkt\n", unit);
         _hal_dawn_pkt_rxStop(unit);
 
-        HAL_KNL_DBG(HAL_KNL_ERR,
+        DIAG_PRINT(HAL_DBG_ERR,
                         "u=%u, stop all intf\n", unit);
         _hal_dawn_pkt_stopAllIntf(unit);
 
-        HAL_KNL_DBG(HAL_KNL_ERR,
+        DIAG_PRINT(HAL_DBG_ERR,
                         "u=%u, deinit pkt task\n", unit);
 
         hal_dawn_pkt_deinitTask(unit);
 
-        HAL_KNL_DBG(HAL_KNL_ERR,
+        DIAG_PRINT(HAL_DBG_ERR,
                         "u=%u, deinit pkt drv\n", unit);
         hal_dawn_pkt_deinitPktDrv(unit);
 
-        HAL_KNL_DBG(HAL_KNL_ERR,
+        DIAG_PRINT(HAL_DBG_ERR,
                         "u=%u, destroy all prof\n", unit);
         _hal_dawn_pkt_destroyAllProfile(unit);
 
-        HAL_KNL_DBG(HAL_KNL_ERR,
+        DIAG_PRINT(HAL_DBG_ERR,
                         "u=%u, destroy all intf\n", unit);
         _hal_dawn_pkt_destroyAllIntf(unit);
     }
@@ -5253,7 +5253,7 @@ hal_dawn_pkt_initPktDrv(
     /* Set the flag to record init state */
     ptr_cb->init_flag |= HAL_DAWN_PKT_INIT_DRV;
 
-    HAL_KNL_DBG(HAL_KNL_COMMON,
+    DIAG_PRINT(HAL_DBG_COMMON,
                     "u=%u, pkt drv init done, init flag=0x%x\n", unit, ptr_cb->init_flag);
 
     return (rc);
@@ -5405,7 +5405,7 @@ _hal_dawn_pkt_net_dev_tx(
     if (NULL == ptr_priv)
     {
         /* in case that the netdev has been freed/reset somewhere */
-        HAL_KNL_DBG(HAL_KNL_ERR, "get netdev_priv failed\n");
+        DIAG_PRINT(HAL_DBG_ERR, "get netdev_priv failed\n");
         return -EFAULT;
     }
 
@@ -5423,7 +5423,7 @@ _hal_dawn_pkt_net_dev_tx(
      * that kernel still has packets to send causing segmentation fault
      */
     if (FALSE == ptr_tx_cb->net_tx_allowed) {
-        HAL_KNL_DBG(HAL_KNL_ERR, "net tx during sdk de-init\n");
+        DIAG_PRINT(HAL_DBG_ERR, "net tx during sdk de-init\n");
         ptr_priv->stats.tx_dropped++;
         osal_skb_free(ptr_skb);
         return NETDEV_TX_OK;
@@ -5456,7 +5456,7 @@ _hal_dawn_pkt_net_dev_tx(
         phy_addr = osal_skb_mapDma(ptr_skb, DMA_TO_DEVICE);
         if (0x0 == phy_addr)
         {
-            HAL_KNL_DBG(HAL_KNL_ERR, "u=%u, txch=%u, skb dma map err\n",
+            DIAG_PRINT(HAL_DBG_ERR, "u=%u, txch=%u, skb dma map err\n",
                             unit, channel);
             ptr_priv->stats.tx_errors++;
             osal_skb_free(ptr_skb);
@@ -5653,14 +5653,14 @@ _hal_dawn_pkt_createIntf(
 
     osal_io_copyFromUser(&net_intf, &ptr_cookie->net_intf, sizeof(HAL_DAWN_PKT_NETIF_INTF_T));
 
-    HAL_KNL_DBG(HAL_KNL_INTF, "u=%u, create intf name=%s, phy port=%d\n",
+    DIAG_PRINT(HAL_DBG_INTF, "u=%u, create intf name=%s, phy port=%d\n",
                     unit, net_intf.name, net_intf.port);
 
     /* To check if the interface with the same name exists in kernel */
     ptr_net_dev = dev_get_by_name(&init_net, net_intf.name);
     if (NULL != ptr_net_dev)
     {
-        HAL_KNL_DBG((HAL_KNL_ERR | HAL_KNL_INTF),
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_INTF),
                         "u=%u, create intf failed, exist same name=%s\n",
                         unit, net_intf.name);
 
@@ -5712,7 +5712,7 @@ _hal_dawn_pkt_createIntf(
     }
     else
     {
-        HAL_KNL_DBG((HAL_KNL_INTF | HAL_KNL_ERR),
+        DIAG_PRINT((HAL_DBG_INTF | HAL_DBG_ERR),
                         "u=%u, create intf failed, exist on phy port=%d\n",
                         unit, net_intf.port);
         /* The user needs to delete the existing intf binding to the same port */
@@ -5750,7 +5750,7 @@ _hal_dawn_pkt_destroyIntf(
         {
             if (ptr_port_db->meta.id == net_intf.id)
             {
-                HAL_KNL_DBG(HAL_KNL_INTF,
+                DIAG_PRINT(HAL_DBG_INTF,
                                 "u=%u, find intf %s (id=%d) on phy port=%d, destroy done\n",
                                 unit,
                                 ptr_port_db->meta.name,
@@ -5790,15 +5790,15 @@ _hal_dawn_pkt_traverseProfList(
 
     ptr_curr_node = ptr_prof_list;
 
-    HAL_KNL_DBG(HAL_KNL_INTF, "intf id=%d, prof list=", intf_id);
+    DIAG_PRINT(HAL_DBG_INTF, "intf id=%d, prof list=", intf_id);
     while(NULL != ptr_curr_node)
     {
-        HAL_KNL_DBG(HAL_KNL_INTF, "%s (%d) => ",
+        DIAG_PRINT(HAL_DBG_INTF, "%s (%d) => ",
                         ptr_curr_node->ptr_profile->name,
                         ptr_curr_node->ptr_profile->priority);
         ptr_curr_node = ptr_curr_node->ptr_next_node;
     }
-    HAL_KNL_DBG(HAL_KNL_INTF, "null\n");
+    DIAG_PRINT(HAL_DBG_INTF, "null\n");
     return (CLX_E_OK);
 }
 
@@ -5822,7 +5822,7 @@ _hal_dawn_pkt_getIntf(
         {
             if (ptr_port_db->meta.id == net_intf.id)
             {
-                HAL_KNL_DBG(HAL_KNL_INTF, "u=%u, find intf id=%d\n", unit, net_intf.id);
+                DIAG_PRINT(HAL_DBG_INTF, "u=%u, find intf id=%d\n", unit, net_intf.id);
                 _hal_dawn_pkt_traverseProfList(net_intf.id, ptr_port_db->ptr_profile_list);
                 osal_io_copyToUser(&ptr_cookie->net_intf, &ptr_port_db->meta, sizeof(HAL_DAWN_PKT_NETIF_INTF_T));
                 rc = CLX_E_OK;
@@ -5870,7 +5870,7 @@ _hal_dawn_pkt_createProfile(
     osal_io_copyFromUser(ptr_profile, &ptr_cookie->net_profile,
                          sizeof(HAL_DAWN_PKT_NETIF_PROFILE_T));
 
-    HAL_KNL_DBG(HAL_KNL_PROFILE,
+    DIAG_PRINT(HAL_DBG_PROFILE,
                     "u=%u, create prof name=%s, priority=%d, flag=0x%x\n",
                     unit,
                     ptr_profile->name,
@@ -5884,14 +5884,14 @@ _hal_dawn_pkt_createProfile(
         /* Insert the profile to the corresponding (port) interface */
         if ((ptr_profile->flags & HAL_DAWN_PKT_NETIF_PROFILE_FLAGS_PORT) != 0)
         {
-            HAL_KNL_DBG(HAL_KNL_PROFILE,
+            DIAG_PRINT(HAL_DBG_PROFILE,
                             "u=%u, bind prof to phy port=%d\n", unit, ptr_profile->port);
             ptr_port_db = HAL_DAWN_PKT_GET_PORT_DB(ptr_profile->port);
             _hal_dawn_pkt_addProfToList(ptr_profile, &ptr_port_db->ptr_profile_list);
         }
         else
         {
-            HAL_KNL_DBG(HAL_KNL_PROFILE,
+            DIAG_PRINT(HAL_DBG_PROFILE,
                             "u=%u, bind prof to all intf\n", unit);
             _hal_dawn_pkt_addProfToAllIntf(ptr_profile);
         }
@@ -5901,7 +5901,7 @@ _hal_dawn_pkt_createProfile(
     }
     else
     {
-        HAL_KNL_DBG((HAL_KNL_PROFILE | HAL_KNL_ERR),
+        DIAG_PRINT((HAL_DBG_PROFILE | HAL_DBG_ERR),
                         "u=%u, alloc prof entry failed, tbl full\n", unit);
         osal_free(ptr_profile);
     }
@@ -5935,7 +5935,7 @@ _hal_dawn_pkt_destroyProfile(
     ptr_profile = _hal_dawn_pkt_freeProfEntry(profile.id);
     if (NULL != ptr_profile)
     {
-        HAL_KNL_DBG(HAL_KNL_PROFILE,
+        DIAG_PRINT(HAL_DBG_PROFILE,
                         "u=%u, destroy prof id=%d, name=%s, priority=%d, flag=0x%x\n",
                         unit,
                         ptr_profile->id,
@@ -6162,7 +6162,7 @@ hal_dawn_pkt_dev_ioctl(
     unsigned int                    unit = ptr_cmd->field.unit;
     HAL_DAWN_PKT_IOCTL_TYPE_T        type = ptr_cmd->field.type;
 
-    HAL_KNL_DBG(HAL_KNL_COMMON, "u=%u, ioctl type=%u, cmd=%u\n",
+    DIAG_PRINT(HAL_DBG_COMMON, "u=%u, ioctl type=%u, cmd=%u\n",
                     unit, type, cmd);
 
     switch (type)

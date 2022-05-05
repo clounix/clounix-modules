@@ -32,7 +32,7 @@ INC_PATH            := $(SRC_PATH)/inc
 BUILD_OUTPUT_DIR    := $(KERNEL_MODULE)/build
 MODULE_OUTPUT_DIR   := $(BUILD_OUTPUT_DIR)/module
 
-all: compile install
+all: compile test install
 ################################################################################
 EXTRA_CFLAGS += -I$(INC_PATH)
 EXTRA_CFLAGS += -I$(SRC_PATH)/clx_netif/inc/
@@ -87,6 +87,16 @@ install::
 	$(TEST_PATH) $(MODULE_OUTPUT_DIR) || $(MKDIR) $(MODULE_OUTPUT_DIR)
 	$(MV) $(BUILD_OUTPUT_DIR)/$(DEV_MODULE_NAME).ko $(MODULE_OUTPUT_DIR)/$(DEV_MODULE_NAME).ko
 	$(MV) $(BUILD_OUTPUT_DIR)/$(NETIF_MODULE_NAME).ko $(MODULE_OUTPUT_DIR)/$(NETIF_MODULE_NAME).ko
+
+
+TEST_SRC     := ./tests
+TEST_SRCS    := $(wildcard $(TEST_SRC)/*.c)
+TEST_SRCS    += $(wildcard $(TEST_SRC)/osal/*.c)
+TEST_SRCS    += $(wildcard $(TEST_SRC)/cmlib/*.c)
+TEST_SRCS    += $(wildcard $(TEST_SRC)/lightning/*.c)
+TEST_CFLAGS := -I ./tests/inc/ -pthread
+test: folder
+	gcc $(EXTRA_CFLAGS) $(TEST_CFLAGS) -Wall -o $(BUILD_OUTPUT_DIR)/test $(TEST_SRCS)
 
 clean::
 	$(RM) $(BUILD_OUTPUT_DIR)

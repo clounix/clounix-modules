@@ -1,6 +1,11 @@
 #ifndef CLX_KNL_H
 #define CLX_KNL_H
+#include <clx_error.h>
+#include <clx_types.h>
+#include <osal/osal_mdc.h>
+#include <hal/common/hal_dev.h>
 
+#ifdef __KERNEL__
 #include <linux/version.h>
 #include <linux/types.h>
 #include <linux/compat.h>
@@ -18,11 +23,6 @@
 #include <linux/slab.h>
 #include <linux/delay.h>
 
-#include <clx_error.h>
-#include <clx_types.h>
-#include <osal/osal_mdc.h>
-#include <hal/common/hal_dev.h>
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5,10,0)
 #if defined(OSAL_MDC_DMA_RESERVED_MEM_CACHEABLE)
     #define IOREMAP_API(a, b)       ioremap(a, b)
@@ -32,7 +32,7 @@
 #else
     #define IOREMAP_API(a, b)       ioremap(a, b)
 #endif
-
+#endif
 /* #define OSAL_MDC_EN_MSI */
 /* #define OSAL_MDC_DMA_RESERVED_MEM_CACHEABLE */
 /* #define OSAL_MDC_EN_TEST */
@@ -42,25 +42,35 @@
 #define OSAL_MDC_PCI_BAR0_OFFSET            (0x0)
 
 /* This flag value will be specified when user inserts kernel module. */
-#define HAL_KNL_CRIT            (0x1UL << 0)
-#define HAL_KNL_ERR             (0x1UL << 1)
-#define HAL_KNL_WARN            (0x1UL << 2)
-#define HAL_KNL_INFO            (0x1UL << 3)
-#define HAL_KNL_DEBUG           (0x1UL << 4)
-#define HAL_KNL_TX              (0x1UL << 5)
-#define HAL_KNL_RX              (0x1UL << 6)
-#define HAL_KNL_INTF            (0x1UL << 7)
-#define HAL_KNL_PROFILE         (0x1UL << 8)
-#define HAL_KNL_COMMON          (0x1UL << 9)
-#define HAL_KNL_NETLINK         (0x1UL << 10)
+#define HAL_DBG_CRIT            (0x1UL << 0)
+#define HAL_DBG_ERR             (0x1UL << 1)
+#define HAL_DBG_WARN            (0x1UL << 2)
+#define HAL_DBG_INFO            (0x1UL << 3)
+#define HAL_DBG_DEBUG           (0x1UL << 4)
+#define HAL_DBG_TX              (0x1UL << 5)
+#define HAL_DBG_RX              (0x1UL << 6)
+#define HAL_DBG_INTF            (0x1UL << 7)
+#define HAL_DBG_PROFILE         (0x1UL << 8)
+#define HAL_DBG_COMMON          (0x1UL << 9)
+#define HAL_DBG_NETLINK         (0x1UL << 10)
 
-#define HAL_KNL_DBG(__flag__, fmt, ...)      do                                \
+#ifdef __KERNEL__
+#define DIAG_PRINT(__flag__, fmt, ...)      do                                \
 {                                                                               \
     if (0 != ((__flag__) & (verbosity)))                                        \
     {                                                                           \
         printk("CLX_KERN %s:%d: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);  \
     }                                                                           \
 }while (0)
+#else
+#define DIAG_PRINT(__flag__, fmt, ...)      do                                \
+{                                                                               \
+    if (0 != ((__flag__) & (verbosity)))                                        \
+    {                                                                           \
+        printf("%s:%d: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);  \
+    }                                                                           \
+}while (0)
+#endif
 
 /* MACRO FUNCTION DECLARATIONS
  */
@@ -80,9 +90,17 @@ typedef struct
 
 typedef struct
 {
-    OSAL_MDC_DEV_T              dev[CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM];
-    UI32_T                      dev_num;
-    OSAL_MDC_DMA_INFO_T         dma_info;
+    /* ISR related */
+    OSAL_MDC_DEV_T          dev[CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM];
+    UI32_T                  dev_num;
+    CLX_THREAD_ID_T         intr_poll_task;
+    /* IOCTL and mmap */
+    int                     dev_fd;
+    /* PCIe MMIO access */
+    void                    *ptr_pci_mmio_base[CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM];
+    CLX_ADDR_T              pci_mmio_size[CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM];
+    /* DMA node management */
+    OSAL_MDC_DMA_INFO_T     dma_info;
 
 } OSAL_MDC_CB_T;
 
@@ -93,7 +111,7 @@ typedef struct
 
 } OSAL_MDC_IOCTL_CB_T;
 
-#if !defined(CLX_EN_DMA_RESERVED)
+#if (!defined(CLX_EN_DMA_RESERVED)) && defined(__KERNEL__)
 typedef struct
 {
     CLX_ADDR_T                  phy_addr;

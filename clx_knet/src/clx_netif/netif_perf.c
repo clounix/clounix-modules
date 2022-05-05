@@ -162,7 +162,7 @@ hal_perf_pkt_getTxIntrCnt(
     }
     else
     {
-        HAL_KNL_DBG(HAL_KNL_CRIT, "unknown chip family, dev_id=0x%x\n",dev_id);
+        DIAG_PRINT(HAL_DBG_CRIT, "unknown chip family, dev_id=0x%x\n",dev_id);
         ret = CLX_E_OTHERS;
     }
     return ret;
@@ -185,7 +185,7 @@ hal_perf_pkt_getNetDev(
     }
     else
     {
-        HAL_KNL_DBG(HAL_KNL_CRIT, "unknown chip family, dev_id=0x%x\n",dev_id);
+        DIAG_PRINT(HAL_DBG_CRIT, "unknown chip family, dev_id=0x%x\n",dev_id);
         ret = CLX_E_OTHERS;
     }
     return ret;
@@ -210,7 +210,7 @@ hal_perf_pkt_prepareGpd(
     }
     else
     {
-        HAL_KNL_DBG(HAL_KNL_CRIT, "unknown chip family, dev_id=0x%x\n",dev_id);
+        DIAG_PRINT(HAL_DBG_CRIT, "unknown chip family, dev_id=0x%x\n",dev_id);
         ret = CLX_E_OTHERS;
     }
     return ret;
@@ -232,7 +232,7 @@ hal_perf_pkt_sendGpd(
     }
     else
     {
-        HAL_KNL_DBG(HAL_KNL_CRIT, "unknown chip family, dev_id=0x%x\n",dev_id);
+        DIAG_PRINT(HAL_DBG_CRIT, "unknown chip family, dev_id=0x%x\n",dev_id);
         ret = CLX_E_OTHERS;
     }
     return ret;
@@ -255,7 +255,7 @@ hal_perf_pkt_getRxIntrCnt(
     }
     else
     {
-        HAL_KNL_DBG(HAL_KNL_CRIT, "unknown chip family, dev_id=0x%x\n",dev_id);
+        DIAG_PRINT(HAL_DBG_CRIT, "unknown chip family, dev_id=0x%x\n",dev_id);
         ret = CLX_E_OTHERS;
     }
     return ret;
@@ -299,30 +299,30 @@ _perf_showPerf(
 
     if (duration < 1000)
     {
-        HAL_KNL_DBG(HAL_KNL_CRIT, "***Error***, %d packets cost < 1000 us.\n", num);
+        DIAG_PRINT(HAL_DBG_CRIT, "***Error***, %d packets cost < 1000 us.\n", num);
         return ;
     }
 
-    HAL_KNL_DBG(HAL_KNL_CRIT, "\n");
+    DIAG_PRINT(HAL_DBG_CRIT, "\n");
 
     if (PERF_DIR_TX == dir)
     {
-        HAL_KNL_DBG(HAL_KNL_CRIT, "Tx-perf\n");
+        DIAG_PRINT(HAL_DBG_CRIT, "Tx-perf\n");
     }
     else
     {
-        HAL_KNL_DBG(HAL_KNL_CRIT, "Rx-perf\n");
+        DIAG_PRINT(HAL_DBG_CRIT, "Rx-perf\n");
     }
 
-    HAL_KNL_DBG(HAL_KNL_CRIT, "------------------------------------\n");
-    HAL_KNL_DBG(HAL_KNL_CRIT, "channel number          : %d\n", channel);
-    HAL_KNL_DBG(HAL_KNL_CRIT, "packet length    (bytes): %d\n", len);
-    HAL_KNL_DBG(HAL_KNL_CRIT, "packet number           : %d\n", num);
-    HAL_KNL_DBG(HAL_KNL_CRIT, "time duration    (us)   : %d\n", duration);
-    HAL_KNL_DBG(HAL_KNL_CRIT, "------------------------------------\n");
-    HAL_KNL_DBG(HAL_KNL_CRIT, "avg. packet rate (pps)  : %d\n", (num * 1000) / (duration / 1000));
-    HAL_KNL_DBG(HAL_KNL_CRIT, "avg. throughput  (Mbps) : %d\n", ((num / 1000) * len * 8) / (duration / 1000));
-    HAL_KNL_DBG(HAL_KNL_CRIT, "interrupt number        : %d\n", intr);
+    DIAG_PRINT(HAL_DBG_CRIT, "------------------------------------\n");
+    DIAG_PRINT(HAL_DBG_CRIT, "channel number          : %d\n", channel);
+    DIAG_PRINT(HAL_DBG_CRIT, "packet length    (bytes): %d\n", len);
+    DIAG_PRINT(HAL_DBG_CRIT, "packet number           : %d\n", num);
+    DIAG_PRINT(HAL_DBG_CRIT, "time duration    (us)   : %d\n", duration);
+    DIAG_PRINT(HAL_DBG_CRIT, "------------------------------------\n");
+    DIAG_PRINT(HAL_DBG_CRIT, "avg. packet rate (pps)  : %d\n", (num * 1000) / (duration / 1000));
+    DIAG_PRINT(HAL_DBG_CRIT, "avg. throughput  (Mbps) : %d\n", ((num / 1000) * len * 8) / (duration / 1000));
+    DIAG_PRINT(HAL_DBG_CRIT, "interrupt number        : %d\n", intr);
 
     if (PERF_DIR_TX == dir)
     {
@@ -330,10 +330,10 @@ _perf_showPerf(
         {
             tx_fail += _perf_tx_perf_cb.send_fail[tx_channel];
         }
-        HAL_KNL_DBG(HAL_KNL_CRIT, "Tx fail                 : %d\n", tx_fail);
+        DIAG_PRINT(HAL_DBG_CRIT, "Tx fail                 : %d\n", tx_fail);
     }
 
-    HAL_KNL_DBG(HAL_KNL_CRIT, "------------------------------------\n");
+    DIAG_PRINT(HAL_DBG_CRIT, "------------------------------------\n");
 }
 
 static void
@@ -433,7 +433,7 @@ _perf_txTask(
                     ptr_sw_gpd = (HAL_DAWN_PKT_TX_SW_GPD_T*)osal_alloc(sizeof(HAL_DAWN_PKT_TX_SW_GPD_T));
                     if (NULL == ptr_sw_gpd)
                     {
-                        HAL_KNL_DBG(HAL_KNL_CRIT, "***Error***, alloc sw-gpd fail.\n");
+                        DIAG_PRINT(HAL_DBG_CRIT, "***Error***, alloc sw-gpd fail.\n");
                         break;
                     }
                     osal_memset(ptr_sw_gpd, 0x0, sizeof(HAL_DAWN_PKT_TX_SW_GPD_T));
@@ -451,7 +451,7 @@ _perf_txTask(
                     ptr_sw_gpd = (void*)osal_alloc(sizeof(HAL_LIGHTNING_PKT_TX_SW_GPD_T));
                     if (NULL == ptr_sw_gpd)
                     {
-                        HAL_KNL_DBG(HAL_KNL_CRIT, "***Error***, alloc sw-gpd fail.\n");
+                        DIAG_PRINT(HAL_DBG_CRIT, "***Error***, alloc sw-gpd fail.\n");
                         break;
                     }
                     osal_memset(ptr_sw_gpd, 0x0, sizeof(HAL_LIGHTNING_PKT_TX_SW_GPD_T));
@@ -479,7 +479,7 @@ _perf_txTask(
                     _perf_tx_perf_cb.send_fail[channel]++;
                     if (send_fail++ >= PERF_TX_PERF_FAIL)
                     {
-                        HAL_KNL_DBG(HAL_KNL_CRIT, "***Error***, Tch-%d send fail over %d packet(s). (rc: %d)\n",
+                        DIAG_PRINT(HAL_DBG_CRIT, "***Error***, Tch-%d send fail over %d packet(s). (rc: %d)\n",
                             channel, PERF_TX_PERF_FAIL, rc);
                         break;
                     }
@@ -704,7 +704,7 @@ perf_test(
     }
     else
     {
-        HAL_KNL_DBG(HAL_KNL_CRIT, "unknown chip family, dev_id=0x%x\n",dev_id);
+        DIAG_PRINT(HAL_DBG_CRIT, "unknown chip family, dev_id=0x%x\n",dev_id);
         return CLX_E_OTHERS;
     }
     
