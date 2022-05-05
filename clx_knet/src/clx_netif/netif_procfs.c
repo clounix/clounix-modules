@@ -65,13 +65,13 @@ static ssize_t debug_proc_write(struct file *file, const char __user *buf,
     }
 
     channel = simple_strtol(debug_str, NULL, 0);
-    HAL_KNL_DBG(HAL_KNL_DEBUG, "DMA channel: %d\n", channel);
+    DIAG_PRINT(HAL_DBG_DEBUG, "DMA channel: %d\n", channel);
 
     if ((ptr = strstr(debug_str, "src=")) != NULL) {
         ptr += 4;
         source = simple_strtoull(ptr, NULL, 0);
     } else {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Unknown configuration setting\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Unknown configuration setting\n");
         return -EFAULT;
     }
 
@@ -79,10 +79,10 @@ static ssize_t debug_proc_write(struct file *file, const char __user *buf,
         ptr += 5;
         dest = simple_strtoull(ptr, NULL, 0);
     } else {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Unknown configuration setting\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Unknown configuration setting\n");
         return -EFAULT;
     }
-    HAL_KNL_DBG(HAL_KNL_DEBUG, "DMA channel %d, source 0x%llx, dest 0x%llx\n", 
+    DIAG_PRINT(HAL_DBG_DEBUG, "DMA channel %d, source 0x%llx, dest 0x%llx\n", 
              channel, source, dest);
 	return count;
 }
@@ -141,6 +141,6 @@ void cleanup_procfs(void)
     remove_proc_entry("debug", netif_procfs_root);
     
     remove_proc_entry(NETIF_KNL_DRIVER_NAME, NULL);
-    HAL_KNL_DBG(HAL_KNL_DEBUG, "%s Procfs removed\n",
+    DIAG_PRINT(HAL_DBG_DEBUG, "%s Procfs removed\n",
                 NETIF_KNL_DRIVER_NAME);
 }

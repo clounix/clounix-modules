@@ -204,21 +204,21 @@ netif_nl_setIntfProperty(
 
     if (NETIF_NL_INTF_PROPERTY_IGR_SAMPLING_RATE == property)
     {
-        HAL_KNL_DBG(HAL_KNL_NETLINK,
+        DIAG_PRINT(HAL_DBG_NETLINK,
                      "receive set igr sample rate req, id=%d, property=%d, param0=%d, param=%d\n",
                      id, property, param0, param1);
         rc = _netif_nl_setIntfIgrSampleRate(unit, id, param0);
     }
     else if (NETIF_NL_INTF_PROPERTY_EGR_SAMPLING_RATE == property)
     {
-        HAL_KNL_DBG(HAL_KNL_NETLINK,
+        DIAG_PRINT(HAL_DBG_NETLINK,
                      "receive set egr sample rate req, id=%d, property=%d, param0=%d, param=%d\n",
                      id, property, param0, param1);
         rc = _netif_nl_setIntfEgrSampleRate(unit, id, param0);
     }
     else
     {
-        HAL_KNL_DBG(HAL_KNL_NETLINK,
+        DIAG_PRINT(HAL_DBG_NETLINK,
                      "[error] unknown property, property=%d\n", property);
     }
 
@@ -272,7 +272,7 @@ netif_nl_getIntfProperty(
     }
     else
     {
-        HAL_KNL_DBG(HAL_KNL_NETLINK,
+        DIAG_PRINT(HAL_DBG_NETLINK,
                      "[error] unknown property, property=%d\n",
                      property);
     }
@@ -307,7 +307,7 @@ _netif_nl_freeNlFamilyEntry(
     NETIF_NL_CB_T       *ptr_cb,
     const UI32_T        index)
 {
-    HAL_KNL_DBG(HAL_KNL_NETLINK,
+    DIAG_PRINT(HAL_DBG_NETLINK,
                  "[DBG] free netlink family entry, idx=%d\n",
                  index);
     ptr_cb->fam_entry[index].valid = FALSE;
@@ -393,10 +393,10 @@ netif_nl_createNetlink(
         ptr_nl_mcgrp = osal_alloc(sizeof(NETIF_NL_MC_GROUP_T)*ptr_netlink->mc_group_num);
         if (NULL != ptr_nl_mcgrp)
         {
-            HAL_KNL_DBG(HAL_KNL_NETLINK, "[DBG] create mc group:\n");
+            DIAG_PRINT(HAL_DBG_NETLINK, "[DBG] create mc group:\n");
             for (idx = 0; idx < ptr_netlink->mc_group_num; idx++)
             {
-                HAL_KNL_DBG(HAL_KNL_NETLINK,
+                DIAG_PRINT(HAL_DBG_NETLINK,
                              "[DBG] - mcgrp%d: %s\n", idx, ptr_netlink->mc_group[idx].name);
                 osal_memcpy(ptr_nl_mcgrp[idx].name, ptr_netlink->mc_group[idx].name,
                             NETIF_NL_NETLINK_NAME_LEN);
@@ -409,14 +409,14 @@ netif_nl_createNetlink(
             if (0 == ret)
             {
                 *ptr_netlink_id = entry_id;
-                HAL_KNL_DBG(HAL_KNL_NETLINK,
+                DIAG_PRINT(HAL_DBG_NETLINK,
                              "[DBG] create netlink family, name=%s, entry_idx=%d, mcgrp_num=%d\n",
                              ptr_netlink->name, entry_id, ptr_nl_family->n_mcgrps);
                 rc = CLX_E_OK;
             }
             else
             {
-                HAL_KNL_DBG(HAL_KNL_NETLINK,
+                DIAG_PRINT(HAL_DBG_NETLINK,
                              "[DBG] register netlink family failed, name=%s, ret=%d\n",
                              ptr_netlink->name, ret);
                 osal_free(ptr_nl_mcgrp);
@@ -426,7 +426,7 @@ netif_nl_createNetlink(
         }
         else
         {
-            HAL_KNL_DBG(HAL_KNL_NETLINK, "[DBG] alloc mcgrp failed\n");
+            DIAG_PRINT(HAL_DBG_NETLINK, "[DBG] alloc mcgrp failed\n");
             rc = CLX_E_NO_MEMORY;
         }
     }
@@ -457,7 +457,7 @@ netif_nl_destroyNetlink(
         }
         else
         {
-            HAL_KNL_DBG(HAL_KNL_NETLINK,
+            DIAG_PRINT(HAL_DBG_NETLINK,
                          "[DBG] unregister netlink family failed, name=%s, ret=%d\n",
                          ptr_nl_family->name, ret);
             rc = CLX_E_OTHERS;
@@ -465,7 +465,7 @@ netif_nl_destroyNetlink(
     }
     else
     {
-        HAL_KNL_DBG(HAL_KNL_NETLINK,
+        DIAG_PRINT(HAL_DBG_NETLINK,
                      "[DBG] destroy netlink failed, invalid netlink_id %d\n",
                      netlink_id);
         rc = CLX_E_ENTRY_NOT_FOUND;
@@ -487,7 +487,7 @@ netif_nl_getNetlink(
 
     if (TRUE == NETIF_NL_IS_FAMILY_ENTRY_VALID(entry_idx))
     {
-        HAL_KNL_DBG(HAL_KNL_NETLINK,
+        DIAG_PRINT(HAL_DBG_NETLINK,
                      "[DBG] get valid netlink, id=%d\n", netlink_id);
 
         ptr_netlink->id = netlink_id;
@@ -505,7 +505,7 @@ netif_nl_getNetlink(
     }
     else
     {
-        HAL_KNL_DBG(HAL_KNL_NETLINK,
+        DIAG_PRINT(HAL_DBG_NETLINK,
                      "[DBG] get netlink failed, invalid netlink_id %d\n",
                      netlink_id);
         rc = CLX_E_ENTRY_NOT_FOUND;
@@ -539,7 +539,7 @@ _netif_nl_getFamilyByName(
 
     if (CLX_E_ENTRY_NOT_FOUND == rc)
     {
-        HAL_KNL_DBG(HAL_KNL_NETLINK,
+        DIAG_PRINT(HAL_DBG_NETLINK,
                      "[DBG] find family failed, name=%s\n",
                      ptr_name);
     }
@@ -570,7 +570,7 @@ _netif_nl_getMcgrpIdByName(
 
     if (CLX_E_OK != rc)
     {
-        HAL_KNL_DBG(HAL_KNL_NETLINK,
+        DIAG_PRINT(HAL_DBG_NETLINK,
                      "[DBG] find mcgrp %s failed in family %s\n",
                      ptr_mcgrp_name, ptr_nl_family->name);
     }
@@ -679,13 +679,13 @@ _netif_nl_allocNetlinkSkb(
                                        ptr_ori_skb, pptr_nl_skb);
         if (CLX_E_OK != rc)
         {
-            HAL_KNL_DBG(HAL_KNL_NETLINK,
+            DIAG_PRINT(HAL_DBG_NETLINK,
                          "[DBG] alloc netlink skb failed\n");
         }
     }
     else
     {
-        HAL_KNL_DBG(HAL_KNL_NETLINK,
+        DIAG_PRINT(HAL_DBG_NETLINK,
                      "[DBG] unknown netlink family\n");
         rc = CLX_E_OTHERS;
     }
@@ -710,7 +710,7 @@ _netif_nl_sendNetlinkSkb(
     else
     {
         /* in errno_base.h, #define  ESRCH        3  : No such process */
-        HAL_KNL_DBG(HAL_KNL_NETLINK,
+        DIAG_PRINT(HAL_DBG_NETLINK,
                      "send skb to mc group failed, ret=%d\n", ret);
         rc = CLX_E_OTHERS;
     }
@@ -722,7 +722,7 @@ void
 _netif_nl_freeNetlinkSkb(
     struct sk_buff              *ptr_nl_skb)
 {
-    HAL_KNL_DBG(HAL_KNL_NETLINK, "[DBG] free nl skb\n");
+    DIAG_PRINT(HAL_DBG_NETLINK, "[DBG] free nl skb\n");
     NETIF_NL_FREE_SKB(ptr_nl_skb);
 }
 

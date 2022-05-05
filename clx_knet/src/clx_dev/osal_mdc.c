@@ -79,7 +79,7 @@ _osal_mdc_list_create(
     *pptr_list = osal_alloc(sizeof(OSAL_MDC_LIST_T));
     if (NULL == *pptr_list)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Failed alloc memory\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Failed alloc memory\n");
         return CLX_E_NO_MEMORY;
     }
 
@@ -100,13 +100,13 @@ _osal_mdc_list_destroy(
 
     if (NULL == ptr_list)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "ptr_list is NULL\n");
+        DIAG_PRINT(HAL_DBG_ERR, "ptr_list is NULL\n");
         return CLX_E_OTHERS;
     }
 
     if (ptr_list->node_cnt != 0)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "dma list not empty, node num=%d\n",
+        DIAG_PRINT(HAL_DBG_ERR, "dma list not empty, node num=%d\n",
                 ptr_list->node_cnt);
         ptr_cur_node = ptr_list->ptr_head_node;
         while(NULL != ptr_cur_node)
@@ -132,7 +132,7 @@ _osal_mdc_list_getNodeData(
 
     if (NULL == ptr_list)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "ptr_list is NULL\n");
+        DIAG_PRINT(HAL_DBG_ERR, "ptr_list is NULL\n");
         return CLX_E_OTHERS;
     }
     
@@ -154,14 +154,14 @@ _osal_mdc_list_insertToHead(
 
     if (NULL == ptr_list)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "ptr_list is NULL\n");
+        DIAG_PRINT(HAL_DBG_ERR, "ptr_list is NULL\n");
         return CLX_E_OTHERS;
     }
 
     ptr_new_node = osal_alloc(sizeof(OSAL_MDC_LIST_NODE_T));
     if (NULL == ptr_new_node)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Failed alloc memory\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Failed alloc memory\n");
         return CLX_E_NO_MEMORY;
     }
     
@@ -199,14 +199,14 @@ _osal_mdc_list_insertBefore(
 
     if ((NULL == ptr_list) || (NULL == ptr_node))
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "ptr_list is NULL\n");
+        DIAG_PRINT(HAL_DBG_ERR, "ptr_list is NULL\n");
         return CLX_E_OTHERS;
     }
 
     ptr_new_node = osal_alloc(sizeof(OSAL_MDC_LIST_NODE_T));
     if (NULL == ptr_new_node)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Failed alloc memory\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Failed alloc memory\n");
         return CLX_E_NO_MEMORY;
     }
 
@@ -283,7 +283,7 @@ _osal_mdc_list_deleteByData(
 
     if (NULL == ptr_list)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "ptr_list is NULL\n");
+        DIAG_PRINT(HAL_DBG_ERR, "ptr_list is NULL\n");
         return CLX_E_OTHERS;
     }
     
@@ -314,14 +314,14 @@ _osal_mdc_list_locateHead(
 
     if (NULL == ptr_list)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "ptr_list is NULL\n");
+        DIAG_PRINT(HAL_DBG_ERR, "ptr_list is NULL\n");
         return CLX_E_OTHERS;
     }
 
     *pptr_node = ptr_list->ptr_head_node;
     if (NULL == pptr_node)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "ptr_list is NULL\n");
+        DIAG_PRINT(HAL_DBG_ERR, "ptr_list is NULL\n");
         return CLX_E_OTHERS;
     }
 
@@ -338,14 +338,14 @@ _osal_mdc_list_next(
 
     if ((NULL == ptr_list) || (NULL == ptr_node))
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "ptr_list is NULL\n");
+        DIAG_PRINT(HAL_DBG_ERR, "ptr_list is NULL\n");
         return CLX_E_OTHERS;
     }
 
     *pptr_next_node = ptr_node->ptr_next;
     if (NULL == pptr_next_node)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "ptr_list is NULL\n");
+        DIAG_PRINT(HAL_DBG_ERR, "ptr_list is NULL\n");
         return CLX_E_OTHERS;
     }
 
@@ -363,14 +363,14 @@ _osal_mdc_list_prev(
 
     if ((NULL == ptr_list) || (NULL == ptr_node))
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "ptr_list is NULL\n");
+        DIAG_PRINT(HAL_DBG_ERR, "ptr_list is NULL\n");
         return CLX_E_OTHERS;
     }
 
     *pptr_prev_node = ptr_node->ptr_prev;
     if (NULL == *pptr_prev_node)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "ptr_list is NULL\n");
+        DIAG_PRINT(HAL_DBG_ERR, "ptr_list is NULL\n");
         return CLX_E_OTHERS;
     }
         
@@ -468,14 +468,14 @@ _osal_mdc_getPciMmioInfo(
 
     if (0 != pci_request_region(pdev, OSAL_MDC_PCI_BAR0_OFFSET, OSAL_MDC_DRIVER_NAME))
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Failed request PCIe region\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Failed request PCIe region\n");
         return CLX_E_OTHERS;
     }
 
     *pptr_base_addr = IOREMAP_API(phy_addr, reg_space_sz);
     if (NULL == *pptr_base_addr)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Failed mmap\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Failed mmap\n");
         return CLX_E_NO_MEMORY;
     }
     return (rc);
@@ -495,12 +495,12 @@ osal_mdc_readPciReg(
 
     if (NULL == ptr_base_addr)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "ptr_list is NULL\n");
+        DIAG_PRINT(HAL_DBG_ERR, "ptr_list is NULL\n");
         return CLX_E_NOT_INITED;
     }
     if (len % OSAL_MDC_PCI_BUS_WIDTH)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Must be 4-byte alignment, %d\n", len);
+        DIAG_PRINT(HAL_DBG_ERR, "Must be 4-byte alignment, %d\n", len);
         return CLX_E_OTHERS;
     }
 
@@ -527,12 +527,12 @@ osal_mdc_writePciReg(
 
     if (NULL == ptr_base_addr)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "ptr_list is NULL\n");
+        DIAG_PRINT(HAL_DBG_ERR, "ptr_list is NULL\n");
         return CLX_E_NOT_INITED;
     }
     if (len % OSAL_MDC_PCI_BUS_WIDTH)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Must be 4-byte alignment, %d\n", len);
+        DIAG_PRINT(HAL_DBG_ERR, "Must be 4-byte alignment, %d\n", len);
         return CLX_E_OTHERS;
     }
 
@@ -559,7 +559,7 @@ _osal_mdc_probePciCallback(
     linux_rc = pci_enable_device(pdev);
     if (0 != linux_rc)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "enable pci dev failed, linux_rc=%d\n", linux_rc);
+        DIAG_PRINT(HAL_DBG_ERR, "enable pci dev failed, linux_rc=%d\n", linux_rc);
         return linux_rc;
     }
 
@@ -581,7 +581,7 @@ _osal_mdc_probePciCallback(
     rc = _osal_mdc_getPciMmioInfo(pdev, &_osal_mdc_cb.dev[_osal_mdc_cb.dev_num].ptr_mmio_virt_addr);
     if (CLX_E_OK != rc)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Failed get PCI MMIO info\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Failed get PCI MMIO info\n");
         return rc;
     }
     
@@ -645,7 +645,7 @@ _osal_mdc_probePciDevice(void)
 
     if (pci_register_driver(&_osal_mdc_pci_driver) < 0)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Cannot find PCI device\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Cannot find PCI device\n");
         rc = CLX_E_OTHERS;
     }
     return (rc);
@@ -671,7 +671,7 @@ _osal_mdc_tunePciPerf(
     ext_cap = pci_find_ext_capability(ptr_rc_dev, PCI_EXT_CAP_ID_SECPCI);
     if (0 == ext_cap)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Cannot find PCI cap PCI_EXT_CAP_ID_SECPCI\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Cannot find PCI cap PCI_EXT_CAP_ID_SECPCI\n");
         return CLX_E_OTHERS;
     }
 
@@ -799,7 +799,7 @@ _osal_mdc_restorePciConfig(
     if (1 != pci_dev_present(_osal_mdc_id_table))
 #endif
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "detect pci device failed\n");
+        DIAG_PRINT(HAL_DBG_ERR, "detect pci device failed\n");
         return CLX_E_OTHERS;
     }
 
@@ -807,7 +807,7 @@ _osal_mdc_restorePciConfig(
     rc = _osal_mdc_clearStatus(unit);
     if (CLX_E_OK != rc)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Failed to clear pci status\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Failed to clear pci status\n");
         return rc;
     }
 
@@ -883,7 +883,7 @@ _osal_mdc_destroyDmaNodeList(
 
     if (NULL == ptr_dma_list)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "ptr_list is NULL\n");
+        DIAG_PRINT(HAL_DBG_ERR, "ptr_list is NULL\n");
         return CLX_E_NOT_INITED;
     }
 
@@ -932,7 +932,7 @@ _osal_mdc_dumpRsrvDmaList(void)
                                     ptr_curr_node, (void **)&ptr_curr_node_data);
         if (CLX_E_OK == rc)
         {
-            HAL_KNL_DBG(HAL_KNL_INFO, 
+            DIAG_PRINT(HAL_DBG_INFO, 
                 "node %d. virt addr=%p, phy addr=%p, size=%d, avbl=%d\n", node,
                 ptr_curr_node_data->ptr_virt_addr, ptr_curr_node_data->phy_addr,
                 ptr_curr_node_data->size, ptr_curr_node_data->available);
@@ -958,7 +958,7 @@ _osal_mdc_createRsrvDmaNodeList(
                               &ptr_dma_info->ptr_dma_list);
     if (CLX_E_OK != rc)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "ptr_list is NULL\n");
+        DIAG_PRINT(HAL_DBG_ERR, "ptr_list is NULL\n");
         return rc;
     }
 
@@ -966,7 +966,7 @@ _osal_mdc_createRsrvDmaNodeList(
     ptr_node_data = kmalloc(sizeof(OSAL_MDC_DMA_NODE_T), GFP_KERNEL);
     if (NULL == ptr_node_data)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Failed alloc memory\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Failed alloc memory\n");
         return CLX_E_NO_MEMORY;
     }
 
@@ -1020,7 +1020,7 @@ _osal_mdc_splitRsrvDmaNodes(
 
     if (CLX_E_OK != rc)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Failed get node data\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Failed get node data\n");
         return rc;
     }
     
@@ -1041,7 +1041,7 @@ _osal_mdc_splitRsrvDmaNodes(
     rc = osal_mdc_list_insertBefore(ptr_dma_list, ptr_ori_node, (void *)*pptr_new_node_data);
     if (CLX_E_OK != rc)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "insert rsrv dma node to list failed, size=%d, rc=%d\n", size, rc);
+        DIAG_PRINT(HAL_DBG_ERR, "insert rsrv dma node to list failed, size=%d, rc=%d\n", size, rc);
         /* Recovery */
         ptr_ori_node_data->size          += size;
         ptr_ori_node_data->phy_addr      -= size;
@@ -1067,14 +1067,14 @@ _osal_mdc_allocRsrvDmaMem(
     rc = _osal_mdc_searchAvblRsrvDmaNode(ptr_dma_list, size, &ptr_node);
     if (CLX_E_OK != rc)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Failed find available DMA node\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Failed find available DMA node\n");
         return NULL;
     }
 
     rc = osal_mdc_list_getNodeData(ptr_dma_list, ptr_node, (void **)&ptr_node_data);
     if (CLX_E_OK != rc)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Failed get node data\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Failed get node data\n");
         return NULL;
     }
     
@@ -1090,7 +1090,7 @@ _osal_mdc_allocRsrvDmaMem(
         rc = _osal_mdc_splitRsrvDmaNodes(ptr_dma_list, ptr_node, size, &ptr_new_node_data);
         if (CLX_E_OK != rc)
         {
-            HAL_KNL_DBG(HAL_KNL_ERR, "Failed split reserved DMA\n");
+            DIAG_PRINT(HAL_DBG_ERR, "Failed split reserved DMA\n");
             return NULL;
         }
 
@@ -1127,7 +1127,7 @@ _osal_mdc_mergeRsrvDmaNodes(
     rc = osal_mdc_list_getNodeData(ptr_dma_list, ptr_curr_node, (void **)&ptr_curr_node_data);
     if (CLX_E_OK != rc)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Failed get node data\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Failed get node data\n");
         return rc;
     }
 
@@ -1173,7 +1173,7 @@ _osal_mdc_freeRsrvDmaMem(
     rc = _osal_mdc_searchDmaVirtAddr(ptr_dma_list, ptr_virt_addr, &ptr_node, &ptr_node_data);
     if (CLX_E_OK != rc)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Failed find available DMA node\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Failed find available DMA node\n");
         return rc;
     }
 
@@ -1197,7 +1197,7 @@ _osal_mdc_initRsrvDmaMem(
                                  ptr_dma_info->rsrv_size, "clx_rsrv_mem");
     if (NULL == ptr_res)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, 
+        DIAG_PRINT(HAL_DBG_ERR, 
             "request_mem_region() failed, phy addr=" CLX_ADDR_PRINT ", size=" CLX_ADDR_PRINT "\n",
             ptr_dma_info->rsrv_phy_addr, ptr_dma_info->rsrv_size);
 
@@ -1208,7 +1208,7 @@ _osal_mdc_initRsrvDmaMem(
             ptr_dma_info->rsrv_size);
     if (NULL == ptr_dma_info->ptr_rsrv_virt_addr)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, 
+        DIAG_PRINT(HAL_DBG_ERR, 
                 "IOREMAP_API() failed, phy addr=" CLX_ADDR_PRINT ", size=" CLX_ADDR_PRINT "\n",
                 ptr_dma_info->rsrv_phy_addr, ptr_dma_info->rsrv_size);
 
@@ -1258,7 +1258,7 @@ _osal_mdc_dumpSysDmaList(void)
                                     ptr_curr_node, (void **)&ptr_curr_node_data);
         if (CLX_E_OK == rc)
         {
-            HAL_KNL_DBG(HAL_KNL_ERR, 
+            DIAG_PRINT(HAL_DBG_ERR, 
                 "node %d. virt addr=%p, phy addr=%p, size=%d\n", node,
                 ptr_curr_node_data->ptr_virt_addr, ptr_curr_node_data->phy_addr,
                 ptr_curr_node_data->size);
@@ -1300,7 +1300,7 @@ _osal_mdc_allocSysDmaMem(
     ptr_virt_addr = dma_alloc_coherent(ptr_dma_info->ptr_dma_dev, size, &phy_addr, GFP_ATOMIC);
     if (NULL == ptr_virt_addr)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Failed alloc DMA mem\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Failed alloc DMA mem\n");
         return NULL;
     }
 
@@ -1315,7 +1315,7 @@ _osal_mdc_allocSysDmaMem(
         kfree(ptr_node_data);
         dma_free_coherent(ptr_dma_info->ptr_dma_dev, size,
                 ptr_virt_addr, phy_addr);
-        HAL_KNL_DBG(HAL_KNL_ERR, "Failed insert dma node to list\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Failed insert dma node to list\n");
         return NULL;
     }
     return (ptr_virt_addr);
@@ -1395,7 +1395,7 @@ osal_mdc_freeDmaMem(
 
     if (CLX_E_OK != rc)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "free dma mem failed, virt addr=%p\n", ptr_virt_addr);
+        DIAG_PRINT(HAL_DBG_ERR, "free dma mem failed, virt addr=%p\n", ptr_virt_addr);
     }
 #endif
 
@@ -1677,7 +1677,7 @@ _osal_mdc_systemIntrCallback(
         rc = ptr_dev->isr_callback(ptr_dev->ptr_isr_data);
         if (CLX_E_OK != rc)
         {
-            HAL_KNL_DBG(HAL_KNL_ERR, "handle irq failed, rc=%d\n", rc);
+            DIAG_PRINT(HAL_DBG_ERR, "handle irq failed, rc=%d\n", rc);
             linux_rc = IRQ_NONE;
         }
     }
@@ -1687,7 +1687,7 @@ _osal_mdc_systemIntrCallback(
     rc = _osal_mdc_notifyUserProcess(ptr_dev->unit);
     if (CLX_E_OK != rc)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "notify intr to usr failed, rc=%d\n", rc);
+        DIAG_PRINT(HAL_DBG_ERR, "notify intr to usr failed, rc=%d\n", rc);
         linux_rc = IRQ_NONE;
     }
 #endif
@@ -1729,7 +1729,7 @@ osal_mdc_connectIsr(
 
     if (NULL != ptr_dev->isr_callback)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "double req isr err\n");
+        DIAG_PRINT(HAL_DBG_ERR, "double req isr err\n");
         return CLX_E_OTHERS;
     }
 #if defined(CLX_LINUX_KERNEL_MODE)
@@ -1745,7 +1745,7 @@ osal_mdc_connectIsr(
         linux_rc = pci_enable_msi(ptr_dev->ptr_pci_dev);
         if (0 != linux_rc)
         {
-            HAL_KNL_DBG(HAL_KNL_ERR, "pci_enable_msi() failed, rc=%d\n", linux_rc);
+            DIAG_PRINT(HAL_DBG_ERR, "pci_enable_msi() failed, rc=%d\n", linux_rc);
             return linux_rc;
         }
 
@@ -1758,7 +1758,7 @@ osal_mdc_connectIsr(
             0, OSAL_MDC_DRIVER_NAME, (void *)ptr_dev);
     if (0 != linux_rc)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "request_irq() failed, rc=%d\n", linux_rc);
+        DIAG_PRINT(HAL_DBG_ERR, "request_irq() failed, rc=%d\n", linux_rc);
         return linux_rc;
     }
 
@@ -2126,7 +2126,7 @@ _osal_mdc_ioctl_initDeviceCallback(
 
     if (ptr_cb->dev_num >= CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "dev num=%d > max support num=%d\n",
+        DIAG_PRINT(HAL_DBG_ERR, "dev num=%d > max support num=%d\n",
                      ptr_ioctl_data->dev_num, CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM);
     }
 
@@ -2241,7 +2241,7 @@ _osal_mdc_registerIoctlCallback(
 
     if ((type >= OSAL_MDC_IOCTL_TYPE_LAST) || (NULL != ptr_cb->callback[type]))
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "register ioctl callback failed, type=%d\n",
+        DIAG_PRINT(HAL_DBG_ERR, "register ioctl callback failed, type=%d\n",
                 type);
         return (CLX_E_OTHERS);
     }
@@ -2308,7 +2308,7 @@ _osal_mdc_ioctl(
 
     if (NULL == ptr_cb->callback[type])
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "invalid ioctl, cmd=%u, arg=%lu, type=%d\n", cmd, arg, type);
+        DIAG_PRINT(HAL_DBG_ERR, "invalid ioctl, cmd=%u, arg=%lu, type=%d\n", cmd, arg, type);
         return linux_rc;
     }
 
@@ -2441,7 +2441,7 @@ osal_mdc_module_init(void)
     linux_rc = misc_register(&_osal_mdc_misc);
     if (0 != linux_rc)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "register dev %s failed, linux_rc=%d\n", OSAL_MDC_DRIVER_NAME, linux_rc);
+        DIAG_PRINT(HAL_DBG_ERR, "register dev %s failed, linux_rc=%d\n", OSAL_MDC_DRIVER_NAME, linux_rc);
     }
     return (linux_rc);
 }
@@ -2457,7 +2457,7 @@ osal_mdc_module_exit(void)
     linux_rc = misc_deregister(&_osal_mdc_misc);
     if (0 != linux_rc)
     {
-        HAL_KNL_DBG(HAL_KNL_ERR, "de-register dev %s failed, linux_rc=%d\n", OSAL_MDC_DRIVER_NAME, linux_rc);
+        DIAG_PRINT(HAL_DBG_ERR, "de-register dev %s failed, linux_rc=%d\n", OSAL_MDC_DRIVER_NAME, linux_rc);
     }
 #else
     misc_deregister(&_osal_mdc_misc);

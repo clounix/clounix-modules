@@ -40,6 +40,11 @@
 #define OSAL_MDC_DMA_LIST_SZ_UNLIMITED      (0)
 #define OSAL_MDC_DMA_LIST_NAME              "RSRV_DMA"
 #define OSAL_MDC_DMA_SEMAPHORE_NAME         "DMALIST"
+#define OSAL_MDC_DEV_FILE_PATH              "/dev/"OSAL_MDC_DRIVER_NAME
+#define OSAL_MDC_ISR_TASK_NAME_LEN          (8)
+#define OSAL_MDC_ISR_TASK_STACK_SIZE        (64*1024)
+#define OSAL_MDC_ISR_TASK_PRI               (99)
+#define OSAL_MDC_DMA_NODE_CACHE_NUM         (4)
 
 /* NAMING CONSTANT DECLARATIONS
  */

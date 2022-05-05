@@ -109,7 +109,7 @@ _netif_knl_initDevOps(
             ptr_ops->ioctl = hal_dawn_pkt_dev_ioctl;
             break;
         default:
-            HAL_KNL_DBG(HAL_KNL_COMMON,
+            DIAG_PRINT(HAL_DBG_COMMON,
                     "unknown chip family, dev_id=0x%x\n",
                     dev_id);
             return CLX_E_OTHERS;
@@ -241,7 +241,7 @@ netif_knl_init(void)
 
     osal_memset(&_netif_knl_cb, 0x0, sizeof(NETIF_KNL_CB_T));
     if (char_proc_init() != 0) {
-        HAL_KNL_DBG(HAL_KNL_ERR, "Create procfs failed\n");
+        DIAG_PRINT(HAL_DBG_ERR, "Create procfs failed\n");
         misc_deregister(&_netif_knl_dev);
         return -ENOMEM;
     }

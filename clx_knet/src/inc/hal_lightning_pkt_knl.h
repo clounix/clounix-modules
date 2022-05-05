@@ -1967,6 +1967,173 @@ typedef union
 #error "Host GPD endian is not defined\n"
 #endif
 
+
+
+/*****************************************************************************
+ * MACRO VLAUE DECLARATIONS
+ *****************************************************************************
+ */
+/* Sleep Time Definitions */
+#define HAL_LIGHTNING_PKT_TX_DEQUE_SLEEP()            osal_sleepThread(1000) /* us */
+#define HAL_LIGHTNING_PKT_RX_DEQUE_SLEEP()            osal_sleepThread(1000) /* us */
+#define HAL_LIGHTNING_PKT_TX_ENQUE_RETRY_SLEEP()      osal_sleepThread(1000) /* us */
+#define HAL_LIGHTNING_PKT_RX_ENQUE_RETRY_SLEEP()      osal_sleepThread(1000) /* us */
+#define HAL_LIGHTNING_PKT_ALLOC_MEM_RETRY_SLEEP()     osal_sleepThread(1000) /* us */
+
+/* Network Device Definitions */
+/* In case that the watchdog alarm during warm-boot if intf isn't killed */
+#define HAL_LIGHTNING_PKT_TX_TIMEOUT                  (30*HZ)
+#define HAL_LIGHTNING_PKT_MAX_ETH_FRAME_SIZE          (HAL_LIGHTNING_PKT_RX_MAX_LEN)
+#define HAL_LIGHTNING_PKT_MAX_PORT_NUM                (HAL_LIGHTNING_PORT_NUM + 1) /* CPU port */
+
+#define HAL_LIGHTNING_PKT_NET_PROFILE_NUM_MAX         (256)
+
+/*****************************************************************************
+ * DATA TYPE DECLARATIONS
+ *****************************************************************************
+ */
+/* ----------------------------------------------------------------------------------- General structure */
+typedef struct
+{
+    UI32_T                          unit;
+    UI32_T                          channel;
+
+} HAL_LIGHTNING_PKT_ISR_COOKIE_T;
+
+typedef struct
+{
+    CLX_HUGE_T                      que_id;
+    CLX_SEMAPHORE_ID_T              sema;
+    UI32_T                          len;      /* Software CPU queue maximum length.        */
+    UI32_T                          weight;   /* The weight for thread de-queue algorithm. */
+
+} HAL_LIGHTNING_PKT_SW_QUEUE_T;
+
+typedef struct
+{
+    /* handleErrorTask */
+    CLX_THREAD_ID_T                 err_task_id;
+
+    /* INTR dispatcher */
+    CLX_ISRLOCK_ID_T                intr_lock;
+    UI32_T                          intr_bitmap;
+
+#define HAL_LIGHTNING_PKT_INIT_DRV           (1UL << 0)
+#define HAL_LIGHTNING_PKT_INIT_TASK          (1UL << 1)
+#define HAL_LIGHTNING_PKT_INIT_INTR          (1UL << 2)
+#define HAL_LIGHTNING_PKT_INIT_RX_START      (1UL << 3)
+    /* a bitmap to record the init status */
+    UI32_T                          init_flag;
+
+} HAL_LIGHTNING_PKT_DRV_CB_T;
+
+/* ----------------------------------------------------------------------------------- TX structure */
+typedef struct
+{
+    /* CLX_SEMAPHORE_ID_T           sema; */
+
+    /* since the Tx GPD ring may be accessed by multiple process including
+     * ndo_start_xmit (SW IRQ), it must be protected with an ISRLOCK
+     * instead of the original semaphore
+     */
+    CLX_ISRLOCK_ID_T                ring_lock;
+
+    UI32_T                          used_idx; /* SW send index = LAMP simulate the Tx HW index */
+    UI32_T                          free_idx; /* SW free index */
+    UI32_T                          used_gpd_num;
+    UI32_T                          free_gpd_num;
+    UI32_T                          gpd_num;
+
+    HAL_LIGHTNING_PKT_TX_GPD_T            *ptr_gpd_start_addr;
+    HAL_LIGHTNING_PKT_TX_GPD_T            *ptr_gpd_align_start_addr;
+    BOOL_T                          err_flag;
+
+    /* ASYNC */
+    HAL_LIGHTNING_PKT_TX_SW_GPD_T         **pptr_sw_gpd_ring;
+    HAL_LIGHTNING_PKT_TX_SW_GPD_T         **pptr_sw_gpd_bulk; /* temporary store packets to be enque */
+
+    /* SYNC_INTR */
+    CLX_SEMAPHORE_ID_T              sync_intr_sema;
+
+} HAL_LIGHTNING_PKT_TX_PDMA_T;
+
+typedef struct
+{
+    HAL_LIGHTNING_PKT_TX_WAIT_T           wait_mode;
+    HAL_LIGHTNING_PKT_TX_PDMA_T           pdma[HAL_LIGHTNING_PKT_TX_CHANNEL_LAST];
+    HAL_LIGHTNING_PKT_TX_CNT_T            cnt;
+
+    /* handleTxDoneTask */
+    CLX_THREAD_ID_T                 isr_task_id[HAL_LIGHTNING_PKT_TX_CHANNEL_LAST];
+    HAL_LIGHTNING_PKT_ISR_COOKIE_T        isr_task_cookie[HAL_LIGHTNING_PKT_TX_CHANNEL_LAST];
+
+    /* txTask */
+    HAL_LIGHTNING_PKT_SW_QUEUE_T          sw_queue;
+    CLX_SEMAPHORE_ID_T              sync_sema;
+    CLX_THREAD_ID_T                 task_id;
+    BOOL_T                          running;     /* TRUE when Init txTask
+                                                  * FALSE when Destroy txTask
+                                                  */
+    /* to block net intf Tx in driver level since netif_tx_disable()
+     * cannot always prevent intf from Tx in time
+     */
+    BOOL_T                          net_tx_allowed;
+} HAL_LIGHTNING_PKT_TX_CB_T;
+
+/* ----------------------------------------------------------------------------------- RX structure */
+typedef struct
+{
+    CLX_SEMAPHORE_ID_T              sema;
+    UI32_T                          cur_idx; /* SW free index */
+    UI32_T                          gpd_num;
+
+    HAL_LIGHTNING_PKT_RX_GPD_T            *ptr_gpd_start_addr;
+    HAL_LIGHTNING_PKT_RX_GPD_T            *ptr_gpd_align_start_addr;
+    BOOL_T                          err_flag;
+    struct sk_buff                  **pptr_skb_ring;
+} HAL_LIGHTNING_PKT_RX_PDMA_T;
+
+typedef struct
+{
+    /* Rx system configuration */
+    UI32_T                          buf_len;
+
+    HAL_LIGHTNING_PKT_RX_SCHED_T          sched_mode;
+    HAL_LIGHTNING_PKT_RX_PDMA_T           pdma[HAL_LIGHTNING_PKT_RX_CHANNEL_LAST];
+    HAL_LIGHTNING_PKT_RX_CNT_T            cnt;
+
+    /* handleRxDoneTask */
+    CLX_THREAD_ID_T                 isr_task_id[HAL_LIGHTNING_PKT_RX_CHANNEL_LAST];
+    HAL_LIGHTNING_PKT_ISR_COOKIE_T        isr_task_cookie[HAL_LIGHTNING_PKT_RX_CHANNEL_LAST];
+
+    /* rxTask */
+    HAL_LIGHTNING_PKT_SW_QUEUE_T          sw_queue[HAL_LIGHTNING_PKT_RX_QUEUE_NUM];
+    UI32_T                          deque_idx;
+    CLX_SEMAPHORE_ID_T              sync_sema;
+    CLX_THREAD_ID_T                 task_id;
+    CLX_SEMAPHORE_ID_T              deinit_sema; /* To sync-up the Rx-stop and thread flush queues */
+    BOOL_T                          running;     /* TRUE when rxStart
+                                                  * FALSE when rxStop
+                                                  */
+
+} HAL_LIGHTNING_PKT_RX_CB_T;
+
+/* ----------------------------------------------------------------------------------- Network Device */
+
+
+typedef enum
+{
+    HAL_LIGHTNING_PKT_DEST_NETDEV = 0,
+    HAL_LIGHTNING_PKT_DEST_SDK,
+#if defined(NETIF_EN_NETLINK)
+    HAL_LIGHTNING_PKT_DEST_NETLINK,
+#endif
+    HAL_LIGHTNING_PKT_DEST_DROP,
+    HAL_LIGHTNING_PKT_DEST_LAST
+} HAL_LIGHTNING_PKT_DEST_T;
+
+
+
 /* ----------------------------------------------------------------------------------- CLX_EN_NETIF */
 #if defined (CLX_EN_NETIF)
 #define HAL_LIGHTNING_PKT_DRIVER_MAJOR_NUM    (10)
@@ -2201,6 +2368,17 @@ typedef union
 
 #endif /* End of CLX_EN_NETIF */
 
+#ifdef __KERNEL__
+struct net_device_priv
+{
+    struct net_device               *ptr_net_dev;
+    struct net_device_stats         stats;
+    UI32_T                          unit;
+    UI32_T                          id;
+    UI32_T                          port;
+    UI16_T                          vlan;
+    UI32_T                          speed;
+};
 //} 
 /*---------------------------------------------------------------------------*/
 /* perf */
@@ -2288,5 +2466,41 @@ hal_lightning_pkt_dev_ioctl(
     struct file                         *filp,
     unsigned int                        cmd,
     unsigned long                       arg);
+#endif
+/* Interrupt */
+#define HAL_LIGHTNING_PKT_ERR_REG(__unit__)                   (_hal_lightning_pkt_intr_vec[0].intr_reg)
+#define HAL_LIGHTNING_PKT_TCH_REG(__unit__, __channel__)      (_hal_lightning_pkt_intr_vec[1 + (__channel__)].intr_reg)
+#define HAL_LIGHTNING_PKT_RCH_REG(__unit__, __channel__)      (_hal_lightning_pkt_intr_vec[5 + (__channel__)].intr_reg)
+
+#define HAL_LIGHTNING_PKT_ERR_EVENT(__unit__)                 (&_hal_lightning_pkt_intr_vec[0].intr_event)
+#define HAL_LIGHTNING_PKT_TCH_EVENT(__unit__, __channel__)    (&_hal_lightning_pkt_intr_vec[1 + (__channel__)].intr_event)
+#define HAL_LIGHTNING_PKT_RCH_EVENT(__unit__, __channel__)    (&_hal_lightning_pkt_intr_vec[5 + (__channel__)].intr_event)
+
+#define HAL_LIGHTNING_PKT_ERR_CNT(__unit__)                   (_hal_lightning_pkt_intr_vec[0].intr_cnt)
+#define HAL_LIGHTNING_PKT_TCH_CNT(__unit__, __channel__)      (_hal_lightning_pkt_intr_vec[1 + (__channel__)].intr_cnt)
+#define HAL_LIGHTNING_PKT_RCH_CNT(__unit__, __channel__)      (_hal_lightning_pkt_intr_vec[5 + (__channel__)].intr_cnt)
+
+typedef struct
+{
+    UI32_T                              intr_reg;
+    CLX_SEMAPHORE_ID_T                  intr_event;
+    UI32_T                              intr_cnt;
+
+} HAL_LIGHTNING_PKT_INTR_VEC_T;
+
+typedef struct HAL_LIGHTNING_PKT_PROFILE_NODE_S
+{
+    HAL_LIGHTNING_PKT_NETIF_PROFILE_T         *ptr_profile;
+    struct HAL_LIGHTNING_PKT_PROFILE_NODE_S   *ptr_next_node;
+
+} HAL_LIGHTNING_PKT_PROFILE_NODE_T;
+
+typedef struct
+{
+    HAL_LIGHTNING_PKT_NETIF_INTF_T            meta;
+    struct net_device                   *ptr_net_dev;
+    HAL_LIGHTNING_PKT_PROFILE_NODE_T          *ptr_profile_list;  /* the profiles binding to this interface */
+
+} HAL_LIGHTNING_PKT_NETIF_PORT_DB_T;
 
 #endif /* end of HAL_LIGHTNING_PKT_KNL_H */
