@@ -176,7 +176,7 @@ typedef union
 
 
 /*PDMA mem reg definition*/
-#define HAL_NB_PDMA_MEM_CTRL_REG                   (0x1160)  /*jianghb : all 4 bits are 1 ? */
+#define HAL_NB_PDMA_MEM_CTRL_REG                   (0x1160)
 #if defined(CLX_EN_LITTLE_ENDIAN)
 typedef union
 {
@@ -254,14 +254,22 @@ typedef union
 #define HAL_NB_PDMA_ENABLE_CHANNEL                  0x1
 #define HAL_NB_PDMA_DISABLE_CHANNEL                 0x0
 
-/*PDMA channel mode*/
-#define HAL_NB_PDMA_CH_MODE_AXI_MASTER0        0x0 /*Host Memory*/
-#define HAL_NB_PDMA_CH_MODE_AXI_MASTER1        0x1 /*Local Bus Memory*/
-#define HAL_NB_PDMA_CH_MODE_AHB_MASTER         0x2 /*Embedded CPU Memory*/
+typedef enum {
+    NB_PCX_DMA_HOSTMEM_TO_HOSTMEM       = 0,
+    NB_PCX_DMA_HOSTMEM_TO_LOCALBUS      = 1,
+    NB_PCX_DMA_HOSTMEM_TO_ECPU          = 2,
+    NB_PCX_DMA_LOCALBUS_TO_HOSTMEM      = 4,
+    NB_PCX_DMA_LOCALBUS_TO_LOCALBUS     = 5,
+    NB_PCX_DMA_LOCALBUS_TO_ECPU         = 6,
+    NB_PCX_DMA_ECPU_TO_HOSTMEM          = 8,
+    NB_PCX_DMA_ECPU_TO_LOCALBUS         = 9,
+    NB_PCX_DMA_ECPU_TO_ECPU             = 10
+} HAL_NB_PDMA_CH_MODE;
 
-#define HAL_NB_PDMA_CH_SRC_MODE(__mode__)   (0xC & (__mode__ << 2))
-#define HAL_NB_PDMA_CH_DST_MODE(__mode__)   (0x3 & (__mode__))
-#define HAL_NB_PDMA_CH_MODE(__src_mode__,__dst_mode__)   (HAL_NB_PDMA_CH_SRC_MODE(__mode__) | HAL_NB_PDMA_CH_DST_MODE(__dst_mode__))
+typedef enum {
+    NB_DMA_ACCESS_INDIRECT = 0,
+    NB_DMA_ACCESS_DIRECT = 1
+} HAL_NB_DMA_ACCESS_MODE;
 
 /*select pdma byte endian*/
 #define HAL_NB_PDMA_BYTE_SWAP_DISABLE          0x0
@@ -317,6 +325,22 @@ typedef enum
     HAL_NB_PDMA_TX_CHANNEL_LAST
 
 } HAL_NB_PDMA_TX_CHANNEL_T;
+
+typedef enum
+{
+    HAL_NB_PDMA_GENERAL_CHANNEL_0 = 8,
+    HAL_NB_PDMA_GENERAL_CHANNEL_1,
+    HAL_NB_PDMA_GENERAL_CHANNEL_2,
+    HAL_NB_PDMA_GENERAL_CHANNEL_3,
+    HAL_NB_PDMA_GENERAL_CHANNEL_4,
+    HAL_NB_PDMA_GENERAL_CHANNEL_5,
+    HAL_NB_PDMA_GENERAL_CHANNEL_6,
+    HAL_NB_PDMA_GENERAL_CHANNEL_7,
+    HAL_NB_PDMA_GENERAL_CHANNEL_LAST
+
+} HAL_NB_PDMA_GENERAL_CHANNEL_T;
+
+#define HAL_NB_PDMA_GENERAL_RING_SIZE   (1024)
 
 #define HAL_NB_PDMA_PKT_CHANNEL_NUM    (HAL_NB_PDMA_TX_CHANNEL_LAST) 
 
