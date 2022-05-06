@@ -327,6 +327,10 @@ typedef struct CLX_FDL_INFO_S
  */
 
 
+#ifndef KBUILD_MODNAME
+#define KBUILD_MODNAME __FILE__
+#endif
+
 #define clx_fmt(fmt) "%s:%s: " fmt, KBUILD_MODNAME, __func__
 enum log_level
 {
@@ -340,7 +344,7 @@ enum log_level
     do                                                     \
     {                                                      \
         if (LOG_##level & loglevel)                        \
-            printk(KERN_DEBUG pr_fmt(fmt), ##__VA_ARGS__); \
+            printk(KERN_DEBUG clx_fmt(fmt), ##__VA_ARGS__); \
     } while (0)
 
 
