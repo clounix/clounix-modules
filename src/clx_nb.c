@@ -353,7 +353,7 @@ static CLX_ERROR_NO_T clxdev_init_pkt_pdma_ring(struct pci_dev* pdev)
     for(channel = HAL_NB_PDMA_RX_CHANNEL_0;channel < HAL_NB_PDMA_PKT_CHANNEL_NUM;channel++) {
         privdata->pdma_ring_size[channel] = HAL_DFLT_CFG_PKT_TX_GPD_NUM;
         privdata->pdma_ring_base[channel] = (HAL_NB_PDMA_DESC_T *)osal_dma_alloc(&pdev->dev,
-                                  (privdata->pdma_ring_size[channel]) * sizeof(HAL_NB_PDMA_DESC_T));
+                                  (privdata->pdma_ring_size[channel] + 1) * sizeof(HAL_NB_PDMA_DESC_T));
         if(privdata->pdma_ring_base[channel] == NULL) {
             ret = CLX_E_NO_MEMORY;
             return ret;
@@ -797,7 +797,7 @@ static ssize_t clxdev_init_general_pdma_ring(struct pci_dev* pdev,UI32_T channel
             return -EINVAL;
         }
         privdata->pdma_ring_base[channel] = (HAL_NB_PDMA_DESC_T *)osal_dma_alloc(&pdev->dev,
-                                  (privdata->pdma_ring_size[channel]) * sizeof(HAL_NB_PDMA_DESC_T));
+                                  (privdata->pdma_ring_size[channel] + 1) * sizeof(HAL_NB_PDMA_DESC_T));
         if(privdata->pdma_ring_base[channel] == NULL) {
             ret = CLX_E_NO_MEMORY;
             return ret;
@@ -1099,7 +1099,7 @@ static ssize_t clxdev_test_general_pdma(struct device *dev, struct device_attrib
     HAL_NB_PDMA_CH_MODE channel_mode = privdata->channel_attr.channel_mode[channel];;
 
 
-    clxdev_read_pci_reg(pdev,HAL_NB_PDMA_GET_MMIO(HAL_NB_GET_PDMA_CH_DESC_POP_IDX_REG(channel)),
+    clxdev_read_pci_reg(pdev,HAL_NB_PDMA_GET_MMIO(HAL_NB_GET_PDMA_CH_DESC_WORK_IDX_REG(channel)),
                         &work_index,sizeof(UI32_T));
 
 
@@ -1174,7 +1174,7 @@ static ssize_t clxdev_test_pkt_pdma_tx(struct device *dev, struct device_attribu
     UI32_T              dest_port = 0;
 
 
-    clxdev_read_pci_reg(pdev,HAL_NB_PDMA_GET_MMIO(HAL_NB_GET_PDMA_CH_DESC_POP_IDX_REG(channel)),
+    clxdev_read_pci_reg(pdev,HAL_NB_PDMA_GET_MMIO(HAL_NB_GET_PDMA_CH_DESC_WORK_IDX_REG(channel)),
                         &work_index,sizeof(UI32_T));
 
 
