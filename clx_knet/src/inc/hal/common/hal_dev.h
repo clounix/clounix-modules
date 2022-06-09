@@ -50,6 +50,8 @@
 #define HAL_DEVICE_ID_CL8578        (0x8578) /* 8.0T 4Bin */
 #define HAL_DEVICE_ID_CL8579        (0x8579) /* 12.8T 4Bin */
 
+#define HAL_DEVICE_ID_CLNB          (0x4300)
+
 #define HAL_REVISION_ID_E1          (0x01)
 #define HAL_REVISION_ID_E2          (0x02)
 

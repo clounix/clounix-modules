@@ -39,6 +39,7 @@
 
 #include <hal_lightning_pkt_knl.h>
 #include <hal_dawn_pkt_knl.h>
+#include <hal_nb_pkt_knl.h>
 #include <hal/common/hal_dev.h>
 #include <osal/osal_mdc.h>
 #include <netif_osal.h>
@@ -107,6 +108,13 @@ _netif_knl_initDevOps(
             ptr_ops->exit  = hal_dawn_pkt_exit;
             ptr_ops->tx    = hal_dawn_pkt_dev_tx;
             ptr_ops->ioctl = hal_dawn_pkt_dev_ioctl;
+            break;
+
+        case HAL_DEVICE_ID_CLNB:
+            ptr_ops->init  = hal_nb_pkt_init;
+            ptr_ops->exit  = hal_nb_pkt_exit;
+            ptr_ops->tx    = hal_nb_pkt_dev_tx;
+            ptr_ops->ioctl = hal_nb_pkt_dev_ioctl;
             break;
         default:
             DIAG_PRINT(HAL_DBG_COMMON,
