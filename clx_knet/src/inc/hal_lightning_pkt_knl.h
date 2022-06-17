@@ -45,6 +45,12 @@
 #define HAL_LIGHTNING_PKT_CP_COMMON_INT_SET_HI                (0x000FC038)
 #define HAL_LIGHTNING_PKT_CP_COMMON_INT_SET_LO                (0x000FC03C)
 
+#define HAL_LIGHTNING_PKT_CP_CP_ERR_INT_EN                    (0x000FC06C)
+#define HAL_LIGHTNING_PKT_CP_CP_ERR_INT_LVL                   (0x000FC070)
+#define HAL_LIGHTNING_PKT_CP_CP_ERR_INT_MASK                  (0x000FC074)
+#define HAL_LIGHTNING_PKT_CP_CP_ERR_INT_SET                   (0x000FC078)
+#define HAL_LIGHTNING_PKT_CP_CP_ERR_INT_CLR                   (0x000FC07C)
+#define HAL_LIGHTNING_PKT_CP_CP_ERR_INT_STAT                  (0x000FC080)
 /* PDMA */
 #define HAL_LIGHTNING_PKT_PDMA_ERR_INT_STAT                   (0x003F1000)
 #define HAL_LIGHTNING_PKT_PDMA_ERR_INT_CLR                    (0x003F1004)
@@ -1051,6 +1057,10 @@ typedef enum
 
 } HAL_LIGHTNING_PKT_L2_ISR_T;
 
+typedef enum
+{
+    HAL_LIGHTNING_PKT_CP_CP_PDMA_ERR         = (0x1UL << 9)
+} HAL_LIGHTNING_PKT_CP_CP_ERR_ISR_T;
 typedef enum
 {
     HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_HWO_ERROR         = (0x1UL << 0),   /* Tx GPD.hwo = 0                         */

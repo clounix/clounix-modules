@@ -725,6 +725,94 @@ _hal_lightning_pkt_unmaskAllRxL2IsrReg(
     return (CLX_E_OK);
 }
 
+/* ----------------------------------------------------------------------------------- ISR HW Regs */
+/* FUNCTION NAME: _hal_lightning_pkt_EnableAllTxL2IsrReg
+ * PURPOSE:
+ *      To mask all the TX L2 interrupts for the specified channel.
+ * INPUT:
+ *      unit        -- The unit ID
+ *      channel     -- The target TX channel
+ * OUTPUT:
+ *      None
+ * RETURN:
+ *      CLX_E_OK    -- Successfully mask all the TX L2 interrupts.
+ * NOTES:
+ *      None
+ */
+static CLX_ERROR_NO_T
+_hal_lightning_pkt_EnableAllTxL2IsrReg(
+    const UI32_T                    unit,
+    const HAL_LIGHTNING_PKT_TX_CHANNEL_T  channel)
+{
+    UI32_T                          reg = 0;
+
+    HAL_LIGHTNING_PKT_SET_BITMAP(reg,
+                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_HWO_ERROR          |
+                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR        |
+                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_NO_OVFL_ERROR      |
+                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_DMA_READ_ERROR     |
+                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_BUF_SIZE_ERROR         |
+                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_RUNT_ERROR             |
+                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_OVSZ_ERROR             |
+                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_LEN_MISMATCH_ERROR     |
+                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_PKTPL_DMA_READ_ERROR   |
+                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_COS_ERROR              |
+                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_GT255_ERROR        |
+                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_PFC                    |
+                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_CREDIT_UDFL_ERROR      |
+                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_DMA_WRITE_ERROR        |
+                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_STOP_CMD_CPLT);
+
+    osal_mdc_writePciReg(unit,
+        HAL_LIGHTNING_PKT_GET_PDMA_TCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_TCH_INT_EN), channel),
+        &reg, sizeof(UI32_T));
+
+    return (CLX_E_OK);
+}
+
+/* FUNCTION NAME: _hal_lightning_pkt_maskAllRxL2IsrReg
+ * PURPOSE:
+ *      To mask all the L2 interrupts for the specified channel.
+ * INPUT:
+ *      unit        -- The unit ID
+ *      channel     -- The target RX channel
+ * OUTPUT:
+ *      None
+ * RETURN:
+ *      CLX_E_OK    -- Successfully mask all the L2 interrupts.
+ * NOTES:
+ *      None
+ */
+static CLX_ERROR_NO_T
+_hal_lightning_pkt_EnableAllRxL2IsrReg(
+    const UI32_T                     unit,
+    const HAL_LIGHTNING_PKT_RX_CHANNEL_T   channel)
+{
+    UI32_T                           reg = 0;
+
+    HAL_LIGHTNING_PKT_SET_BITMAP(reg,
+                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_LOW    |
+                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_EMPTY  |
+                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_ERROR  |
+                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR  |
+                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_DMA_READ_ERROR   |
+                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_DMA_WRITE_ERROR  |
+                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_STOP_CMD_CPLT    |
+                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_GPD_GT255_ERROR  |
+                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_TOD_UNINIT       |
+                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_PKT_ERROR_DROP   |
+                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_UDSZ_DROP        |
+                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_OVSZ_DROP        |
+                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_CMDQ_OVF_DROP    |
+                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_FIFO_OVF_DROP);
+
+    osal_mdc_writePciReg(unit,
+        HAL_LIGHTNING_PKT_GET_PDMA_RCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_RCH_INT_EN), channel),
+        &reg, sizeof(UI32_T));
+
+    return (CLX_E_OK);
+}
+
 /* FUNCTION NAME: _hal_lightning_pkt_clearTxL2IsrStatusReg
  * PURPOSE:
  *      To clear the status of TX L2 interrupts for the specified channel.
@@ -4547,7 +4635,19 @@ _hal_lightning_pkt_initL2Isr(
     const UI32_T            unit)
 {
     HAL_LIGHTNING_PKT_L2_ISR_T    isr_status = 0x0;
+    UI32_T channel = 0;
+    HAL_LIGHTNING_PKT_CP_CP_ERR_ISR_T cp_err_isr_status = 0x0;
 
+    //enable cp pdma_err intrrupt
+    osal_mdc_readPciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_CP_CP_ERR_INT_EN), 
+        &cp_err_isr_status, sizeof(cp_err_isr_status));
+    HAL_LIGHTNING_PKT_SET_BITMAP(cp_err_isr_status, HAL_LIGHTNING_PKT_CP_CP_PDMA_ERR);
+    osal_mdc_writePciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_CP_CP_ERR_INT_EN), 
+        &cp_err_isr_status, sizeof(cp_err_isr_status));
+    osal_mdc_writePciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_CP_CP_ERR_INT_MASK), 
+        &cp_err_isr_status, sizeof(cp_err_isr_status));
+    
+    //enable pdma_err level 2 interrupt
     HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_RCH0);
     HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_RCH1);
     HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_RCH2);
@@ -4567,6 +4667,17 @@ _hal_lightning_pkt_initL2Isr(
         HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_ERR_INT_MASK_SET),
         &isr_status, sizeof(UI32_T));
 
+    //enable pdma_err level 3 interrupt
+    for (channel = 0; channel < HAL_LIGHTNING_PKT_TX_CHANNEL_LAST; channel++)
+    {
+        _hal_lightning_pkt_EnableAllTxL2IsrReg(unit, (HAL_LIGHTNING_PKT_TX_CHANNEL_T)channel);
+        _hal_lightning_pkt_unmaskAllTxL2IsrReg(unit, (HAL_LIGHTNING_PKT_TX_CHANNEL_T)channel);
+    }
+    for (channel = 0; channel < HAL_LIGHTNING_PKT_RX_CHANNEL_LAST; channel++)
+    {
+        _hal_lightning_pkt_EnableAllRxL2IsrReg(unit, (HAL_LIGHTNING_PKT_TX_CHANNEL_T)channel);
+        _hal_lightning_pkt_unmaskAllRxL2IsrReg(unit, (HAL_LIGHTNING_PKT_RX_CHANNEL_T)channel);
+    }
     return (CLX_E_OK);
 
 }
