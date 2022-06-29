@@ -461,7 +461,7 @@ _osal_mdc_getPciMmioInfo(
 {
     CLX_ERROR_NO_T      rc = CLX_E_OK;
     CLX_ADDR_T          phy_addr;
-    UI32_T              reg_space_sz;
+    CLX_ADDR_T          reg_space_sz;
 
     phy_addr     = pci_resource_start(pdev, OSAL_MDC_PCI_BAR0_OFFSET);
     reg_space_sz = pci_resource_len(pdev, OSAL_MDC_PCI_BAR0_OFFSET);
