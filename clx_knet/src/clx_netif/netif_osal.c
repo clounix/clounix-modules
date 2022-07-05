@@ -476,7 +476,7 @@ osal_getTime(
     struct timespec64          usec_time;
 
     ktime_get_real_ts64(&usec_time);
-    *(CLX_TIME_T *)ptr_time = (usec_time.tv_sec * OSAL_US_PER_SECOND) + usec_time.tv_nsec;
+    *(CLX_TIME_T *)ptr_time = (usec_time.tv_sec * OSAL_US_PER_SECOND * OSAL_NS_PER_USECOND) + usec_time.tv_nsec;
 
     return (CLX_E_OK);
 }
