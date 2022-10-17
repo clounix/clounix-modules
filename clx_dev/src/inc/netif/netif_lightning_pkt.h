@@ -25,7 +25,7 @@
 #define HAL_LIGHTNING_PKT_KNL_H
 
 #include <clx_error.h>
-#include <osal/netif_common.h>
+#include <netif/netif_common.h>
 
 /* CP_COMMON */
 #define HAL_LIGHTNING_PKT_CP_COMMON_INT_EN_HI                 (0x000FC000)

@@ -38,7 +38,7 @@
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
 #include <linux/sched/signal.h>
 #endif
-#include <netif_osal.h>
+#include <netif/netif_osal.h>
 
 /* ----------------------------------------------------------------------------------- macro value */
 #define OSAL_US_PER_SECOND      (1000000)   /* macro second per second      */

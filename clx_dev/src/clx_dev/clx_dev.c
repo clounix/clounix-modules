@@ -41,8 +41,7 @@
     #define IOREMAP_API(a, b)       ioremap(a, b)
 #endif
 
-#include <osal/netif_common.h>
-#include <osal/netif_nb_pkt.h>
+#include <netif/netif_common.h>
 
 
 #include <linux/cdev.h>
@@ -799,8 +798,6 @@ _osal_mdc_initInterrupt(void)
     return (CLX_E_OK);
 }
 
-
-#define SIG_CLX_INTR 44
 static inline CLX_ERROR_NO_T
 _osal_mdc_notifyUserProcess(
     const UI32_T        unit)
@@ -1383,6 +1380,10 @@ osal_mdc_module_exit(void)
     }
 }
 
+module_param(verbosity, uint, S_IRUGO|S_IWUSR);
+MODULE_PARM_DESC(verbosity, "bit0:critical, bit1:error, bit2:warning, bit3:infor," \
+                        "bit4:debug, bit5:tx, bit6:rx, bit7:intf, bit8:profile, "  \
+                        "bit9:common, bit10:netlink");
 module_init(osal_mdc_module_init);
 module_exit(osal_mdc_module_exit);
 MODULE_LICENSE("GPL");

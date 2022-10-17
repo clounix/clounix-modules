@@ -52,12 +52,12 @@
 #include <linux/ipv6.h>
 
 /* netif */
-#include <netif_osal.h>
-#include <netif_perf.h>
-#include <netif_nl.h>
+#include <netif/netif_osal.h>
+#include <netif/netif_perf.h>
+#include <netif/netif_nl.h>
 
-#include <osal/netif_dawn_pkt.h>
-#include <osal/netif_common.h>
+#include <netif/netif_dawn_pkt.h>
+#include <netif/netif_common.h>
 
 /* clx_sdk */
 #include <hal/common/hal_dflt.h>
@@ -80,7 +80,7 @@
 #define HAL_DAWN_PKT_RCH_CNT(__unit__, __channel__)      (_hal_dawn_pkt_intr_vec[5 + (__channel__)].intr_cnt)
 
 
-extern UI32_T                           verbosity;
+extern UI32_T verbosity;
 
 typedef struct
 {
@@ -4887,8 +4887,8 @@ void hal_dawn_register_drv_cb(
     osal_memset(_hal_dawn_pkt_rx_cb, 0x0,
                 CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM*sizeof(HAL_DAWN_PKT_RX_CB_T));
 
-    ptr_cb->init_task = hal_dawn_pkt_initTask;
-    ptr_cb->deinit_task = hal_dawn_pkt_deinitTask;
+    ptr_cb->pkt_init_task = hal_dawn_pkt_initTask;
+    ptr_cb->pkt_deinit_task = hal_dawn_pkt_deinitTask;
     ptr_cb->pkt_rx_stop = hal_dawn_pkt_rxStop;
     ptr_cb->pkt_rx_start = _hal_dawn_pkt_rxStart;
     ptr_cb->pkt_deinit_drv = hal_dawn_pkt_deinit_pkt_drv;

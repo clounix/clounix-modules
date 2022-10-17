@@ -14,7 +14,7 @@
  * version 2 (GPLv2) along with this source code.
  */
 
-/* FILE NAME:  netif_perf.h
+/* FILE NAME:  netif/netif_perf.h
  * PURPOSE:
  *      It provide customer performance test API.
  * NOTES:

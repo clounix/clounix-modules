@@ -14,7 +14,7 @@
  * version 2 (GPLv2) along with this source code.
  */
 
-/* FILE NAME:  netif_nl.h
+/* FILE NAME:  netif/netif_nl.h
  * PURPOSE:
  *      It provide xxx API.
  * NOTES:
@@ -25,7 +25,6 @@
 
 #include <linux/skbuff.h>
 #include <clx_knl.h>
-extern UI32_T     verbosity; 
 
 #define NETIF_NL_NETLINK_MC_GROUP_NUM           (32)
 #define NETIF_NL_NETLINK_NAME_LEN               (16)

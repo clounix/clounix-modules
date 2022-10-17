@@ -22,17 +22,17 @@
 #include <clx_error.h>
 #include <clx_types.h>
 
-#include <netif_osal.h>
-#include <netif_perf.h>
+#include <netif/netif_osal.h>
+#include <netif/netif_perf.h>
 
 #include <hal/common/hal_dev.h>
 
 #if defined (CLX_EN_DAWN)
-#include <osal/netif_dawn_pkt.h>
+#include <netif/netif_dawn_pkt.h>
 #endif
 
 #if defined (CLX_EN_LIGHTNING)
-#include <osal/netif_lightning_pkt.h>
+#include <netif/netif_lightning_pkt.h>
 #endif
 
 /* -------------------------------------------------------------- switch */

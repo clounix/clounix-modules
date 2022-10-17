@@ -25,7 +25,7 @@
 #define HAL_DAWN_PKT_KNL_H
 
 #include <clx_error.h>
-#include <netif_knl.h>
+#include <netif/netif_knl.h>
 
 /* CP_COMMON */
 #define HAL_DAWN_PKT_CP_COMMON_INT_EN_HI                 (0x000FC000)
@@ -2269,28 +2269,7 @@ hal_dawn_pkt_sendGpd(
     const HAL_DAWN_PKT_TX_CHANNEL_T  channel,
           HAL_DAWN_PKT_TX_SW_GPD_T   *ptr_sw_gpd);
 
-CLX_ERROR_NO_T
-hal_dawn_pkt_init(
-    const UI32_T                        unit);
-
-CLX_ERROR_NO_T
-hal_dawn_pkt_exit(
-    const UI32_T                        unit);
-
-ssize_t
-hal_dawn_pkt_dev_tx(
-    struct file                         *file,
-    const char __user                   *buf,
-    size_t                              count,
-    loff_t                              *pos);
-
-long
-hal_dawn_pkt_dev_ioctl(
-    struct file                         *filp,
-    unsigned int                        cmd,
-    unsigned long                       arg);
-
-CLX_ERROR_NO_T
-hal_dawn_register_pkt_ioctl(void);
+void hal_dawn_register_drv_cb(
+    const UI32_T unit);
 
 #endif /* end of HAL_DAWN_PKT_KNL_H */

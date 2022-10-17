@@ -43,37 +43,6 @@
 #define OSAL_MDC_PCI_BAR1_OFFSET            (0x1)
 #define OSAL_MDC_PCI_BAR2_OFFSET            (0x2)
 
-/* This flag value will be specified when user inserts kernel module. */
-#define HAL_DBG_CRIT            (0x1UL << 0)
-#define HAL_DBG_ERR             (0x1UL << 1)
-#define HAL_DBG_WARN            (0x1UL << 2)
-#define HAL_DBG_INFO            (0x1UL << 3)
-#define HAL_DBG_DEBUG           (0x1UL << 4)
-#define HAL_DBG_TX              (0x1UL << 5)
-#define HAL_DBG_RX              (0x1UL << 6)
-#define HAL_DBG_INTF            (0x1UL << 7)
-#define HAL_DBG_PROFILE         (0x1UL << 8)
-#define HAL_DBG_COMMON          (0x1UL << 9)
-#define HAL_DBG_NETLINK         (0x1UL << 10)
-
-#ifdef __KERNEL__
-#define DIAG_PRINT(__flag__, fmt, ...)      do                                \
-{                                                                               \
-    if (0 != ((__flag__) & (verbosity)))                                        \
-    {                                                                           \
-        printk("CLX_KERN %s:%d: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);  \
-    }                                                                           \
-}while (0)
-#else
-#define DIAG_PRINT(__flag__, fmt, ...)      do                                \
-{                                                                               \
-    if (0 != ((__flag__) & (verbosity)))                                        \
-    {                                                                           \
-        printf("%s:%d: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);  \
-    }                                                                           \
-}while (0)
-#endif
-
 /* MACRO FUNCTION DECLARATIONS
  */
 
