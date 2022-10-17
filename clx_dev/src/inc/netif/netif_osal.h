@@ -14,7 +14,7 @@
  * version 2 (GPLv2) along with this source code.
  */
 
-/* FILE NAME:  netif_osal.h
+/* FILE NAME:  netif/netif_osal.h
  * PURPOSE:
  *      It provide customer linux API.
  * NOTES:

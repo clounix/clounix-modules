@@ -25,7 +25,7 @@
 #define HAL_PKT_KNL_H
 
 #include <clx_error.h>
-#include <netif_knl.h>
+#include <netif/netif_knl.h>
 
 
 /* PKT definitions */
@@ -223,12 +223,13 @@ typedef struct
     /* Rx system configuration */
     UI32_T                          buf_len;
 
-    NETIF_CALLBACK_FUNC_T           init_task;
-    NETIF_CALLBACK_FUNC_T           deinit_task;
+    NETIF_CALLBACK_FUNC_T           pkt_init_task;
+    NETIF_CALLBACK_FUNC_T           pkt_deinit_task;
     NETIF_CALLBACK_FUNC_T           pkt_rx_stop;
     NETIF_CALLBACK_FUNC_T           pkt_rx_start;
     NETIF_CALLBACK_FUNC_T           pkt_deinit_drv;
     NETIF_CALLBACK_FUNC_T           pkt_init_drv;
+    NETIF_CALLBACK_FUNC_T           init_irq;
     NETIF_CALLBACK_FUNC_T           lock_all_rx_channel;
     NETIF_CALLBACK_FUNC_T           unlock_all_rx_channel;
     NET_DEV_TX                      net_dev_tx;

@@ -25,13 +25,14 @@
 #define HAL_NB_PKT_KNL_H
 
 #include <clx_error.h>
-#include <netif_knl.h>
+#include <netif/netif_knl.h>
 
 /* PKT definitions */
 #define HAL_NB_PKT_CX_HDR_SZ               (20)
 #define HAL_NB_PKT_PPH_HDR_SZ              (40)
 #define HAL_NB_PKT_TX_MAX_LEN              (9216)
 
-
+void hal_nb_register_drv_cb(
+    const UI32_T unit);
 
 #endif /* end of HAL_NB_PKT_KNL_H */

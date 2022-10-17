@@ -22,16 +22,16 @@
 #include <clx_error.h>
 #include <clx_types.h>
 
-#include <netif_osal.h>
-#include <netif_perf.h>
-#include <netif_nl.h>
+#include <netif/netif_osal.h>
+#include <netif/netif_perf.h>
+#include <netif/netif_nl.h>
 
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/version.h>
 #include <net/genetlink.h>
 
-extern UI32_T       verbosity;
+extern UI32_T verbosity;
 
 
 #define NETIF_NL_FAMILY_NUM_MAX                                 (256)

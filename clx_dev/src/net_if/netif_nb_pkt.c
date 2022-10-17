@@ -52,12 +52,12 @@
 #include <linux/ipv6.h>
 
 /* netif */
-#include <netif_osal.h>
-#include <netif_perf.h>
-#include <netif_nl.h>
+#include <netif/netif_osal.h>
+#include <netif/netif_perf.h>
+#include <netif/netif_nl.h>
 
-#include <osal/netif_nb_pkt.h>
-#include <osal/netif_common.h>
+#include <netif/netif_nb_pkt.h>
+#include <netif/netif_common.h>
 
 /* clx_sdk */
 #include <hal/common/hal_dflt.h>
@@ -216,8 +216,8 @@ void hal_nb_register_drv_cb(
     // osal_memset(_hal_nb_pkt_rx_cb, 0x0,
     //             CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM*sizeof(HAL_NB_PKT_RX_CB_T));
 
-    ptr_cb->init_task = hal_nb_pkt_initTask;
-    ptr_cb->deinit_task = hal_nb_pkt_deinitTask;
+    ptr_cb->pkt_init_task = hal_nb_pkt_initTask;
+    ptr_cb->pkt_deinit_task = hal_nb_pkt_deinitTask;
     ptr_cb->pkt_rx_stop = hal_nb_pkt_rxStop;
     ptr_cb->pkt_rx_start = _hal_nb_pkt_rxStart;
     ptr_cb->pkt_deinit_drv = hal_nb_pkt_deinit_pkt_drv;

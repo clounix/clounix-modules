@@ -24,12 +24,14 @@
 #include <linux/ipv6.h>
 
 /* netif */
-#include <netif_osal.h>
-#include <netif_perf.h>
-#include <netif_nl.h>
+#include <netif/netif_osal.h>
+#include <netif/netif_perf.h>
+#include <netif/netif_nl.h>
 
-#include <osal/netif_common.h>
-#include <osal/netif_lightning_pkt.h>
+#include <netif/netif_common.h>
+#include <netif/netif_lightning_pkt.h>
+#include <netif/netif_dawn_pkt.h>
+#include <netif/netif_nb_pkt.h>
 
 /* clx_sdk */
 #include <osal/osal_mdc.h>
@@ -1461,6 +1463,8 @@ hal_pkt_initPktDrv(
         ptr_cb->init_stage = HAL_PKT_INIT_DRV;
         DIAG_PRINT(HAL_DBG_COMMON,
                         "u=%u, pkt drv init done, next_stage=%d\n", unit, ptr_cb->init_stage);
+
+        rc = ptr_cb->init_irq(unit);
     }
     return (rc);
 }
@@ -1493,7 +1497,7 @@ hal_pkt_initTask(
         return rc;
     }
 
-    rc = ptr_cb->init_task(unit);
+    rc = ptr_cb->pkt_init_task(unit);
 
     if(rc == CLX_E_OK)
     {
@@ -1603,7 +1607,7 @@ hal_pkt_deinitTask(
         return CLX_E_OK;
     }
     
-    ptr_cb->deinit_task(unit);
+    ptr_cb->pkt_deinit_task(unit);
 
     /* Set the flag to record init state */
     ptr_cb->init_stage = HAL_PKT_INIT_DRV;
@@ -1771,7 +1775,18 @@ hal_netif_pkt_init(
     osal_memset(_hal_pkt_drv_cb, 0x0,
             CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM * sizeof(HAL_PKT_DRV_CB_T));
 
-    hal_lightning_register_drv_cb(unit);
+    if(CLX_DEVICE_LIGHTNING == clx_get_device_type(unit))
+    {
+        hal_lightning_register_drv_cb(unit);
+    }
+    else if(CLX_DEVICE_DAWN == clx_get_device_type(unit))
+    {
+        hal_dawn_register_drv_cb(unit);
+    }
+    else if(CLX_DEVICE_NB == clx_get_device_type(unit))
+    {
+        hal_nb_register_drv_cb(unit);
+    }
 
     netif_nl_init();
 

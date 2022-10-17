@@ -52,12 +52,12 @@
 #include <linux/ipv6.h>
 
 /* netif */
-#include <netif_osal.h>
-#include <netif_perf.h>
-#include <netif_nl.h>
+#include <netif/netif_osal.h>
+#include <netif/netif_perf.h>
+#include <netif/netif_nl.h>
 
-#include <osal/netif_lightning_pkt.h>
-#include <osal/netif_common.h>
+#include <netif/netif_lightning_pkt.h>
+#include <netif/netif_common.h>
 
 /* clx_sdk */
 #include <hal/common/hal_dflt.h>
@@ -78,9 +78,6 @@
 #define HAL_LIGHTNING_PKT_ERR_CNT(__unit__)                   (_hal_lightning_pkt_intr_vec[0].intr_cnt)
 #define HAL_LIGHTNING_PKT_TCH_CNT(__unit__, __channel__)      (_hal_lightning_pkt_intr_vec[1 + (__channel__)].intr_cnt)
 #define HAL_LIGHTNING_PKT_RCH_CNT(__unit__, __channel__)      (_hal_lightning_pkt_intr_vec[5 + (__channel__)].intr_cnt)
-
-
-extern UI32_T                           verbosity;
 
 typedef struct
 {
@@ -4230,38 +4227,6 @@ _hal_lightning_pkt_initRxPdma(
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_initPktCb
- * PURPOSE:
- *      To initialize the control block of Drv.
- * INPUT:
- *      unit            -- The unit ID
- * OUTPUT:
- *      None
- * RETURN:
- *      CLX_E_OK        -- Successfully initialize the control block.
- * NOTES:
- *      None
- */
-static CLX_ERROR_NO_T
-_hal_lightning_pkt_initPktCb(
-    const UI32_T                unit)
-{
-    HAL_PKT_DRV_CB_T        *ptr_cb = HAL_LIGHTNING_PKT_GET_DRV_CB_PTR(unit);
-    UI32_T                      idx = 0, vec = sizeof(_hal_lightning_pkt_intr_vec) / sizeof(HAL_LIGHTNING_PKT_INTR_VEC_T);
-
-    /* Register PKT interrupt functions */
-    osal_createIsrLock("ISR_LOCK", &ptr_cb->intr_lock);
-    osal_mdc_registerIsr(unit, _hal_lightning_pkt_dispatcher, (void *)((CLX_HUGE_T)unit));
-
-    for (idx = 0; idx < vec; idx++)
-    {
-        osal_createEvent("ISR_EVENT", &_hal_lightning_pkt_intr_vec[idx].intr_event);
-        ptr_cb->intr_bitmap |= (_hal_lightning_pkt_intr_vec[idx].intr_reg);
-    }
-
-    return (CLX_E_OK);
-}
-
 /* FUNCTION NAME: _hal_lightning_pkt_initPktTxCb
  * PURPOSE:
  *      To initialize the control block of Rx PDMA.
@@ -4435,48 +4400,29 @@ _hal_lightning_pkt_initL2Isr(
 
 }
 
-CLX_ERROR_NO_T
-_hal_lightning_pkt_resetIosCreditCfg(
-    const UI32_T        unit)
+/* FUNCTION NAME: _hal_lightning_pkt_init_irq
+ * PURPOSE:
+ *      To initialize the control block of Drv.
+ * INPUT:
+ *      unit            -- The unit ID
+ * OUTPUT:
+ *      None
+ * RETURN:
+ *      CLX_E_OK        -- Successfully initialize the control block.
+ * NOTES:
+ *      None
+ */
+static CLX_ERROR_NO_T
+_hal_lightning_pkt_init_irq(
+    const UI32_T                unit)
 {
-#define HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG_RESET_OFFSET    (16)
-
-    UI32_T              credit_cfg = 0x0;
-    UI32_T              idx;
-
-    for (idx=0; idx<HAL_LIGHTNING_PKT_TX_CHANNEL_LAST; idx++)
-    {
-        osal_mdc_readPciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG),
-                            &credit_cfg, sizeof(credit_cfg));
-
-        credit_cfg |= (0x1UL << HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG_RESET_OFFSET);
-
-        osal_mdc_writePciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG),
-                             &credit_cfg, sizeof(UI32_T));
-
-        credit_cfg &= ~(0x1UL << HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG_RESET_OFFSET);
-
-        osal_mdc_writePciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG),
-                             &credit_cfg, sizeof(UI32_T));
-    }
-
-    return (CLX_E_OK);
-}
-
-CLX_ERROR_NO_T hal_lightning_init_irq(
-    const UI32_T            unit)
-{
-    CLX_ERROR_NO_T          rc = CLX_E_OK;
-    UI32_T                  channel = 0;
-    UI32_T                  flush_intr = 0x0;
-    UI32_T                  clear_intr = 0xffffffff;
-    /* There's a case that PDMA Tx is on-going when doing chip reset,
-     * where PDMA may hang and be not programmable since current Tx packet
-     * stucks due to IOS credit too low.
-     * Thus, we always reset IOS credit value before progrmming Tx PDMA.
-     */
-    _hal_lightning_pkt_resetIosCreditCfg(unit);
-
+    CLX_ERROR_NO_T              rc = CLX_E_OK;
+    HAL_PKT_DRV_CB_T            *ptr_cb = HAL_LIGHTNING_PKT_GET_DRV_CB_PTR(unit);
+    UI32_T                      idx = 0, vec = sizeof(_hal_lightning_pkt_intr_vec) / sizeof(HAL_LIGHTNING_PKT_INTR_VEC_T);
+    UI32_T                      channel = 0;
+    UI32_T                      flush_intr = 0x0;
+    UI32_T                      clear_intr = 0xffffffff;
+    
     /* [cold-boot] 1. stop DMA channel
      *             2. disable/mask/clear the interrupt status.
      */
@@ -4506,15 +4452,16 @@ CLX_ERROR_NO_T hal_lightning_init_irq(
         _hal_lightning_pkt_clearRxL2IsrStatusReg(unit, channel, clear_intr);
     }
 
-    rc = _hal_lightning_pkt_initPktCb(unit);    
-    if (CLX_E_OK == rc)
+    /* Register PKT interrupt functions */
+    osal_createIsrLock("ISR_LOCK", &ptr_cb->intr_lock);
+    osal_mdc_registerIsr(unit, _hal_lightning_pkt_dispatcher, (void *)((CLX_HUGE_T)unit));
+
+    for (idx = 0; idx < vec; idx++)
     {
-        rc = _hal_lightning_pkt_initPktTxCb(unit);
+        osal_createEvent("ISR_EVENT", &_hal_lightning_pkt_intr_vec[idx].intr_event);
+        ptr_cb->intr_bitmap |= (_hal_lightning_pkt_intr_vec[idx].intr_reg);
     }
-    if (CLX_E_OK == rc)
-    {
-        rc = _hal_lightning_pkt_initPktRxCb(unit);
-    }
+
     if (CLX_E_OK == rc)
     {
         rc = _hal_lightning_pkt_initL1Isr(unit);
@@ -4522,6 +4469,54 @@ CLX_ERROR_NO_T hal_lightning_init_irq(
     if (CLX_E_OK == rc)
     {
         rc = _hal_lightning_pkt_initL2Isr(unit);
+    }
+
+    return (rc);
+}
+
+CLX_ERROR_NO_T
+_hal_lightning_pkt_resetIosCreditCfg(
+    const UI32_T        unit)
+{
+#define HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG_RESET_OFFSET    (16)
+
+    UI32_T              credit_cfg = 0x0;
+    UI32_T              idx;
+
+    for (idx=0; idx<HAL_LIGHTNING_PKT_TX_CHANNEL_LAST; idx++)
+    {
+        osal_mdc_readPciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG),
+                            &credit_cfg, sizeof(credit_cfg));
+
+        credit_cfg |= (0x1UL << HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG_RESET_OFFSET);
+
+        osal_mdc_writePciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG),
+                             &credit_cfg, sizeof(UI32_T));
+
+        credit_cfg &= ~(0x1UL << HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG_RESET_OFFSET);
+
+        osal_mdc_writePciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG),
+                             &credit_cfg, sizeof(UI32_T));
+    }
+
+    return (CLX_E_OK);
+}
+
+static CLX_ERROR_NO_T hal_lightning_init_drv(
+    const UI32_T            unit)
+{
+    CLX_ERROR_NO_T          rc = CLX_E_OK;
+    /* There's a case that PDMA Tx is on-going when doing chip reset,
+     * where PDMA may hang and be not programmable since current Tx packet
+     * stucks due to IOS credit too low.
+     * Thus, we always reset IOS credit value before progrmming Tx PDMA.
+     */
+    _hal_lightning_pkt_resetIosCreditCfg(unit);
+
+    rc = _hal_lightning_pkt_initPktTxCb(unit);
+    if (CLX_E_OK == rc)
+    {
+        rc = _hal_lightning_pkt_initPktRxCb(unit);
     }
 
     return rc;
@@ -4887,12 +4882,13 @@ void hal_lightning_register_drv_cb(
     osal_memset(_hal_lightning_pkt_rx_cb, 0x0,
                 CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM*sizeof(HAL_LIGHTNING_PKT_RX_CB_T));
 
-    ptr_cb->init_task = hal_lightning_pkt_initTask;
-    ptr_cb->deinit_task = hal_lightning_pkt_deinitTask;
+    ptr_cb->pkt_init_task = hal_lightning_pkt_initTask;
+    ptr_cb->pkt_deinit_task = hal_lightning_pkt_deinitTask;
     ptr_cb->pkt_rx_stop = hal_lightning_pkt_rxStop;
     ptr_cb->pkt_rx_start = _hal_lightning_pkt_rxStart;
     ptr_cb->pkt_deinit_drv = hal_lightning_pkt_deinit_pkt_drv;
-    ptr_cb->pkt_init_drv = hal_lightning_init_irq;
+    ptr_cb->pkt_init_drv = hal_lightning_init_drv;
+    ptr_cb->init_irq = _hal_lightning_pkt_init_irq;
 
     ptr_cb->net_dev_tx = _hal_lightning_pkt_net_dev_tx;
     ptr_cb->pkt_dev_tx = _hal_lightning_pkt_dev_tx;

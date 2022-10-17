@@ -35,6 +35,7 @@ MODULE_OUTPUT_DIR   := $(BUILD_OUTPUT_DIR)/module
 all: compile install
 ################################################################################
 EXTRA_CFLAGS += -I$(INC_PATH)
+EXTRA_CFLAGS += -I$(INC_PATH)/netif
 EXTRA_CFLAGS += -DCLX_EN_NETIF
 EXTRA_CFLAGS += -DNETIF_EN_NETLINK
 EXTRA_CFLAGS += -DCLX_EN_DAWN
@@ -57,13 +58,13 @@ DEV_MODULE_NAME            := clx_dev
 
 ################################################################################
 DEV_OBJS_TOTAL             := ./src/clx_dev/clx_dev.o
-DEV_OBJS_TOTAL             += ./src/clx_dev/netif_nb_pkt.o
-DEV_OBJS_TOTAL             += ./src/clx_dev/netif_lightning_pkt.o
-DEV_OBJS_TOTAL             += ./src/clx_dev/netif_dawn_pkt.o
-DEV_OBJS_TOTAL             += ./src/clx_dev/netif_common.o
-DEV_OBJS_TOTAL             += ./src/clx_dev/netif_nl.o
-DEV_OBJS_TOTAL             += ./src/clx_dev/netif_osal.o
-DEV_OBJS_TOTAL             += ./src/clx_dev/netif_perf.o
+DEV_OBJS_TOTAL             += ./src/net_if/netif_nb_pkt.o
+DEV_OBJS_TOTAL             += ./src/net_if/netif_lightning_pkt.o
+DEV_OBJS_TOTAL             += ./src/net_if/netif_dawn_pkt.o
+DEV_OBJS_TOTAL             += ./src/net_if/netif_common.o
+DEV_OBJS_TOTAL             += ./src/net_if/netif_nl.o
+DEV_OBJS_TOTAL             += ./src/net_if/netif_osal.o
+DEV_OBJS_TOTAL             += ./src/net_if/netif_perf.o
 
 
 obj-m                      := $(DEV_MODULE_NAME).o

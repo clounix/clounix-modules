@@ -14,7 +14,7 @@
  * version 2 (GPLv2) along with this source code.
  */
 
-/* FILE NAME:   netif_knl.h
+/* FILE NAME:   netif/netif_knl.h
  * NOTES:
  */
 #ifndef NETIF_KNL_H
