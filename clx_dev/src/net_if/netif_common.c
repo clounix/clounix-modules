@@ -1464,7 +1464,7 @@ hal_pkt_initPktDrv(
         DIAG_PRINT(HAL_DBG_COMMON,
                         "u=%u, pkt drv init done, next_stage=%d\n", unit, ptr_cb->init_stage);
 
-        rc = ptr_cb->init_irq(unit);
+        rc = ptr_cb->pkt_init_irq(unit);
     }
     return (rc);
 }

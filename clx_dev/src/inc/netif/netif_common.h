@@ -174,6 +174,14 @@ typedef struct
 
 } HAL_PKT_NL_IOCTL_COOKIE_T;
 
+typedef struct
+{
+    CLX_HUGE_T                      que_id;
+    CLX_SEMAPHORE_ID_T              sema;
+    UI32_T                          len;      /* Software CPU queue maximum length.        */
+    UI32_T                          weight;   /* The weight for thread de-queue algorithm. */
+
+} HAL_PKT_SW_QUEUE_T;
 
 typedef CLX_ERROR_NO_T
 (*NETIF_CALLBACK_FUNC_T)(
@@ -229,7 +237,8 @@ typedef struct
     NETIF_CALLBACK_FUNC_T           pkt_rx_start;
     NETIF_CALLBACK_FUNC_T           pkt_deinit_drv;
     NETIF_CALLBACK_FUNC_T           pkt_init_drv;
-    NETIF_CALLBACK_FUNC_T           init_irq;
+    NETIF_CALLBACK_FUNC_T           pkt_init_irq;
+    NETIF_CALLBACK_FUNC_T           pkt_deinit_irq;
     NETIF_CALLBACK_FUNC_T           lock_all_rx_channel;
     NETIF_CALLBACK_FUNC_T           unlock_all_rx_channel;
     NET_DEV_TX                      net_dev_tx;

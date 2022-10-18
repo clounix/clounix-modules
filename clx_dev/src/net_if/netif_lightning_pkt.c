@@ -153,14 +153,6 @@ static CLX_THREAD_ID_T                      err_task_id;
  */
 /* ----------------------------------------------------------------------------------- General structure */
 
-typedef struct
-{
-    CLX_HUGE_T                      que_id;
-    CLX_SEMAPHORE_ID_T              sema;
-    UI32_T                          len;      /* Software CPU queue maximum length.        */
-    UI32_T                          weight;   /* The weight for thread de-queue algorithm. */
-
-} HAL_LIGHTNING_PKT_SW_QUEUE_T;
 
 
 /* ----------------------------------------------------------------------------------- TX structure */
@@ -211,7 +203,7 @@ typedef struct
     HAL_LIGHTNING_PKT_ISR_COOKIE_T        isr_task_cookie[HAL_LIGHTNING_PKT_TX_CHANNEL_LAST];
 
     /* txTask */
-    HAL_LIGHTNING_PKT_SW_QUEUE_T          sw_queue;
+    HAL_PKT_SW_QUEUE_T                    sw_queue;
     CLX_SEMAPHORE_ID_T                    sync_sema;
     BOOL_T                                running;/* TRUE when Init txTask
                                                   * FALSE when Destroy txTask
@@ -246,7 +238,7 @@ typedef struct
     HAL_LIGHTNING_PKT_ISR_COOKIE_T  isr_task_cookie[HAL_LIGHTNING_PKT_RX_CHANNEL_LAST];
 
     /* rxTask */
-    HAL_LIGHTNING_PKT_SW_QUEUE_T    sw_queue[HAL_LIGHTNING_PKT_RX_QUEUE_NUM];
+    HAL_PKT_SW_QUEUE_T    sw_queue[HAL_LIGHTNING_PKT_RX_QUEUE_NUM];
     UI32_T                          deque_idx;
     CLX_SEMAPHORE_ID_T              sync_sema;
     CLX_SEMAPHORE_ID_T              deinit_sema; /* To sync-up the Rx-stop and thread flush queues */
@@ -1159,7 +1151,7 @@ hal_lightning_pkt_clearRxKnlCnt(
  */
 static CLX_ERROR_NO_T
 _hal_lightning_pkt_enQueue(
-    HAL_LIGHTNING_PKT_SW_QUEUE_T  *ptr_que,
+    HAL_PKT_SW_QUEUE_T  *ptr_que,
     void                    *ptr_data)
 {
     CLX_ERROR_NO_T          rc = CLX_E_OK;
@@ -1186,7 +1178,7 @@ _hal_lightning_pkt_enQueue(
  */
 static CLX_ERROR_NO_T
 _hal_lightning_pkt_deQueue(
-    HAL_LIGHTNING_PKT_SW_QUEUE_T  *ptr_que,
+    HAL_PKT_SW_QUEUE_T  *ptr_que,
     void                    **pptr_data)
 {
     CLX_ERROR_NO_T          rc = CLX_E_OK;
@@ -1214,7 +1206,7 @@ _hal_lightning_pkt_deQueue(
  */
 static CLX_ERROR_NO_T
 _hal_lightning_pkt_getQueueCount(
-    HAL_LIGHTNING_PKT_SW_QUEUE_T  *ptr_que,
+    HAL_PKT_SW_QUEUE_T  *ptr_que,
     UI32_T                  *ptr_count)
 {
     CLX_ERROR_NO_T          rc = CLX_E_OK;
@@ -2275,7 +2267,7 @@ _hal_lightning_pkt_rxEnQueue(
 static CLX_ERROR_NO_T
 _hal_lightning_pkt_flushRxQueue(
     const UI32_T                unit,
-    HAL_LIGHTNING_PKT_SW_QUEUE_T      *ptr_que)
+    HAL_PKT_SW_QUEUE_T      *ptr_que)
 {
     HAL_LIGHTNING_PKT_RX_SW_GPD_T     *ptr_sw_gpd_knl = NULL;
     CLX_ERROR_NO_T              rc;
@@ -4888,7 +4880,7 @@ void hal_lightning_register_drv_cb(
     ptr_cb->pkt_rx_start = _hal_lightning_pkt_rxStart;
     ptr_cb->pkt_deinit_drv = hal_lightning_pkt_deinit_pkt_drv;
     ptr_cb->pkt_init_drv = hal_lightning_init_drv;
-    ptr_cb->init_irq = _hal_lightning_pkt_init_irq;
+    ptr_cb->pkt_init_irq = _hal_lightning_pkt_init_irq;
 
     ptr_cb->net_dev_tx = _hal_lightning_pkt_net_dev_tx;
     ptr_cb->pkt_dev_tx = _hal_lightning_pkt_dev_tx;
