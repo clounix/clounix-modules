@@ -80,8 +80,6 @@
 #define HAL_DAWN_PKT_RCH_CNT(__unit__, __channel__)      (_hal_dawn_pkt_intr_vec[5 + (__channel__)].intr_cnt)
 
 
-extern UI32_T verbosity;
-
 typedef struct
 {
     UI32_T                              intr_reg;
