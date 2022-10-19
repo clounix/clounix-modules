@@ -94,21 +94,25 @@ static CLX_THREAD_ID_T                                  err_task_id;
 #define HAL_NB_PKT_RX_ENQUE_RETRY_SLEEP()               osal_sleepThread(1000) /* us */
 #define HAL_NB_PKT_ALLOC_MEM_RETRY_SLEEP()              osal_sleepThread(1000) /* us */
 
+typedef enum
+{
+    HAL_NB_PKT_DEST_NETDEV = 0,
+    HAL_NB_PKT_DEST_SDK,
+    HAL_NB_PKT_DEST_NETLINK,
+    HAL_NB_PKT_DEST_DROP,
+    HAL_NB_PKT_DEST_LAST
+} HAL_NB_PKT_DEST_T;
 
-static CLX_ERROR_NO_T
-_hal_nb_pkt_schedRxDeQueue(
-    const UI32_T                    unit,
-    void                            *ptr_data)
+struct net_device_priv
 {
-    return (CLX_E_OK);
-}
-static CLX_ERROR_NO_T
-_hal_nb_pkt_strictTxDeQueue(
-    const UI32_T                    unit,
-    void                            *ptr_data)
-{
-    return (CLX_E_OK);
-}
+    struct net_device               *ptr_net_dev;
+    struct net_device_stats         stats;
+    UI32_T                          unit;
+    UI32_T                          id;
+    UI32_T                          port;
+    UI16_T                          vlan;
+    UI32_T                          speed;
+};
 
 static CLX_ERROR_NO_T
 _hal_nb_enable_pdma_rx_channel(
@@ -183,33 +187,33 @@ _hal_nb_pdma_get_rx_ch_work_idx(
 //     return pop_idx;
 // }
 
-// static CLX_ERROR_NO_T
-// _hal_nb_pdma_set_tx_ch_work_idx(
-//     const UI32_T                    unit,
-//     const HAL_NB_PDMA_TX_CHANNEL_T  channel,
-//     const UI32_T                    work_idx)
-// {
-//     osal_mdc_writePciReg(unit, HAL_NB_PDMA_GET_MMIO(HAL_NB_GET_PDMA_CH_DESC_WORK_IDX_REG(channel+4)), &work_idx, sizeof(UI32_T));
-//     return CLX_E_OK;
-// }
-// static UI32_T
-// _hal_nb_pdma_get_tx_ch_work_idx(
-//     const UI32_T                    unit,
-//     const HAL_NB_PDMA_TX_CHANNEL_T  channel)
-// {
-//     UI32_T                          work_idx;
-//     osal_mdc_readPciReg(unit, HAL_NB_PDMA_GET_MMIO(HAL_NB_GET_PDMA_CH_DESC_WORK_IDX_REG(channel+4)), &work_idx, sizeof(UI32_T));
-//     return work_idx;
-// }
-// static UI32_T
-// _hal_nb_pdma_get_tx_ch_pop_idx(
-//     const UI32_T                    unit,
-//     const HAL_NB_PDMA_TX_CHANNEL_T  channel)
-// {
-//     UI32_T                          pop_idx;
-//     osal_mdc_readPciReg(unit, HAL_NB_PDMA_GET_MMIO(HAL_NB_GET_PDMA_CH_DESC_WORK_IDX_REG(channel+4)), &pop_idx, sizeof(UI32_T));
-//     return pop_idx;
-// }
+static CLX_ERROR_NO_T
+_hal_nb_pdma_set_tx_ch_work_idx(
+    const UI32_T                    unit,
+    const HAL_NB_PDMA_TX_CHANNEL_T  channel,
+    const UI32_T                    work_idx)
+{
+    osal_mdc_writePciReg(unit, HAL_NB_PDMA_GET_MMIO(HAL_NB_GET_PDMA_CH_DESC_WORK_IDX_REG(channel+4)), &work_idx, sizeof(UI32_T));
+    return CLX_E_OK;
+}
+static UI32_T
+_hal_nb_pdma_get_tx_ch_work_idx(
+    const UI32_T                    unit,
+    const HAL_NB_PDMA_TX_CHANNEL_T  channel)
+{
+    UI32_T                          work_idx;
+    osal_mdc_readPciReg(unit, HAL_NB_PDMA_GET_MMIO(HAL_NB_GET_PDMA_CH_DESC_WORK_IDX_REG(channel+4)), &work_idx, sizeof(UI32_T));
+    return work_idx;
+}
+static UI32_T
+_hal_nb_pdma_get_tx_ch_pop_idx(
+    const UI32_T                    unit,
+    const HAL_NB_PDMA_TX_CHANNEL_T  channel)
+{
+    UI32_T                          pop_idx;
+    osal_mdc_readPciReg(unit, HAL_NB_PDMA_GET_MMIO(HAL_NB_GET_PDMA_CH_DESC_WORK_IDX_REG(channel+4)), &pop_idx, sizeof(UI32_T));
+    return pop_idx;
+}
 
 
 static CLX_ERROR_NO_T
@@ -345,6 +349,21 @@ _hal_nb_pkt_free_rx_payload_buf_desc(
     return (rc);
 }
 
+static void
+_hal_nb_pkt_freeTxGpdList(
+    UI32_T                          unit,
+    HAL_NB_PKT_TX_SW_GPD_T         *ptr_sw_gpd)
+{
+    HAL_NB_PKT_TX_SW_GPD_T         *ptr_sw_gpd_cur = NULL;
+
+    while (NULL != ptr_sw_gpd)
+    {
+        ptr_sw_gpd_cur = ptr_sw_gpd;
+        ptr_sw_gpd = ptr_sw_gpd->ptr_next;
+        osal_free(ptr_sw_gpd_cur);
+    }
+}
+
 static CLX_ERROR_NO_T
 _hal_nb_pkt_freeRxGpdList(
     UI32_T                          unit,
@@ -396,6 +415,20 @@ _hal_nb_pkt_dequeue(
 }
 
 static CLX_ERROR_NO_T
+_hal_nb_pkt_get_queue_count(
+    HAL_PKT_SW_QUEUE_T  *ptr_que,
+    UI32_T                  *ptr_count)
+{
+    CLX_ERROR_NO_T          rc = CLX_E_OK;
+
+    osal_takeSemaphore(&ptr_que->sema, CLX_SEMAPHORE_WAIT_FOREVER);
+    osal_que_getCount(&ptr_que->que_id, ptr_count);
+    osal_giveSemaphore(&ptr_que->sema);
+
+    return (rc);
+}
+
+static CLX_ERROR_NO_T
 _hal_nb_pkt_flushRxQueue(
     const UI32_T                unit,
     HAL_PKT_SW_QUEUE_T      *ptr_que)
@@ -424,21 +457,134 @@ _hal_nb_pkt_handleErrorTask(
     void                    *ptr_argv)
 {
 }
+
+static void
+_hal_nb_pkt_txEnQueueBulk(
+    const UI32_T                    unit,
+    const UI32_T                    channel,
+    const UI32_T                    number)
+{
+    HAL_NB_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_NB_PKT_GET_TX_PDMA_PTR(unit, channel);
+    HAL_NB_PKT_TX_SW_GPD_T         *ptr_sw_gpd = NULL;
+    UI32_T                          idx;
+
+    for (idx = 0; idx < number; idx++)
+    {
+        ptr_sw_gpd = ptr_tx_pdma->pptr_sw_gpd_bulk[idx];
+        ptr_tx_pdma->pptr_sw_gpd_bulk[idx] = NULL;
+        if (NULL != ptr_sw_gpd->callback)
+        {
+            ptr_sw_gpd->callback(unit, ptr_sw_gpd, ptr_sw_gpd->ptr_cookie);
+        }
+    }
+}
+
 static void
 _hal_nb_pkt_handleTxDoneTask(
     void                    *ptr_argv)
 {
+    /* cookie or index */
+    UI32_T                          unit    = ((HAL_NB_PKT_ISR_COOKIE_T *)ptr_argv)->unit;
+    HAL_NB_PDMA_TX_CHANNEL_T        channel = (HAL_NB_PDMA_TX_CHANNEL_T)
+                                              ((HAL_NB_PKT_ISR_COOKIE_T *)ptr_argv)->channel;
+    /* control block */
+    HAL_NB_PKT_TX_CB_T             *ptr_tx_cb = HAL_NB_PKT_GET_TX_CB_PTR(unit);
+    HAL_NB_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_NB_PKT_GET_TX_PDMA_PTR(unit, channel);
+    volatile HAL_NB_PDMA_DESC_T   *ptr_tx_gpd = NULL;
+    UI32_T                          first_gpd_idx = 0; /* To record the first GPD */
+    UI32_T                          loop_cnt = 0;
+    CLX_IRQ_FLAGS_T                 irg_flags;
+    unsigned long                   timeout  = 0;
+    UI32_T                          bulk_pkt_cnt = 0;
+
+    osal_initRunThread();
+    do
+    {
+        if (CLX_E_OK != osal_isRunThread())
+        {
+            DIAG_PRINT(HAL_DBG_TX,
+                            "u=%u, txch=%u, tx done task destroyed\n", unit, channel);
+            break; /* deinit-thread */
+        }
+
+        /* protect Tx PDMA
+         * for sync-intr, the sema is locked by sendGpd
+         */
+        if (HAL_PKT_TX_WAIT_SYNC_INTR != ptr_tx_cb->wait_mode)
+        {
+            osal_takeIsrLock(&ptr_tx_pdma->ring_lock, &irg_flags);
+        }
+
+        loop_cnt = ptr_tx_pdma->used_desc_num;
+        while (loop_cnt > 0)
+        {
+            ptr_tx_gpd = HAL_NB_PKT_GET_TX_GPD_PTR(unit, channel, ptr_tx_pdma->free_idx);
+            osal_dma_invalidateCache((void *)ptr_tx_gpd, sizeof(HAL_NB_PDMA_DESC_T));
+
+            // TODO: Error Handler
+
+            if (HAL_PKT_TX_WAIT_ASYNC == ptr_tx_cb->wait_mode)
+            {
+                /* If sop=1, record the head of sw gpd in bulk buf */
+                if (1 == ptr_tx_gpd->sop)
+                {
+                    ptr_tx_pdma->pptr_sw_gpd_bulk[bulk_pkt_cnt]
+                        = ptr_tx_pdma->pptr_sw_gpd_ring[first_gpd_idx];
+
+                    bulk_pkt_cnt++;
+                    ptr_tx_pdma->pptr_sw_gpd_ring[first_gpd_idx] = NULL;
+
+                    /* next SW-GPD must be the head of another PKT->SW-GPD */
+                    first_gpd_idx = ptr_tx_pdma->free_idx + 1;
+                    first_gpd_idx %= ptr_tx_pdma->ring_size;
+                }
+            }
+
+            if (1 == ptr_tx_gpd->err)
+            {
+                ptr_tx_cb->cnt.channel[channel].error++;
+            }
+
+            /* update Tx PDMA */
+            ptr_tx_pdma->free_idx++;
+            ptr_tx_pdma->free_idx %= ptr_tx_pdma->ring_size;
+            ptr_tx_pdma->used_desc_num--;
+            ptr_tx_pdma->free_desc_num++;
+            loop_cnt--;
+        }
+
+        /* let the netdev resume Tx */
+        hal_pkt_resumeAllIntf(unit);
+
+        /* update ISR and counter */
+        ptr_tx_cb->cnt.channel[channel].tx_done++;
+
+
+        if (HAL_PKT_TX_WAIT_SYNC_INTR != ptr_tx_cb->wait_mode)
+        {
+            osal_giveIsrLock(&ptr_tx_pdma->ring_lock, &irg_flags);
+        }
+        else
+        {
+            osal_giveSemaphore(&ptr_tx_pdma->sync_intr_sema);
+        }
+
+        /* enque packet after releasing the spinlock */
+        _hal_nb_pkt_txEnQueueBulk(unit, channel, bulk_pkt_cnt);
+        bulk_pkt_cnt = 0;
+
+        /* prevent this task from executing too long */
+        if (!(time_before(jiffies, timeout)))
+        {
+            schedule();
+            timeout = jiffies + 1; /* continuously free tx descriptor for 1 tick */
+        }
+
+    } while (CLX_E_OK == osal_isRunThread());
+    osal_exitRunThread();
 }
 
 
-typedef enum
-{
-    HAL_NB_PKT_DEST_NETDEV = 0,
-    HAL_NB_PKT_DEST_SDK,
-    HAL_NB_PKT_DEST_NETLINK,
-    HAL_NB_PKT_DEST_DROP,
-    HAL_NB_PKT_DEST_LAST
-} HAL_NB_PKT_DEST_T;
 
 static void
 _hal_nb_pkt_rxEnQueue(
@@ -1103,7 +1249,6 @@ _hal_nb_pkt_init_tx_pdma(
     /* Reset Tx PDMA */
     osal_takeIsrLock(&ptr_tx_pdma->ring_lock, &irg_flags);
 
-    ptr_tx_pdma->used_idx     = 0;
     ptr_tx_pdma->free_idx     = 0;
     ptr_tx_pdma->used_desc_num = 0;
     ptr_tx_pdma->free_desc_num = HAL_NB_DFLT_TX_RING_SIZE;
@@ -1138,13 +1283,13 @@ _hal_nb_pkt_init_tx_pdma(
         if (CLX_E_OK == rc)
         {
             /* Prepare the SW-GPD ring */
-            ptr_tx_pdma->pptr_sw_gpd_ring = (HAL_NB_PDMA_DESC_T **)osal_alloc(
-                ptr_tx_pdma->ring_size * sizeof(HAL_NB_PDMA_DESC_T *));
+            ptr_tx_pdma->pptr_sw_gpd_ring = (HAL_NB_PKT_TX_SW_GPD_T **)osal_alloc(
+                ptr_tx_pdma->ring_size * sizeof(HAL_NB_PKT_TX_SW_GPD_T *));
 
             if (NULL != ptr_tx_pdma->pptr_sw_gpd_ring)
             {
                 osal_memset(ptr_tx_pdma->pptr_sw_gpd_ring, 0x0,
-                    ptr_tx_pdma->ring_size * sizeof(HAL_NB_PDMA_DESC_T *));
+                    ptr_tx_pdma->ring_size * sizeof(HAL_NB_PKT_TX_SW_GPD_T *));
             }
             else
             {
@@ -1155,13 +1300,13 @@ _hal_nb_pkt_init_tx_pdma(
             /* a temp buffer to store the 1st sw gpd for each packet to be enque
              * we cannot enque packet before release a spinlock
              */
-            ptr_tx_pdma->pptr_sw_gpd_bulk = (HAL_NB_PDMA_DESC_T **)osal_alloc(
-                ptr_tx_pdma->ring_size * sizeof(HAL_NB_PDMA_DESC_T *));
+            ptr_tx_pdma->pptr_sw_gpd_bulk = (HAL_NB_PKT_TX_SW_GPD_T **)osal_alloc(
+                ptr_tx_pdma->ring_size * sizeof(HAL_NB_PKT_TX_SW_GPD_T *));
 
             if (NULL != ptr_tx_pdma->pptr_sw_gpd_bulk)
             {
                 osal_memset(ptr_tx_pdma->pptr_sw_gpd_bulk, 0x0,
-                    ptr_tx_pdma->ring_size * sizeof(HAL_NB_PDMA_DESC_T *));
+                    ptr_tx_pdma->ring_size * sizeof(HAL_NB_PKT_TX_SW_GPD_T *));
             }
             else
             {
@@ -1263,23 +1408,597 @@ _hal_nb_pkt_rx_start(
     return (rc);
 }
 
+
+static CLX_ERROR_NO_T
+_hal_nb_pkt_waitTxDone(
+    const UI32_T                    unit,
+    const HAL_NB_PDMA_TX_CHANNEL_T  channel,
+          HAL_NB_PKT_TX_SW_GPD_T   *ptr_sw_gpd)
+{
+    CLX_ERROR_NO_T                  rc = CLX_E_OK;
+    HAL_NB_PKT_TX_CB_T             *ptr_tx_cb = HAL_NB_PKT_GET_TX_CB_PTR(unit);
+    HAL_NB_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_NB_PKT_GET_TX_PDMA_PTR(unit, channel);
+    UI32_T                          loop_cnt = 0;
+    UI32_T                          work_idx;
+    UI32_T                          pop_idx;
+
+    if (HAL_PKT_TX_WAIT_ASYNC == ptr_tx_cb->wait_mode)
+    {
+        ;
+    }
+    else if (HAL_PKT_TX_WAIT_SYNC_INTR == ptr_tx_cb->wait_mode)
+    {
+        osal_takeSemaphore(&ptr_tx_pdma->sync_intr_sema, HAL_NB_PKT_PDMA_TX_INTR_TIMEOUT);
+        /* rc = _hal_nb_pkt_invokeTxGpdCallback(unit, ptr_sw_gpd); */
+    }
+    else if (HAL_PKT_TX_WAIT_SYNC_POLL == ptr_tx_cb->wait_mode)
+    {
+        work_idx = _hal_nb_pdma_get_tx_ch_work_idx(unit,channel);
+        pop_idx = _hal_nb_pdma_get_tx_ch_pop_idx(unit,channel);
+        do
+        {
+            loop_cnt++;
+            if (0 == loop_cnt % HAL_NB_PKT_PDMA_TX_POLL_MAX_LOOP)
+            {
+                ptr_tx_cb->cnt.channel[channel].poll_timeout++;
+                rc = CLX_E_OTHERS;
+                break;
+            }
+        } while (work_idx != pop_idx);
+        
+        if (CLX_E_OK == rc)
+        {
+            ptr_tx_pdma->free_desc_num += ptr_tx_pdma->used_desc_num;
+            ptr_tx_pdma->used_desc_num  = 0;
+            /* rc = _hal_nb_pkt_invokeTxGpdCallback(unit, ptr_sw_gpd); */
+        }
+    }
+
+    return (rc);
+}
+
+CLX_ERROR_NO_T
+hal_nb_pkt_sendGpd(
+    const UI32_T                    unit,
+    const HAL_NB_PDMA_TX_CHANNEL_T  channel,
+          HAL_NB_PKT_TX_SW_GPD_T    *ptr_sw_gpd)
+{
+    CLX_ERROR_NO_T                  rc = CLX_E_OK;
+    HAL_NB_PKT_TX_CB_T             *ptr_tx_cb = HAL_NB_PKT_GET_TX_CB_PTR(unit);
+    HAL_NB_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_NB_PKT_GET_TX_PDMA_PTR(unit, channel);
+    volatile HAL_NB_PDMA_DESC_T   *ptr_tx_gpd = NULL;
+    HAL_NB_PKT_TX_SW_GPD_T         *ptr_sw_first_gpd = ptr_sw_gpd;
+    UI32_T                          work_idx = 0;
+    UI32_T                          used_gpd_num = ptr_sw_gpd->desc_num;
+    CLX_IRQ_FLAGS_T                 irq_flags;
+    HAL_PKT_DRV_CB_T            *ptr_cb = HAL_NB_PKT_GET_DRV_CB_PTR(unit);
+
+    if(ptr_cb->init_stage != HAL_PKT_INIT_DONE)
+    {
+        DIAG_PRINT(HAL_DBG_ERR,
+                        "u=%u, send Gpd failed. init_stage=%d\n", unit, ptr_cb->init_stage);
+        return CLX_E_OTHERS;
+    }
+
+    osal_takeIsrLock(&ptr_tx_pdma->ring_lock, &irq_flags);
+
+    /* If not PDMA error */
+    if (FALSE == ptr_tx_pdma->err_flag)
+    {
+        /* Make Sure descriptor is enough */
+        if (ptr_tx_pdma->free_desc_num >= used_gpd_num)
+        {
+            work_idx = _hal_nb_pdma_get_tx_ch_work_idx(unit,channel);
+            while (NULL != ptr_sw_gpd)
+            {
+                ptr_tx_gpd = HAL_NB_PKT_GET_TX_GPD_PTR(unit, channel, work_idx);
+                osal_dma_invalidateCache((void *)ptr_tx_gpd, sizeof(HAL_NB_PDMA_DESC_T));
+
+                if (1 == ptr_tx_gpd->interrupt)
+                {
+                    DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
+                                    "u=%u, txch=%u, free gpd idx out-of-sync\n",
+                                    unit, channel);
+                    rc = CLX_E_TABLE_FULL;
+                    break;
+                }
+
+                /* Fill in HW-GPD Ring */
+                osal_memcpy((void *)ptr_tx_gpd, &ptr_sw_gpd->desc, sizeof(HAL_NB_PDMA_DESC_T));
+                osal_dma_flushCache((void *)ptr_tx_gpd, sizeof(HAL_NB_PDMA_DESC_T));
+
+                /* next */
+                work_idx++;
+                work_idx %= ptr_tx_pdma->ring_size;
+                ptr_sw_gpd = ptr_sw_gpd->ptr_next;
+            }
+            _hal_nb_pdma_set_tx_ch_work_idx(unit,channel,work_idx);
+
+            if (HAL_PKT_TX_WAIT_ASYNC == ptr_tx_cb->wait_mode)
+            {
+                /* Fill 1st GPD in SW-GPD Ring */
+                ptr_tx_pdma->pptr_sw_gpd_ring[work_idx] = ptr_sw_first_gpd;
+            }
+
+            /* update Tx PDMA */
+            ptr_tx_pdma->used_desc_num += used_gpd_num;
+            ptr_tx_pdma->free_desc_num -= used_gpd_num;
+
+            _hal_nb_enable_pdma_tx_channel(unit, channel);
+            ptr_tx_cb->cnt.channel[channel].send_ok++;
+
+            _hal_nb_pkt_waitTxDone(unit, channel, ptr_sw_first_gpd);
+
+            /* reserve 1 packet buffer for each port in case that the suspension is too late */
+#define HAL_NB_PKT_KNL_TX_RING_AVBL_GPD_LOW      (HAL_NB_PORT_NUM)
+            if (ptr_tx_pdma->free_desc_num < HAL_NB_PKT_KNL_TX_RING_AVBL_GPD_LOW)
+            {
+                DIAG_PRINT(HAL_DBG_TX,
+                                "u=%u, txch=%u, tx avbl gpd < %d, suspend all netdev\n",
+                                unit, channel, HAL_NB_PKT_KNL_TX_RING_AVBL_GPD_LOW);
+                hal_pkt_suspendAllIntf(unit);
+            }
+        }
+        else
+        {
+            rc = CLX_E_TABLE_FULL;
+        }
+    }
+    else
+    {
+        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
+                        "u=%u, txch=%u, pdma hw err\n",
+                        unit, channel);
+        rc = CLX_E_OTHERS;
+    }
+
+    osal_giveIsrLock(&ptr_tx_pdma->ring_lock, &irq_flags);
+
+    return (rc);
+}
+
+
+static CLX_ERROR_NO_T
+hal_nb_pkt_prepare_descriptor(
+    const UI32_T                unit,
+    const CLX_ADDR_T            phy_addr,
+    const struct sk_buff        *ptr_skb,
+    const UI32_T                port,
+    HAL_NB_PKT_TX_SW_GPD_T     *ptr_sw_gpd,
+    HAL_NB_PP_HDR_T             *ptr_pph)
+{
+    /* fill up tx_gpd */
+    ptr_sw_gpd->desc.s_addr_hi              = CLX_ADDR_64_HI(phy_addr);
+    ptr_sw_gpd->desc.s_addr_lo              = CLX_ADDR_64_LOW(phy_addr);
+    ptr_sw_gpd->desc.size                   = ptr_skb->len;
+    ptr_sw_gpd->desc.interrupt                        = 0;
+    ptr_sw_gpd->desc.sop                           = 1; 
+    ptr_sw_gpd->desc.eop                           = 1;
+    ptr_sw_gpd->desc.sinc                           = 1;
+
+    /* fill up pp header */
+    ptr_pph->skip_ipp             = 1;
+    ptr_pph->skip_epp             = 1;
+    ptr_pph->color                = 0;   /* Green */
+    ptr_pph->tc                   = 7;   /* Max tc */
+    ptr_pph->src_idx              = 0;
+    ptr_pph->dst_idx              = port;
+
+    // TODO: fill up pph other fields
+
+    return (CLX_E_OK);
+}
+
+static void
+_hal_nb_pkt_net_dev_tx_callback(
+    const UI32_T                unit,
+    HAL_NB_PKT_TX_SW_GPD_T     *ptr_sw_gpd,
+    struct sk_buff              *ptr_skb)
+{
+    CLX_ADDR_T                  phy_addr = 0;
+    void                        *ptr_virt_addr = NULL;
+    /* unmap dma */
+    phy_addr = CLX_ADDR_32_TO_64(ptr_sw_gpd->desc.s_addr_hi, ptr_sw_gpd->desc.s_addr_lo);
+    ptr_virt_addr = osal_dma_convertPhyToVirt(phy_addr);
+
+    /* free descriptor buffer */
+    osal_dma_free(ptr_virt_addr);
+
+    /* free gpd */
+    osal_free(ptr_sw_gpd);
+}
+
 static netdev_tx_t
 _hal_nb_pkt_net_dev_tx(
     struct sk_buff              *ptr_skb,
     struct net_device           *ptr_net_dev)
 {
-    return (0);
+    struct net_device_priv      *ptr_priv = netdev_priv(ptr_net_dev);
+    HAL_NB_PKT_TX_CB_T   *ptr_tx_cb;
+    /* chip meta */
+    unsigned int                unit;
+    unsigned int                channel        = 0;
+    HAL_NB_PKT_TX_SW_GPD_T     *ptr_sw_gpd    = NULL;
+    void                        *ptr_virt_addr = NULL;
+    CLX_ADDR_T                  phy_addr       = 0x0;
+
+    if (NULL == ptr_priv)
+    {
+        /* in case that the netdev has been freed/reset somewhere */
+        DIAG_PRINT(HAL_DBG_ERR, "get netdev_priv failed\n");
+        return -EFAULT;
+    }
+
+    /* check skb */
+    if (NULL == ptr_skb)
+    {
+        ptr_priv->stats.tx_errors++;
+        return -EFAULT;
+    }
+
+    unit = ptr_priv->unit;
+
+    ptr_tx_cb = HAL_NB_PKT_GET_TX_CB_PTR(unit);
+
+    /* for warm de-init procedure, if any net intf not destroyed, it is possible
+     * that kernel still has packets to send causing segmentation fault
+     */
+    if (FALSE == ptr_tx_cb->net_tx_allowed) {
+        DIAG_PRINT(HAL_DBG_ERR, "net tx during sdk de-init\n");
+        ptr_priv->stats.tx_dropped++;
+        osal_skb_free(ptr_skb);
+        return NETDEV_TX_OK;
+    }
+
+    /* pad to 60-bytes if skb_len < 60, see: eth_skb_pad(skb) */
+    if (ptr_skb->len < ETH_ZLEN)
+    {
+        skb_pad(ptr_skb, ETH_ZLEN - ptr_skb->len);
+        skb_set_tail_pointer(ptr_skb, ETH_ZLEN);
+        ptr_skb->len = ETH_ZLEN;
+    }
+
+    /* pad 4-bytes for chip-crc */
+    skb_pad(ptr_skb, ETH_FCS_LEN);
+    skb_set_tail_pointer(ptr_skb, ETH_FCS_LEN);
+    ptr_skb->len += ETH_FCS_LEN;
+
+    /* alloc gpd */
+    ptr_sw_gpd = osal_alloc(sizeof(HAL_NB_PKT_TX_SW_GPD_T));
+    if (NULL == ptr_sw_gpd)
+    {
+        ptr_priv->stats.tx_errors++;
+        osal_skb_free(ptr_skb);
+    }
+    else
+    {
+        // copy ptr_skb->data to DMA buffer
+        ptr_virt_addr = osal_dma_alloc(ptr_skb->len + sizeof(HAL_NB_PP_HDR_T));
+        phy_addr = osal_dma_convertVirtToPhy(ptr_virt_addr);
+        memcpy(ptr_virt_addr + sizeof(HAL_NB_PP_HDR_T),ptr_skb->data,sizeof(ptr_skb->len));
+
+        if (0x0 == phy_addr)
+        {
+            DIAG_PRINT(HAL_DBG_ERR, "u=%u, txch=%u, skb dma map err\n",
+                            unit, channel);
+            ptr_priv->stats.tx_errors++;
+            osal_skb_free(ptr_skb);
+            osal_free(ptr_sw_gpd);
+        }
+        else
+        {
+            /* trans skb to gpd */
+            memset(ptr_sw_gpd, 0x0, sizeof(HAL_NB_PKT_TX_SW_GPD_T));
+            ptr_sw_gpd->callback   = (void *)_hal_nb_pkt_net_dev_tx_callback;
+            ptr_sw_gpd->ptr_cookie = (void *)ptr_skb;
+            ptr_sw_gpd->desc_num    = 1;
+            ptr_sw_gpd->ptr_next   = NULL;
+            ptr_sw_gpd->channel    = channel;
+            /* prepare gpd */
+            hal_nb_pkt_prepare_descriptor(unit, phy_addr, ptr_skb, ptr_priv->port, ptr_sw_gpd,(HAL_NB_PP_HDR_T*)ptr_virt_addr);
+
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(4,6,7)
+            ptr_net_dev->trans_start = jiffies;
+#else
+            netdev_get_tx_queue(ptr_net_dev, 0)->trans_start = jiffies;
+#endif
+            /* send gpd */
+            if (CLX_E_OK == hal_nb_pkt_sendGpd(unit, channel, ptr_sw_gpd))
+            {
+                ptr_priv->stats.tx_packets++;
+                ptr_priv->stats.tx_bytes += ptr_skb->len;
+            }
+            else
+            {
+                ptr_priv->stats.tx_fifo_errors++;   /* to record the extreme cases where packets are dropped */
+                ptr_priv->stats.tx_dropped++;
+
+                osal_skb_free(ptr_skb);
+                osal_free(ptr_sw_gpd);
+            }
+        }
+    }
+
+    return NETDEV_TX_OK;
 }
 
-static ssize_t
-_hal_nb_pkt_dev_tx(
-    struct file             *file,
-    const char __user       *buf,
-    size_t                  count,
-    loff_t                  *pos)
+static void
+_hal_nb_pkt_dev_tx_callback(
+    const UI32_T                    unit,
+    HAL_NB_PKT_TX_SW_GPD_T          *ptr_sw_gpd,
+    HAL_NB_PKT_TX_SW_GPD_T          *ptr_sw_gpd_usr)
 {
-    return (0);
+    UI32_T                          channel = ptr_sw_gpd->channel;
+    HAL_NB_PKT_TX_CB_T             *ptr_tx_cb = HAL_NB_PKT_GET_TX_CB_PTR(unit);
+
+    while (0 != _hal_nb_pkt_enqueue(&ptr_tx_cb->sw_queue, ptr_sw_gpd))
+    {
+        ptr_tx_cb->cnt.channel[channel].enque_retry++;
+        HAL_NB_PKT_TX_ENQUE_RETRY_SLEEP();
+    }
+    ptr_tx_cb->cnt.channel[channel].enque_ok++;
+
+    osal_triggerEvent(&ptr_tx_cb->sync_sema);
+    ptr_tx_cb->cnt.channel[channel].trig_event++;
 }
+
+
+ssize_t
+_hal_nb_pkt_dev_tx(
+    struct file                     *file,
+    const char __user               *buf,
+    size_t                          count,
+    loff_t                          *pos)
+{
+    int                             ret = 0;
+    int                             idx = 0;
+    unsigned int                    unit = 0;
+    unsigned int                    channel = 0;
+    HAL_NB_PKT_IOCTL_TX_COOKIE_T    tx_cookie;
+    HAL_NB_PKT_IOCTL_TX_GPD_T       ioctl_gpd;
+    HAL_NB_PKT_TX_SW_GPD_T          *ptr_sw_gpd_knl = NULL;
+    HAL_NB_PKT_TX_SW_GPD_T          *ptr_first_sw_gpd_knl = NULL;
+
+    /* copy the tx-cookie */
+    osal_io_copyFromUser(&tx_cookie, (void *)buf, sizeof(HAL_NB_PKT_IOCTL_TX_COOKIE_T));
+
+    unit    = tx_cookie.unit;
+    channel = tx_cookie.channel;
+
+    ptr_sw_gpd_knl = osal_alloc(sizeof(HAL_NB_PKT_TX_SW_GPD_T));
+    ptr_first_sw_gpd_knl = ptr_sw_gpd_knl;
+
+    /* create SW GPD based on the content of each IOCTL GPD */
+    while (1)
+    {
+        osal_io_copyFromUser(&ioctl_gpd,
+                             ((void *)((CLX_HUGE_T)tx_cookie.ioctl_gpd_addr))
+                                 +idx*sizeof(HAL_NB_PKT_IOCTL_TX_GPD_T),
+                             sizeof(HAL_NB_PKT_IOCTL_TX_GPD_T));
+
+        ptr_sw_gpd_knl->channel = ioctl_gpd.channel;
+        ptr_sw_gpd_knl->desc_num = ioctl_gpd.gpd_num;
+        ptr_sw_gpd_knl->ptr_cookie = (void *)ioctl_gpd.cookie;
+
+        /* directly copy user's HW GPD */
+        osal_io_copyFromUser(&ptr_sw_gpd_knl->desc,
+                             (void *)((CLX_HUGE_T)ioctl_gpd.hw_gpd_addr),
+                             sizeof(HAL_NB_PDMA_DESC_T));
+
+        /* replace the callback */
+        ptr_sw_gpd_knl->callback = (void *)_hal_nb_pkt_dev_tx_callback;
+
+        /* save the first SW GPD address from userspace since
+         * we have replaced the original callback
+         */
+        ptr_sw_gpd_knl->ptr_cookie = (void *)ioctl_gpd.sw_gpd_addr;
+
+        if (1 == ptr_sw_gpd_knl->desc.eop)
+        {
+            ptr_sw_gpd_knl->ptr_next = NULL;
+            break;
+        }
+        else
+        {
+            ptr_sw_gpd_knl->ptr_next = (HAL_NB_PKT_TX_SW_GPD_T *)osal_alloc(
+                                            sizeof(HAL_NB_PKT_TX_SW_GPD_T));
+            ptr_sw_gpd_knl = ptr_sw_gpd_knl->ptr_next;
+            idx++;
+        }
+    }
+
+    ret = hal_nb_pkt_sendGpd(unit, channel, ptr_first_sw_gpd_knl);
+    if (CLX_E_OK != ret)
+    {
+        _hal_nb_pkt_freeTxGpdList(unit, ptr_first_sw_gpd_knl);
+    }
+
+    /* return 0 if success */
+    return (ret);
+}
+
+
+static CLX_ERROR_NO_T
+_hal_nb_pkt_schedRxDeQueue(
+    const UI32_T                    unit,
+    void                            *ptr_data)
+{
+    HAL_PKT_IOCTL_RX_COOKIE_T             *ptr_cookie = ptr_data;
+    HAL_PKT_IOCTL_RX_COOKIE_T             ioctl_data;
+    HAL_NB_PKT_IOCTL_RX_GPD_T      ioctl_gpd;
+    HAL_NB_PKT_RX_CB_T             *ptr_rx_cb = HAL_NB_PKT_GET_RX_CB_PTR(unit);
+    HAL_NB_PKT_RX_SW_DESC_T         *ptr_sw_gpd_knl = NULL;
+    HAL_NB_PKT_RX_SW_DESC_T         *ptr_sw_first_gpd_knl = NULL;
+    UI32_T                                que_cnt = 0;
+    UI32_T                                queue   = 0;
+    UI32_T                                idx     = 0;
+    UI32_T                                gpd_idx = 0;
+    /* copy Rx sw_gpd */
+    volatile HAL_NB_PDMA_DESC_T   *ptr_desc = NULL;
+    void                            *ptr_virt_addr = NULL;
+    CLX_ADDR_T                      phy_addr = 0;
+    UI32_T                          buf_len = 0;
+    CLX_ERROR_NO_T                  rc = CLX_E_OK;
+
+    /* normal process */
+    if (TRUE == ptr_rx_cb->running)
+    {
+        /* get queue and count */
+        for (idx = 0; idx < HAL_NB_PKT_RX_QUEUE_NUM; idx++)
+        {
+            /* to gurantee the opportunity where each queue can be handler */
+            queue = ((ptr_rx_cb->deque_idx + idx) % HAL_NB_PKT_RX_QUEUE_NUM);
+            _hal_nb_pkt_get_queue_count(&ptr_rx_cb->sw_queue[queue], &que_cnt);
+            if (que_cnt > 0)
+            {
+                ptr_rx_cb->deque_idx = ((queue + 1) % HAL_NB_PKT_RX_QUEUE_NUM);
+                break;
+            }
+        }
+
+        /* If all of the queues are empty, wait rxTask event */
+        if (0 == que_cnt)
+        {
+            osal_waitEvent(&ptr_rx_cb->sync_sema);
+
+            ptr_rx_cb->cnt.wait_event++;
+
+            /* re-get queue and count */
+            for (queue = 0; queue < HAL_NB_PKT_RX_QUEUE_NUM; queue++)
+            {
+                _hal_nb_pkt_get_queue_count(&ptr_rx_cb->sw_queue[queue], &que_cnt);
+                if (que_cnt > 0)
+                {
+                    ptr_rx_cb->deque_idx = ((queue + 1) % HAL_NB_PKT_RX_QUEUE_NUM);
+                    break;
+                }
+            }
+        }
+
+        /* deque */
+        if ((que_cnt > 0) && (queue < HAL_NB_PKT_RX_QUEUE_NUM))
+        {
+            rc = _hal_nb_pkt_dequeue(&ptr_rx_cb->sw_queue[queue], (void **)&ptr_sw_gpd_knl);
+            if (CLX_E_OK == rc)
+            {
+                ptr_rx_cb->cnt.channel[queue].deque_ok++;
+                ptr_sw_first_gpd_knl = ptr_sw_gpd_knl;
+
+                osal_io_copyFromUser(&ioctl_data, ptr_cookie, sizeof(HAL_PKT_IOCTL_RX_COOKIE_T));
+
+                while (NULL != ptr_sw_gpd_knl)
+                {
+                    /* get the IOCTL GPD from user */
+                    osal_io_copyFromUser(&ioctl_gpd,
+                                         ((void *)((CLX_HUGE_T)ioctl_data.ioctl_gpd_addr))
+                                             + gpd_idx*sizeof(HAL_NB_PKT_IOCTL_RX_GPD_T),
+                                         sizeof(HAL_NB_PKT_IOCTL_RX_GPD_T));
+
+                    /* get knl buf addr */
+                    ptr_desc = &ptr_sw_gpd_knl->desc;
+                    phy_addr = CLX_ADDR_32_TO_64(ptr_desc->d_addr_hi, ptr_desc->d_addr_lo);
+                    ptr_virt_addr = osal_dma_convertPhyToVirt(phy_addr);
+
+                    buf_len = ptr_desc->size;
+
+                    /* overwrite whole rx_gpd to user
+                     * the user should re-assign the correct value to data_buf_addr_hi, data_buf_addr_low
+                     * after this IOCTL returns
+                     */
+                    osal_io_copyToUser((void *)((CLX_HUGE_T)ioctl_gpd.hw_gpd_addr),
+                                       &ptr_sw_gpd_knl->desc,
+                                       sizeof(HAL_NB_PDMA_DESC_T));
+                    /* copy buf */
+                    /* DMA buf address allocated by the user is store in ptr_ioctl_data->gpd[idx].cookie */
+                    osal_io_copyToUser((void *)((CLX_HUGE_T)ioctl_gpd.dma_buf_addr),
+                                       ptr_virt_addr, buf_len);
+
+                    /* next */
+                    ptr_sw_gpd_knl = ptr_sw_gpd_knl->ptr_next;
+                    gpd_idx++;
+                }
+
+                /* Must free kernel sw_gpd */
+                _hal_nb_pkt_freeRxGpdList(unit, ptr_sw_first_gpd_knl, TRUE);
+            }
+            else
+            {
+                ptr_rx_cb->cnt.channel[queue].deque_fail++;
+            }
+        }
+        else
+        {
+            /* it means that all queue's are flush -> rx stop flow */
+            rc = CLX_E_OTHERS;
+        }
+    }
+
+    return (rc);
+}
+
+
+static CLX_ERROR_NO_T
+_hal_nb_pkt_strictTxDeQueue(
+    const UI32_T                    unit,
+    void                            *ptr_data)
+{
+    HAL_NB_PKT_IOCTL_TX_COOKIE_T   *ptr_cookie = ptr_data;
+    CLX_ERROR_NO_T                  rc = CLX_E_OK;
+    HAL_NB_PKT_TX_CB_T             *ptr_tx_cb = HAL_NB_PKT_GET_TX_CB_PTR(unit);
+    HAL_NB_PKT_TX_SW_GPD_T         *ptr_sw_gpd = NULL;
+    CLX_ADDR_T                      sw_gpd_addr;
+    UI32_T                          que_cnt = 0;
+
+    /* get queue count */
+    _hal_nb_pkt_get_queue_count(&ptr_tx_cb->sw_queue, &que_cnt);
+
+    /* wait txTask event */
+    if (0 == que_cnt)
+    {
+        osal_waitEvent(&ptr_tx_cb->sync_sema);
+        if (FALSE == ptr_tx_cb->running)
+        {
+            return (CLX_E_OTHERS); /* deinit */
+        }
+
+        ptr_tx_cb->cnt.wait_event++;
+
+        /* re-get queue count */
+        _hal_nb_pkt_get_queue_count(&ptr_tx_cb->sw_queue, &que_cnt);
+    }
+
+    /* deque */
+    if (que_cnt > 0)
+    {
+        rc = _hal_nb_pkt_dequeue(&ptr_tx_cb->sw_queue, (void **)&ptr_sw_gpd);
+        if (CLX_E_OK == rc)
+        {
+            ptr_tx_cb->cnt.deque_ok++;
+
+            sw_gpd_addr = (CLX_ADDR_T)ptr_sw_gpd->ptr_cookie;
+
+            /* Give the address of pre-saved SW GPD back to userspace */
+            osal_io_copyToUser(&ptr_cookie->done_sw_gpd_addr,
+                               &sw_gpd_addr,
+                               sizeof(CLX_ADDR_T));
+
+            /* free kernel sw_gpd */
+            _hal_nb_pkt_freeTxGpdList(unit, ptr_sw_gpd);
+        }
+        else
+        {
+            ptr_tx_cb->cnt.deque_fail++;
+        }
+    }
+    else
+    {
+        /* It may happen at last gpd, return error and do not invoke callback. */
+        rc = CLX_E_OTHERS;
+    }
+
+    return (rc);
+}
+
 static CLX_ERROR_NO_T
 hal_nb_pkt_lockRxChannelAll(
     const UI32_T                    unit)
@@ -1365,7 +2084,21 @@ hal_nb_register_netif_ioctl(void)
     return rc;
 }
 
-
+/*
+    SDK Tx pkt flow
+    1.  SDK write clx_dev_fd to send pkt
+    2.  ptr_cb->pkt_dev_tx
+    2.1 register tx_done callback
+    2.2 send pkt:set work_idx
+    3.  _hal_nb_pkt_handleTxDoneTask
+    3.1 enqueue tx_bulk
+    4.  SDK free descriptor buffer via blocking-ioctl cmd:OSAL_MDC_IOCTL_TYPE_NETIF_WAIT_TX_FREE
+    4.1 dequeue tx_bulk in _hal_nb_pkt_strictTxDeQueue
+    4.2 SDK free descriptor buffer
+*/
+/*
+    SDK Rx pkt flow
+*/
 void hal_nb_register_drv_cb(
     const UI32_T unit)
 {

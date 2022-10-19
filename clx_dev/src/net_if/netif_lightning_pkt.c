@@ -2585,7 +2585,7 @@ hal_lightning_pkt_sendGpd(
                 DIAG_PRINT(HAL_DBG_TX,
                                 "u=%u, txch=%u, tx avbl gpd < %d, suspend all netdev\n",
                                 unit, channel, HAL_LIGHTNING_PKT_KNL_TX_RING_AVBL_GPD_LOW);
-                _hal_pkt_suspendAllIntf(unit);
+                hal_pkt_suspendAllIntf(unit);
             }
         }
         else
@@ -3603,7 +3603,7 @@ _hal_lightning_pkt_handleTxDoneTask(
         }
 
         /* let the netdev resume Tx */
-        _hal_pkt_resumeAllIntf(unit);
+        hal_pkt_resumeAllIntf(unit);
 
         /* update ISR and counter */
         ptr_tx_cb->cnt.channel[channel].tx_done++;
@@ -3847,7 +3847,7 @@ _hal_lightning_pkt_net_dev_tx_callback(
     /* free gpd */
     osal_free(ptr_sw_gpd);
 }
-netdev_tx_t
+static netdev_tx_t
 _hal_lightning_pkt_net_dev_tx(
     struct sk_buff              *ptr_skb,
     struct net_device           *ptr_net_dev)

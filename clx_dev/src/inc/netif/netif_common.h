@@ -270,15 +270,15 @@ hal_pkt_dev_tx(
     loff_t                              *pos);
 
 CLX_ERROR_NO_T
-_hal_pkt_resumeAllIntf(
+hal_pkt_resumeAllIntf(
     const UI32_T                        unit);
 
 CLX_ERROR_NO_T
-_hal_pkt_suspendAllIntf(
+hal_pkt_suspendAllIntf(
     const UI32_T                        unit);
 
 CLX_ERROR_NO_T
-_hal_pkt_stopAllIntf(
+hal_pkt_stopAllIntf(
     const UI32_T                        unit);
 
 CLX_ERROR_NO_T
