@@ -2594,7 +2594,7 @@ hal_dawn_pkt_sendGpd(
                 DIAG_PRINT(HAL_DBG_TX,
                                 "u=%u, txch=%u, tx avbl gpd < %d, suspend all netdev\n",
                                 unit, channel, HAL_DAWN_PKT_KNL_TX_RING_AVBL_GPD_LOW);
-                _hal_pkt_suspendAllIntf(unit);
+                hal_pkt_suspendAllIntf(unit);
             }
         }
         else
@@ -3612,7 +3612,7 @@ _hal_dawn_pkt_handleTxDoneTask(
         }
 
         /* let the netdev resume Tx */
-        _hal_pkt_resumeAllIntf(unit);
+        hal_pkt_resumeAllIntf(unit);
 
         /* update ISR and counter */
         ptr_tx_cb->cnt.channel[channel].tx_done++;

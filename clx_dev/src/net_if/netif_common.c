@@ -1365,7 +1365,7 @@ _hal_pkt_getNetlink(
 }
 
 CLX_ERROR_NO_T
-_hal_pkt_resumeAllIntf(
+hal_pkt_resumeAllIntf(
     const UI32_T                        unit)
 {
     struct net_device                   *ptr_net_dev = NULL;
@@ -1388,7 +1388,7 @@ _hal_pkt_resumeAllIntf(
 }
 
 CLX_ERROR_NO_T
-_hal_pkt_suspendAllIntf(
+hal_pkt_suspendAllIntf(
     const UI32_T                        unit)
 {
     struct net_device                   *ptr_net_dev = NULL;
@@ -1408,7 +1408,7 @@ _hal_pkt_suspendAllIntf(
 }
 
 CLX_ERROR_NO_T
-_hal_pkt_stopAllIntf(
+hal_pkt_stopAllIntf(
     const UI32_T                        unit)
 {
     struct net_device                   *ptr_net_dev = NULL;
@@ -1509,7 +1509,7 @@ hal_pkt_initTask(
     /* For some specail case in warmboot, the netifs are not destroyed during sdk deinit
      * but stopped, here we need to resume them with the original carrier status
      */
-    _hal_pkt_resumeAllIntf(unit);
+    hal_pkt_resumeAllIntf(unit);
 
     return (rc);
 }
@@ -1592,7 +1592,7 @@ hal_pkt_deinitTask(
     HAL_PKT_DRV_CB_T        *ptr_cb    = HAL_PKT_GET_DRV_CB_PTR(unit);
 
     /* In case that some undestroyed net intf keep Tx after task deinit */
-    _hal_pkt_stopAllIntf(unit);
+    hal_pkt_stopAllIntf(unit);
 
     /* Need to stop Rx before de-init Task */
     if(ptr_cb->init_stage == HAL_PKT_INIT_RX_START)
@@ -1799,7 +1799,7 @@ hal_netif_pkt_exit(
     const UI32_T            unit)
 {
     /* 1st. Stop all netdev (if any) to prevent kernel from Tx new packets */
-    _hal_pkt_stopAllIntf(unit);
+    hal_pkt_stopAllIntf(unit);
 
     /* 2nd. Stop Rx HW DMA and free all the DMA buffer hooked on the ring */
     hal_pkt_rx_stop(unit);

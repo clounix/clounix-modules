@@ -84,6 +84,7 @@ typedef enum {
 0x10 ----------------|------------------------------------------------|
 
 */
+#if defined(CLX_EN_LITTLE_ENDIAN)
 typedef struct
 {
     UI32_T  s_addr_lo           : 32;   
@@ -103,7 +104,29 @@ typedef struct
     UI32_T  reserve             :  5;
 
 } HAL_NB_PDMA_DESC_T;
+#elif defined(CLX_EN_BIG_ENDIAN)
+typedef struct
+{
+    /*status[127:112]*/
+    UI32_T  reserve             :  5;
+    UI32_T  xfer_size           :  5; // do not care
+    UI32_T  dinc                :  1;
+    UI32_T  sinc                :  1;
+    UI32_T  err                 :  1;
+    UI32_T  eop                 :  1;
+    UI32_T  sop                 :  1;
+    UI32_T  interrupt           :  1;
 
+    UI32_T  d_addr_lo           : 32;
+    UI32_T  d_addr_hi           : 16;
+    UI32_T  size                : 16;
+    UI32_T  s_addr_lo           : 32;   
+    UI32_T  s_addr_hi           : 16;   
+
+} HAL_NB_PDMA_DESC_T;
+#else
+#error "Host PDMA endian is not defined\n"
+#endif
 
 /*PPH struct*/
 #if defined(CLX_EN_LITTLE_ENDIAN)
@@ -232,10 +255,16 @@ typedef enum
 
 } HAL_NB_PDMA_TX_CHANNEL_T;
 
+#define HAL_NB_PORT_NUM                           (256)
+
 #define HAL_NB_PKT_RX_QUEUE_NUM             (HAL_NB_PDMA_RX_CHANNEL_LAST)
 #define HAL_NB_DFLT_RX_RING_SIZE            (HAL_DFLT_CFG_PKT_RX_GPD_NUM)
 #define HAL_NB_DFLT_TX_RING_SIZE            (HAL_DFLT_CFG_PKT_TX_GPD_NUM)
 #define HAL_NB_PKT_TX_WAIT_MODE             (HAL_PKT_TX_WAIT_ASYNC)
+
+#define HAL_NB_PKT_PDMA_MAX_GPD_PER_PKT     (10)   /* <= 256   */
+#define HAL_NB_PKT_PDMA_TX_INTR_TIMEOUT     (10 * 1000) /* us */
+#define HAL_NB_PKT_PDMA_TX_POLL_MAX_LOOP    (10 * 1000) /* int */
 
 typedef struct
 {
@@ -244,6 +273,54 @@ typedef struct
 
 } HAL_NB_PKT_ISR_COOKIE_T;
 
+
+
+typedef void
+(*HAL_NB_PKT_TX_FUNC_T)(
+    const UI32_T                        unit,
+    const void                          *ptr_sw_gpd,    /* SW-GPD to be processed  */
+    void                                *ptr_coockie);  /* Private data of SDK     */
+
+
+typedef struct
+{
+    CLX_ADDR_T                      callback;       /* (unit, ptr_sw_gpd, ptr_cookie) */
+    CLX_ADDR_T                      cookie;         /* Pointer of CLX_PKT_TX_PKT_T    */
+    UI32_T                          channel;
+    UI32_T                          gpd_num;
+    CLX_ADDR_T                      hw_gpd_addr;
+    CLX_ADDR_T                      sw_gpd_addr;
+
+} HAL_NB_PKT_IOCTL_TX_GPD_T;
+
+typedef struct
+{
+    UI32_T                          unit;
+    UI32_T                          channel;            /* sendGpd[In]      */
+    CLX_ADDR_T                      ioctl_gpd_addr;     /* sendGpd[In]      */
+    CLX_ADDR_T                      done_sw_gpd_addr;   /* waitTxFree[Out]  */
+
+} HAL_NB_PKT_IOCTL_TX_COOKIE_T;
+
+typedef struct
+{
+    BOOL_T                          rx_complete;        /* FALSE when PDMA error occurs                 */
+    CLX_ADDR_T                      hw_gpd_addr;        /* Pointer to HW GPD in user's SW GPD struct    */
+    CLX_ADDR_T                      dma_buf_addr;       /* Pointer to DMA buffer allocated by the user (virtual) */
+
+} HAL_NB_PKT_IOCTL_RX_GPD_T;
+
+typedef struct HAL_NB_PKT_TX_SW_GPD_S
+{
+    HAL_NB_PKT_TX_FUNC_T                callback;       /* (unit, ptr_sw_gpd, ptr_cookie) */
+    void                                *ptr_cookie;    /* Pointer of CLX_PKT_TX_PKT_T    */
+    HAL_NB_PDMA_DESC_T                  desc;
+    UI32_T                              desc_num;
+    struct HAL_NB_PKT_TX_SW_GPD_S       *ptr_next;
+
+    UI32_T                              channel;        /* For counter */
+
+} HAL_NB_PKT_TX_SW_GPD_T;
 
 typedef struct
 {
@@ -255,8 +332,7 @@ typedef struct
      */
     CLX_ISRLOCK_ID_T                ring_lock;
 
-    UI32_T                          used_idx; /* SW send index = LAMP simulate the Tx HW index */
-    UI32_T                          free_idx; /* SW free index */
+    UI32_T                          free_idx;
     UI32_T                          used_desc_num;
     UI32_T                          free_desc_num;
 
@@ -266,16 +342,42 @@ typedef struct
     BOOL_T                          err_flag;
 
     /* ASYNC */
-    HAL_NB_PDMA_DESC_T              **pptr_sw_gpd_ring;
-    HAL_NB_PDMA_DESC_T              **pptr_sw_gpd_bulk; /* temporary store packets to be enque */
+    HAL_NB_PKT_TX_SW_GPD_T              **pptr_sw_gpd_ring;
+    HAL_NB_PKT_TX_SW_GPD_T              **pptr_sw_gpd_bulk; /* temporary store packets to be enque */
 
     /* SYNC_INTR */
     CLX_SEMAPHORE_ID_T              sync_intr_sema;
 
 } HAL_NB_PKT_TX_PDMA_T;
 
+
 typedef struct
 {
+    UI32_T                              send_ok;
+    UI32_T                              gpd_empty;
+    UI32_T                              poll_timeout;
+
+    /* queue */
+    UI32_T                              enque_ok;
+    UI32_T                              enque_retry;
+
+    /* event */
+    UI32_T                              trig_event;
+
+    /* normal interrupt */
+    UI32_T                              tx_done;
+
+    /* TODO:abnormal interrupt */
+    
+    /* others */
+    UI32_T                              err_recover;
+    UI32_T                              error;
+
+} HAL_NB_PKT_TX_CHANNEL_CNT_T;
+
+typedef struct
+{
+    HAL_NB_PKT_TX_CHANNEL_CNT_T         channel[HAL_NB_PDMA_TX_CHANNEL_LAST];
     UI32_T                              invoke_gpd_callback;
     UI32_T                              no_memory;
 
