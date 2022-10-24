@@ -38,7 +38,7 @@
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
 #include <linux/sched/signal.h>
 #endif
-#include <netif/netif_osal.h>
+#include <netif/common/netif_osal.h>
 
 /* ----------------------------------------------------------------------------------- macro value */
 #define OSAL_US_PER_SECOND      (1000000)   /* macro second per second      */
@@ -612,6 +612,10 @@ osal_dma_alloc(
     dma_addr_t              phy_addr = 0x0;
 
     ptr_dma_node = dma_alloc_coherent(ptr_dev, sizeof(linux_dma_t) + size, &phy_addr, GFP_ATOMIC);
+    if (ptr_dma_node == NULL)
+    {
+        return NULL;
+    }
     ptr_dma_node->size = sizeof(linux_dma_t) + size;
     ptr_dma_node->phy_addr = phy_addr;
 

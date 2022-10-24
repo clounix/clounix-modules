@@ -14,7 +14,7 @@
  * version 2 (GPLv2) along with this source code.
  */
 
-/* FILE NAME:  hal_lightning_pkt_knl.c
+/* FILE NAME:  hal_lt_dawn_pkt_knl.c
  * PURPOSE:
  *      To provide Linux kernel for PDMA TX/RX control.
  *
@@ -52,32 +52,33 @@
 #include <linux/ipv6.h>
 
 /* netif */
-#include <netif/netif_osal.h>
-#include <netif/netif_perf.h>
-#include <netif/netif_nl.h>
+#include <netif/common/netif_osal.h>
+#include <netif/common/netif_perf.h>
+#include <netif/common/netif_nl.h>
 
-#include <netif/netif_lightning_pkt.h>
-#include <netif/netif_common.h>
+#include <netif/light/dawn/netif_lt_dawn_pkt.h>
+#include <netif/netif_knl.h>
 
 /* clx_sdk */
-#include <hal/common/hal_dflt.h>
+
 
 /*****************************************************************************
  * CHIP DEPENDENT VARIABLES
  *****************************************************************************
  */
 /* Interrupt */
-#define HAL_LIGHTNING_PKT_ERR_REG(__unit__)                   (_hal_lightning_pkt_intr_vec[0].intr_reg)
-#define HAL_LIGHTNING_PKT_TCH_REG(__unit__, __channel__)      (_hal_lightning_pkt_intr_vec[1 + (__channel__)].intr_reg)
-#define HAL_LIGHTNING_PKT_RCH_REG(__unit__, __channel__)      (_hal_lightning_pkt_intr_vec[5 + (__channel__)].intr_reg)
+#define HAL_LT_DAWN_PKT_ERR_REG(__unit__)                   (_hal_lt_dawn_pkt_intr_vec[0].intr_reg)
+#define HAL_LT_DAWN_PKT_TCH_REG(__unit__, __channel__)      (_hal_lt_dawn_pkt_intr_vec[1 + (__channel__)].intr_reg)
+#define HAL_LT_DAWN_PKT_RCH_REG(__unit__, __channel__)      (_hal_lt_dawn_pkt_intr_vec[5 + (__channel__)].intr_reg)
 
-#define HAL_LIGHTNING_PKT_ERR_EVENT(__unit__)                 (&_hal_lightning_pkt_intr_vec[0].intr_event)
-#define HAL_LIGHTNING_PKT_TCH_EVENT(__unit__, __channel__)    (&_hal_lightning_pkt_intr_vec[1 + (__channel__)].intr_event)
-#define HAL_LIGHTNING_PKT_RCH_EVENT(__unit__, __channel__)    (&_hal_lightning_pkt_intr_vec[5 + (__channel__)].intr_event)
+#define HAL_LT_DAWN_PKT_ERR_EVENT(__unit__)                 (&_hal_lt_dawn_pkt_intr_vec[0].intr_event)
+#define HAL_LT_DAWN_PKT_TCH_EVENT(__unit__, __channel__)    (&_hal_lt_dawn_pkt_intr_vec[1 + (__channel__)].intr_event)
+#define HAL_LT_DAWN_PKT_RCH_EVENT(__unit__, __channel__)    (&_hal_lt_dawn_pkt_intr_vec[5 + (__channel__)].intr_event)
 
-#define HAL_LIGHTNING_PKT_ERR_CNT(__unit__)                   (_hal_lightning_pkt_intr_vec[0].intr_cnt)
-#define HAL_LIGHTNING_PKT_TCH_CNT(__unit__, __channel__)      (_hal_lightning_pkt_intr_vec[1 + (__channel__)].intr_cnt)
-#define HAL_LIGHTNING_PKT_RCH_CNT(__unit__, __channel__)      (_hal_lightning_pkt_intr_vec[5 + (__channel__)].intr_cnt)
+#define HAL_LT_DAWN_PKT_ERR_CNT(__unit__)                   (_hal_lt_dawn_pkt_intr_vec[0].intr_cnt)
+#define HAL_LT_DAWN_PKT_TCH_CNT(__unit__, __channel__)      (_hal_lt_dawn_pkt_intr_vec[1 + (__channel__)].intr_cnt)
+#define HAL_LT_DAWN_PKT_RCH_CNT(__unit__, __channel__)      (_hal_lt_dawn_pkt_intr_vec[5 + (__channel__)].intr_cnt)
+
 
 typedef struct
 {
@@ -85,10 +86,10 @@ typedef struct
     CLX_SEMAPHORE_ID_T                  intr_event;
     UI32_T                              intr_cnt;
 
-} HAL_LIGHTNING_PKT_INTR_VEC_T;
+} HAL_LT_DAWN_PKT_INTR_VEC_T;
 
 
-static HAL_LIGHTNING_PKT_INTR_VEC_T           _hal_lightning_pkt_intr_vec[] =
+static HAL_LT_DAWN_PKT_INTR_VEC_T           _hal_lt_dawn_pkt_intr_vec[] =
 {
     { /* 0: PDMA_ERR */ 1UL << 0,  0x0, 0 },
     { /* 1: TX_CH0   */ 1UL << 28, 0x0, 0 },
@@ -106,21 +107,21 @@ static HAL_LIGHTNING_PKT_INTR_VEC_T           _hal_lightning_pkt_intr_vec[] =
  *****************************************************************************
  */
 /* Sleep Time Definitions */
-#define HAL_LIGHTNING_PKT_TX_DEQUE_SLEEP()            osal_sleepThread(1000) /* us */
-#define HAL_LIGHTNING_PKT_RX_DEQUE_SLEEP()            osal_sleepThread(1000) /* us */
-#define HAL_LIGHTNING_PKT_TX_ENQUE_RETRY_SLEEP()      osal_sleepThread(1000) /* us */
-#define HAL_LIGHTNING_PKT_RX_ENQUE_RETRY_SLEEP()      osal_sleepThread(1000) /* us */
-#define HAL_LIGHTNING_PKT_ALLOC_MEM_RETRY_SLEEP()     osal_sleepThread(1000) /* us */
+#define HAL_LT_DAWN_PKT_TX_DEQUE_SLEEP()            osal_sleepThread(1000) /* us */
+#define HAL_LT_DAWN_PKT_RX_DEQUE_SLEEP()            osal_sleepThread(1000) /* us */
+#define HAL_LT_DAWN_PKT_TX_ENQUE_RETRY_SLEEP()      osal_sleepThread(1000) /* us */
+#define HAL_LT_DAWN_PKT_RX_ENQUE_RETRY_SLEEP()      osal_sleepThread(1000) /* us */
+#define HAL_LT_DAWN_PKT_ALLOC_MEM_RETRY_SLEEP()     osal_sleepThread(1000) /* us */
 
 /* Network Device Definitions */
 /* In case that the watchdog alarm during warm-boot if intf isn't killed */
-#define HAL_LIGHTNING_PKT_TX_TIMEOUT                  (30*HZ)
-#define HAL_LIGHTNING_PKT_MAX_ETH_FRAME_SIZE          (HAL_LIGHTNING_PKT_RX_MAX_LEN)
-#define HAL_LIGHTNING_PKT_MAX_PORT_NUM                (HAL_LIGHTNING_PORT_NUM + 1) /* CPU port */
+#define HAL_LT_DAWN_PKT_TX_TIMEOUT                  (30*HZ)
+#define HAL_LT_DAWN_PKT_MAX_ETH_FRAME_SIZE          (HAL_LT_DAWN_PKT_RX_MAX_LEN)
+#define HAL_LT_DAWN_PKT_MAX_PORT_NUM                (HAL_LT_DAWN_PORT_NUM + 1) /* CPU port */
 
-#define HAL_LIGHTNING_PKT_NET_PROFILE_NUM_MAX         (256)
+#define HAL_LT_DAWN_PKT_NET_PROFILE_NUM_MAX         (256)
 
-extern HAL_PKT_NETIF_PORT_DB_T              _hal_pkt_port_db[HAL_PKT_MAX_PORT_NUM];
+extern HAL_PKT_NETIF_PORT_DB_T              _hal_pkt_port_db[CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM][HAL_PKT_MAX_PORT_NUM];
 static CLX_THREAD_ID_T                      err_task_id;
 
 /*****************************************************************************
@@ -133,19 +134,19 @@ static CLX_THREAD_ID_T                      err_task_id;
  *****************************************************************************
  */
 /*---------------------------------------------------------------------------*/
-#define HAL_LIGHTNING_PKT_GET_DRV_CB_PTR(unit)                (&_hal_pkt_drv_cb[unit])
+#define HAL_LT_DAWN_PKT_GET_DRV_CB_PTR(unit)                (&_hal_pkt_drv_cb[unit])
 /*---------------------------------------------------------------------------*/
-#define HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit)                 (&_hal_lightning_pkt_tx_cb[unit])
-#define HAL_LIGHTNING_PKT_GET_TX_PDMA_PTR(unit, channel)      (&_hal_lightning_pkt_tx_cb[unit].pdma[channel])
-#define HAL_LIGHTNING_PKT_GET_TX_GPD_PTR(unit, channel, gpd)  (&_hal_lightning_pkt_tx_cb[unit].pdma[channel].ptr_gpd_align_start_addr[gpd])
+#define HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit)                 (&_hal_lt_dawn_pkt_tx_cb[unit])
+#define HAL_LT_DAWN_PKT_GET_TX_PDMA_PTR(unit, channel)      (&_hal_lt_dawn_pkt_tx_cb[unit].pdma[channel])
+#define HAL_LT_DAWN_PKT_GET_TX_GPD_PTR(unit, channel, gpd)  (&_hal_lt_dawn_pkt_tx_cb[unit].pdma[channel].ptr_gpd_align_start_addr[gpd])
 /*---------------------------------------------------------------------------*/
-#define HAL_LIGHTNING_PKT_GET_RX_CB_PTR(unit)                 (&_hal_lightning_pkt_rx_cb[unit])
-#define HAL_LIGHTNING_PKT_GET_RX_PDMA_PTR(unit, channel)      (&_hal_lightning_pkt_rx_cb[unit].pdma[channel])
-#define HAL_LIGHTNING_PKT_GET_RX_GPD_PTR(unit, channel, gpd)  (&_hal_lightning_pkt_rx_cb[unit].pdma[channel].ptr_gpd_align_start_addr[gpd])
+#define HAL_LT_DAWN_PKT_GET_RX_CB_PTR(unit)                 (&_hal_lt_dawn_pkt_rx_cb[unit])
+#define HAL_LT_DAWN_PKT_GET_RX_PDMA_PTR(unit, channel)      (&_hal_lt_dawn_pkt_rx_cb[unit].pdma[channel])
+#define HAL_LT_DAWN_PKT_GET_RX_GPD_PTR(unit, channel, gpd)  (&_hal_lt_dawn_pkt_rx_cb[unit].pdma[channel].ptr_gpd_align_start_addr[gpd])
 /*---------------------------------------------------------------------------*/
-#define HAL_LIGHTNING_PKT_GET_PORT_DB(port)                   (&_hal_pkt_port_db[port])
-#define HAL_LIGHTNING_PKT_GET_PORT_PROFILE_LIST(port)         (_hal_pkt_port_db[port].ptr_profile_list)
-#define HAL_LIGHTNING_PKT_GET_PORT_NETDEV(port)               _hal_pkt_port_db[port].ptr_net_dev
+#define HAL_LT_DAWN_PKT_GET_PORT_DB(port)                   (&_hal_pkt_port_db[unit][port])
+#define HAL_LT_DAWN_PKT_GET_PORT_PROFILE_LIST(port)         (_hal_pkt_port_db[unit][port].ptr_profile_list)
+#define HAL_LT_DAWN_PKT_GET_PORT_NETDEV(port)               _hal_pkt_port_db[unit][port].ptr_net_dev
 
 /*****************************************************************************
  * DATA TYPE DECLARATIONS
@@ -153,6 +154,14 @@ static CLX_THREAD_ID_T                      err_task_id;
  */
 /* ----------------------------------------------------------------------------------- General structure */
 
+typedef struct
+{
+    CLX_HUGE_T                      que_id;
+    CLX_SEMAPHORE_ID_T              sema;
+    UI32_T                          len;      /* Software CPU queue maximum length.        */
+    UI32_T                          weight;   /* The weight for thread de-queue algorithm. */
+
+} HAL_LT_DAWN_PKT_SW_QUEUE_T;
 
 
 /* ----------------------------------------------------------------------------------- TX structure */
@@ -172,38 +181,38 @@ typedef struct
     UI32_T                          free_gpd_num;
     UI32_T                          gpd_num;
 
-    HAL_LIGHTNING_PKT_TX_GPD_T            *ptr_gpd_start_addr;
-    HAL_LIGHTNING_PKT_TX_GPD_T            *ptr_gpd_align_start_addr;
+    HAL_LT_DAWN_PKT_TX_GPD_T            *ptr_gpd_start_addr;
+    HAL_LT_DAWN_PKT_TX_GPD_T            *ptr_gpd_align_start_addr;
     BOOL_T                          err_flag;
 
     /* ASYNC */
-    HAL_LIGHTNING_PKT_TX_SW_GPD_T         **pptr_sw_gpd_ring;
-    HAL_LIGHTNING_PKT_TX_SW_GPD_T         **pptr_sw_gpd_bulk; /* temporary store packets to be enque */
+    HAL_LT_DAWN_PKT_TX_SW_GPD_T         **pptr_sw_gpd_ring;
+    HAL_LT_DAWN_PKT_TX_SW_GPD_T         **pptr_sw_gpd_bulk; /* temporary store packets to be enque */
 
     /* SYNC_INTR */
     CLX_SEMAPHORE_ID_T              sync_intr_sema;
 
-} HAL_LIGHTNING_PKT_TX_PDMA_T;
+} HAL_LT_DAWN_PKT_TX_PDMA_T;
 
 typedef struct
 {
     UI32_T                          unit;
     UI32_T                          channel;
 
-} HAL_LIGHTNING_PKT_ISR_COOKIE_T;
+} HAL_LT_DAWN_PKT_ISR_COOKIE_T;
 
 typedef struct
 {
     HAL_PKT_TX_WAIT_T                     wait_mode;
-    HAL_LIGHTNING_PKT_TX_PDMA_T           pdma[HAL_LIGHTNING_PKT_TX_CHANNEL_LAST];
-    HAL_LIGHTNING_PKT_TX_CNT_T            cnt;
+    HAL_LT_DAWN_PKT_TX_PDMA_T           pdma[HAL_LT_DAWN_PKT_TX_CHANNEL_LAST];
+    HAL_LT_DAWN_PKT_TX_CNT_T            cnt;
 
     /* handleTxDoneTask */
-    CLX_THREAD_ID_T                       isr_task_id[HAL_LIGHTNING_PKT_TX_CHANNEL_LAST];
-    HAL_LIGHTNING_PKT_ISR_COOKIE_T        isr_task_cookie[HAL_LIGHTNING_PKT_TX_CHANNEL_LAST];
+    CLX_THREAD_ID_T                       isr_task_id[HAL_LT_DAWN_PKT_TX_CHANNEL_LAST];
+    HAL_LT_DAWN_PKT_ISR_COOKIE_T        isr_task_cookie[HAL_LT_DAWN_PKT_TX_CHANNEL_LAST];
 
     /* txTask */
-    HAL_PKT_SW_QUEUE_T                    sw_queue;
+    HAL_LT_DAWN_PKT_SW_QUEUE_T          sw_queue;
     CLX_SEMAPHORE_ID_T                    sync_sema;
     BOOL_T                                running;/* TRUE when Init txTask
                                                   * FALSE when Destroy txTask
@@ -212,7 +221,7 @@ typedef struct
      * cannot always prevent intf from Tx in time
      */
     BOOL_T                                net_tx_allowed;
-} HAL_LIGHTNING_PKT_TX_CB_T;
+} HAL_LT_DAWN_PKT_TX_CB_T;
 
 /* ----------------------------------------------------------------------------------- RX structure */
 typedef struct
@@ -221,24 +230,24 @@ typedef struct
     UI32_T                          cur_idx; /* SW free index */
     UI32_T                          gpd_num;
 
-    HAL_LIGHTNING_PKT_RX_GPD_T      *ptr_gpd_start_addr;
-    HAL_LIGHTNING_PKT_RX_GPD_T      *ptr_gpd_align_start_addr;
+    HAL_LT_DAWN_PKT_RX_GPD_T      *ptr_gpd_start_addr;
+    HAL_LT_DAWN_PKT_RX_GPD_T      *ptr_gpd_align_start_addr;
     BOOL_T                          err_flag;
     struct sk_buff                  **pptr_skb_ring;
-} HAL_LIGHTNING_PKT_RX_PDMA_T;
+} HAL_LT_DAWN_PKT_RX_PDMA_T;
 
 typedef struct
 {
     HAL_PKT_RX_SCHED_T          sched_mode;
-    HAL_LIGHTNING_PKT_RX_PDMA_T           pdma[HAL_LIGHTNING_PKT_RX_CHANNEL_LAST];
-    HAL_LIGHTNING_PKT_RX_CNT_T            cnt;
+    HAL_LT_DAWN_PKT_RX_PDMA_T           pdma[HAL_LT_DAWN_PKT_RX_CHANNEL_LAST];
+    HAL_LT_DAWN_PKT_RX_CNT_T            cnt;
 
     /* handleRxDoneTask */
-    CLX_THREAD_ID_T                 isr_task_id[HAL_LIGHTNING_PKT_RX_CHANNEL_LAST];
-    HAL_LIGHTNING_PKT_ISR_COOKIE_T  isr_task_cookie[HAL_LIGHTNING_PKT_RX_CHANNEL_LAST];
+    CLX_THREAD_ID_T                 isr_task_id[HAL_LT_DAWN_PKT_RX_CHANNEL_LAST];
+    HAL_LT_DAWN_PKT_ISR_COOKIE_T  isr_task_cookie[HAL_LT_DAWN_PKT_RX_CHANNEL_LAST];
 
     /* rxTask */
-    HAL_PKT_SW_QUEUE_T    sw_queue[HAL_LIGHTNING_PKT_RX_QUEUE_NUM];
+    HAL_LT_DAWN_PKT_SW_QUEUE_T    sw_queue[HAL_LT_DAWN_PKT_RX_QUEUE_NUM];
     UI32_T                          deque_idx;
     CLX_SEMAPHORE_ID_T              sync_sema;
     CLX_SEMAPHORE_ID_T              deinit_sema; /* To sync-up the Rx-stop and thread flush queues */
@@ -246,30 +255,20 @@ typedef struct
                                                   * FALSE when rxStop
                                                   */
 
-} HAL_LIGHTNING_PKT_RX_CB_T;
+} HAL_LT_DAWN_PKT_RX_CB_T;
 
 /* ----------------------------------------------------------------------------------- Network Device */
-struct net_device_priv
-{
-    struct net_device               *ptr_net_dev;
-    struct net_device_stats         stats;
-    UI32_T                          unit;
-    UI32_T                          id;
-    UI32_T                          port;
-    UI16_T                          vlan;
-    UI32_T                          speed;
-};
 
 typedef enum
 {
-    HAL_LIGHTNING_PKT_DEST_NETDEV = 0,
-    HAL_LIGHTNING_PKT_DEST_SDK,
+    HAL_LT_DAWN_PKT_DEST_NETDEV = 0,
+    HAL_LT_DAWN_PKT_DEST_SDK,
 #if defined(NETIF_EN_NETLINK)
-    HAL_LIGHTNING_PKT_DEST_NETLINK,
+    HAL_LT_DAWN_PKT_DEST_NETLINK,
 #endif
-    HAL_LIGHTNING_PKT_DEST_DROP,
-    HAL_LIGHTNING_PKT_DEST_LAST
-} HAL_LIGHTNING_PKT_DEST_T;
+    HAL_LT_DAWN_PKT_DEST_DROP,
+    HAL_LT_DAWN_PKT_DEST_LAST
+} HAL_LT_DAWN_PKT_DEST_T;
 
 /*****************************************************************************
  * GLOBAL VARIABLE DECLARATIONS
@@ -282,8 +281,8 @@ typedef enum
  */
 /*---------------------------------------------------------------------------*/
 extern HAL_PKT_DRV_CB_T                   _hal_pkt_drv_cb[CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM];
-static HAL_LIGHTNING_PKT_TX_CB_T          _hal_lightning_pkt_tx_cb[CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM];
-static HAL_LIGHTNING_PKT_RX_CB_T          _hal_lightning_pkt_rx_cb[CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM];
+static HAL_LT_DAWN_PKT_TX_CB_T          _hal_lt_dawn_pkt_tx_cb[CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM];
+static HAL_LT_DAWN_PKT_RX_CB_T          _hal_lt_dawn_pkt_rx_cb[CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM];
 /*---------------------------------------------------------------------------*/
 
 /*****************************************************************************
@@ -295,30 +294,30 @@ static HAL_LIGHTNING_PKT_RX_CB_T          _hal_lightning_pkt_rx_cb[CLX_CFG_MAXIM
 
 
 CLX_ERROR_NO_T
-hal_lightning_pkt_lockRxChannelAll(
+hal_lt_dawn_pkt_lockRxChannelAll(
     const UI32_T                        unit)
 {
     UI32_T                              rch;
-    HAL_LIGHTNING_PKT_RX_PDMA_T               *ptr_rx_pdma;
+    HAL_LT_DAWN_PKT_RX_PDMA_T               *ptr_rx_pdma;
 
-    for (rch = 0; rch < HAL_LIGHTNING_PKT_RX_CHANNEL_LAST; rch++)
+    for (rch = 0; rch < HAL_LT_DAWN_PKT_RX_CHANNEL_LAST; rch++)
     {
-        ptr_rx_pdma = HAL_LIGHTNING_PKT_GET_RX_PDMA_PTR(unit, rch);
+        ptr_rx_pdma = HAL_LT_DAWN_PKT_GET_RX_PDMA_PTR(unit, rch);
         osal_takeSemaphore(&ptr_rx_pdma->sema, CLX_SEMAPHORE_WAIT_FOREVER);
     }
     return CLX_E_OK;
 }
 
 CLX_ERROR_NO_T
-hal_lightning_pkt_unlockRxChannelAll(
+hal_lt_dawn_pkt_unlockRxChannelAll(
     const UI32_T                        unit)
 {
     UI32_T                              rch;
-    HAL_LIGHTNING_PKT_RX_PDMA_T               *ptr_rx_pdma;
+    HAL_LT_DAWN_PKT_RX_PDMA_T               *ptr_rx_pdma;
 
-    for (rch = 0; rch < HAL_LIGHTNING_PKT_RX_CHANNEL_LAST; rch++)
+    for (rch = 0; rch < HAL_LT_DAWN_PKT_RX_CHANNEL_LAST; rch++)
     {
-        ptr_rx_pdma = HAL_LIGHTNING_PKT_GET_RX_PDMA_PTR(unit, rch);
+        ptr_rx_pdma = HAL_LT_DAWN_PKT_GET_RX_PDMA_PTR(unit, rch);
         osal_giveSemaphore(&ptr_rx_pdma->sema);
     }
     return CLX_E_OK;
@@ -326,90 +325,90 @@ hal_lightning_pkt_unlockRxChannelAll(
 
 /* ----------------------------------------------------------------------------------- Interrupt */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_enableIntr(
+_hal_lt_dawn_pkt_enableIntr(
     const UI32_T                unit,
     const UI32_T                intr_bitmap)
 {
-    HAL_PKT_DRV_CB_T            *ptr_cb = HAL_LIGHTNING_PKT_GET_DRV_CB_PTR(unit);
+    HAL_PKT_DRV_CB_T            *ptr_cb = HAL_LT_DAWN_PKT_GET_DRV_CB_PTR(unit);
     CLX_IRQ_FLAGS_T             irq_flag = 0;
     UI32_T                      intr_en = 0;
 
     osal_takeIsrLock(&ptr_cb->intr_lock, &irq_flag);
-    osal_mdc_readPciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_CP_COMMON_INT_EN_HI), &intr_en, sizeof(intr_en));
+    osal_mdc_readPciReg(unit, HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_CP_COMMON_INT_EN_HI), &intr_en, sizeof(intr_en));
     intr_en |= intr_bitmap;
-    osal_mdc_writePciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_CP_COMMON_INT_EN_HI), &intr_en, sizeof(intr_en));
+    osal_mdc_writePciReg(unit, HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_CP_COMMON_INT_EN_HI), &intr_en, sizeof(intr_en));
     osal_giveIsrLock(&ptr_cb->intr_lock, &irq_flag);
 
     return (CLX_E_OK);
 }
 
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_disableIntr(
+_hal_lt_dawn_pkt_disableIntr(
     const UI32_T                unit,
     const UI32_T                intr_bitmap)
 {
-    HAL_PKT_DRV_CB_T            *ptr_cb = HAL_LIGHTNING_PKT_GET_DRV_CB_PTR(unit);
+    HAL_PKT_DRV_CB_T            *ptr_cb = HAL_LT_DAWN_PKT_GET_DRV_CB_PTR(unit);
     CLX_IRQ_FLAGS_T             irq_flag = 0;
     UI32_T                      intr_en = 0;
 
     osal_takeIsrLock(&ptr_cb->intr_lock, &irq_flag);
-    osal_mdc_readPciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_CP_COMMON_INT_EN_HI), &intr_en, sizeof(intr_en));
+    osal_mdc_readPciReg(unit, HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_CP_COMMON_INT_EN_HI), &intr_en, sizeof(intr_en));
     intr_en &= ~intr_bitmap;
-    osal_mdc_writePciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_CP_COMMON_INT_EN_HI), &intr_en, sizeof(intr_en));
+    osal_mdc_writePciReg(unit, HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_CP_COMMON_INT_EN_HI), &intr_en, sizeof(intr_en));
     osal_giveIsrLock(&ptr_cb->intr_lock, &irq_flag);
 
     return (CLX_E_OK);
 }
 
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_maskIntr(
+_hal_lt_dawn_pkt_maskIntr(
     const UI32_T                unit,
     const UI32_T                intr_bitmap)
 {
-    HAL_PKT_DRV_CB_T        *ptr_cb = HAL_LIGHTNING_PKT_GET_DRV_CB_PTR(unit);
+    HAL_PKT_DRV_CB_T        *ptr_cb = HAL_LT_DAWN_PKT_GET_DRV_CB_PTR(unit);
     CLX_IRQ_FLAGS_T             irq_flag = 0;
 
     osal_takeIsrLock(&ptr_cb->intr_lock, &irq_flag);
-    osal_mdc_writePciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_CP_COMMON_INT_MASK_CLR_HI), &intr_bitmap, sizeof(intr_bitmap));
+    osal_mdc_writePciReg(unit, HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_CP_COMMON_INT_MASK_CLR_HI), &intr_bitmap, sizeof(intr_bitmap));
     osal_giveIsrLock(&ptr_cb->intr_lock, &irq_flag);
 
     return (CLX_E_OK);
 }
 
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_unmaskIntr(
+_hal_lt_dawn_pkt_unmaskIntr(
     const UI32_T                unit,
     const UI32_T                intr_bitmap)
 {
-    HAL_PKT_DRV_CB_T        *ptr_cb = HAL_LIGHTNING_PKT_GET_DRV_CB_PTR(unit);
+    HAL_PKT_DRV_CB_T        *ptr_cb = HAL_LT_DAWN_PKT_GET_DRV_CB_PTR(unit);
     CLX_IRQ_FLAGS_T             irq_flag = 0;
 
     osal_takeIsrLock(&ptr_cb->intr_lock, &irq_flag);
-    osal_mdc_writePciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_CP_COMMON_INT_MASK_SET_HI), &intr_bitmap, sizeof(intr_bitmap));
+    osal_mdc_writePciReg(unit, HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_CP_COMMON_INT_MASK_SET_HI), &intr_bitmap, sizeof(intr_bitmap));
     osal_giveIsrLock(&ptr_cb->intr_lock, &irq_flag);
 
     return (CLX_E_OK);
 }
 
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_dispatcher(
+_hal_lt_dawn_pkt_dispatcher(
     void                        *ptr_cookie)
 {
     UI32_T                      unit = (UI32_T)((CLX_HUGE_T)ptr_cookie);
-    HAL_PKT_DRV_CB_T            *ptr_cb = HAL_LIGHTNING_PKT_GET_DRV_CB_PTR(unit);
+    HAL_PKT_DRV_CB_T            *ptr_cb = HAL_LT_DAWN_PKT_GET_DRV_CB_PTR(unit);
     CLX_IRQ_FLAGS_T             irq_flag = 0;
 
-    UI32_T                      idx = 0, vec = sizeof(_hal_lightning_pkt_intr_vec) / sizeof(HAL_LIGHTNING_PKT_INTR_VEC_T);
+    UI32_T                      idx = 0, vec = sizeof(_hal_lt_dawn_pkt_intr_vec) / sizeof(HAL_LT_DAWN_PKT_INTR_VEC_T);
     UI32_T                      intr_mask = ptr_cb->intr_bitmap;
     UI32_T                      intr_unmask = 0;
     UI32_T                      intr_status = 0;
 
     /* MASK, READ and CLEAR PKT IRQs */
     osal_takeIsrLock(&ptr_cb->intr_lock, &irq_flag);
-    osal_mdc_writePciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_CP_COMMON_INT_MASK_CLR_HI), &intr_mask,   sizeof(UI32_T));
-    osal_mdc_readPciReg (unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_CP_COMMON_INT_STAT_HI),     &intr_status, sizeof(UI32_T));
+    osal_mdc_writePciReg(unit, HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_CP_COMMON_INT_MASK_CLR_HI), &intr_mask,   sizeof(UI32_T));
+    osal_mdc_readPciReg (unit, HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_CP_COMMON_INT_STAT_HI),     &intr_status, sizeof(UI32_T));
     intr_status = intr_status & intr_mask;
-    osal_mdc_writePciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_CP_COMMON_INT_CLR_HI),      &intr_status, sizeof(UI32_T));
+    osal_mdc_writePciReg(unit, HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_CP_COMMON_INT_CLR_HI),      &intr_status, sizeof(UI32_T));
     osal_giveIsrLock(&ptr_cb->intr_lock, &irq_flag);
 
     /* Module thread handle and unmask the interrupt */
@@ -418,24 +417,24 @@ _hal_lightning_pkt_dispatcher(
     {
         for (idx = 0; idx < vec; idx++)
         {
-            if (_hal_lightning_pkt_intr_vec[idx].intr_reg & intr_status)
+            if (_hal_lt_dawn_pkt_intr_vec[idx].intr_reg & intr_status)
             {
-                osal_triggerEvent(&_hal_lightning_pkt_intr_vec[idx].intr_event);
-                _hal_lightning_pkt_intr_vec[idx].intr_cnt++;
+                osal_triggerEvent(&_hal_lt_dawn_pkt_intr_vec[idx].intr_event);
+                _hal_lt_dawn_pkt_intr_vec[idx].intr_cnt++;
             }
         }
     }
 
     /* UNMASK other PKT IRQs */
     osal_takeIsrLock(&ptr_cb->intr_lock, &irq_flag);
-    osal_mdc_writePciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_CP_COMMON_INT_MASK_SET_HI), &intr_unmask, sizeof(UI32_T));
+    osal_mdc_writePciReg(unit, HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_CP_COMMON_INT_MASK_SET_HI), &intr_unmask, sizeof(UI32_T));
     osal_giveIsrLock(&ptr_cb->intr_lock, &irq_flag);
 
     return (CLX_E_OK);
 }
 
 /* ----------------------------------------------------------------------------------- RW HW Regs */
-/* FUNCTION NAME: _hal_lightning_pkt_startTxChannelReg
+/* FUNCTION NAME: _hal_lt_dawn_pkt_startTxChannelReg
  * PURPOSE:
  *      To issue "START" command to the target TX channel.
  * INPUT:
@@ -451,12 +450,12 @@ _hal_lightning_pkt_dispatcher(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_startTxChannelReg(
+_hal_lt_dawn_pkt_startTxChannelReg(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_TX_CHANNEL_T  channel,
+    const HAL_LT_DAWN_PKT_TX_CHANNEL_T  channel,
     const UI32_T                    gpd_num)
 {
-    HAL_LIGHTNING_PKT_TCH_CMD_REG_T       tch_cmd;
+    HAL_LT_DAWN_PKT_TCH_CMD_REG_T       tch_cmd;
 
     tch_cmd.reg                     = 0x0;
     tch_cmd.field.tch_start         = 0x1;
@@ -464,13 +463,13 @@ _hal_lightning_pkt_startTxChannelReg(
     tch_cmd.field.tch_gpd_add_no_hi = (gpd_num & 0xff00) >> 8;
 
     osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_PDMA_TCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_TCH_CMD), channel),
-        &tch_cmd.reg, sizeof(HAL_LIGHTNING_PKT_TCH_CMD_REG_T));
+        HAL_LT_DAWN_PKT_GET_PDMA_TCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_TCH_CMD), channel),
+        &tch_cmd.reg, sizeof(HAL_LT_DAWN_PKT_TCH_CMD_REG_T));
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_startRxChannelReg
+/* FUNCTION NAME: _hal_lt_dawn_pkt_startRxChannelReg
  * PURPOSE:
  *      To issue "START" command to the target RX channel.
  * INPUT:
@@ -486,12 +485,12 @@ _hal_lightning_pkt_startTxChannelReg(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_startRxChannelReg(
+_hal_lt_dawn_pkt_startRxChannelReg(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_RX_CHANNEL_T  channel,
+    const HAL_LT_DAWN_PKT_RX_CHANNEL_T  channel,
     const UI32_T                    gpd_num)
 {
-    HAL_LIGHTNING_PKT_RCH_CMD_REG_T       rch_cmd;
+    HAL_LT_DAWN_PKT_RCH_CMD_REG_T       rch_cmd;
 
     rch_cmd.reg                     = 0x0;
     rch_cmd.field.rch_start         = 0x1;
@@ -499,13 +498,13 @@ _hal_lightning_pkt_startRxChannelReg(
     rch_cmd.field.rch_gpd_add_no_hi = (gpd_num & 0xff00) >> 8;
 
     osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_PDMA_RCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_RCH_CMD), channel),
-        &rch_cmd.reg, sizeof(HAL_LIGHTNING_PKT_RCH_CMD_REG_T));
+        HAL_LT_DAWN_PKT_GET_PDMA_RCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_RCH_CMD), channel),
+        &rch_cmd.reg, sizeof(HAL_LT_DAWN_PKT_RCH_CMD_REG_T));
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_resumeTxChannelReg
+/* FUNCTION NAME: _hal_lt_dawn_pkt_resumeTxChannelReg
  * PURPOSE:
  *      To issue "RESUME" command to the target TX channel.
  * INPUT:
@@ -521,12 +520,12 @@ _hal_lightning_pkt_startRxChannelReg(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_resumeTxChannelReg(
+_hal_lt_dawn_pkt_resumeTxChannelReg(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_TX_CHANNEL_T  channel,
+    const HAL_LT_DAWN_PKT_TX_CHANNEL_T  channel,
     const UI32_T                    gpd_num)
 {
-    HAL_LIGHTNING_PKT_TCH_CMD_REG_T       tch_cmd;
+    HAL_LT_DAWN_PKT_TCH_CMD_REG_T       tch_cmd;
 
     tch_cmd.reg                     = 0x0;
     tch_cmd.field.tch_resume        = 0x1;
@@ -534,13 +533,13 @@ _hal_lightning_pkt_resumeTxChannelReg(
     tch_cmd.field.tch_gpd_add_no_hi = (gpd_num & 0xff00) >> 8;
 
     osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_PDMA_TCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_TCH_CMD), channel),
-        &tch_cmd.reg, sizeof(HAL_LIGHTNING_PKT_TCH_CMD_REG_T));
+        HAL_LT_DAWN_PKT_GET_PDMA_TCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_TCH_CMD), channel),
+        &tch_cmd.reg, sizeof(HAL_LT_DAWN_PKT_TCH_CMD_REG_T));
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_resumeRxChannelReg
+/* FUNCTION NAME: _hal_lt_dawn_pkt_resumeRxChannelReg
  * PURPOSE:
  *      To issue "RESUME" command to the target RX channel.
  * INPUT:
@@ -556,12 +555,12 @@ _hal_lightning_pkt_resumeTxChannelReg(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_resumeRxChannelReg(
+_hal_lt_dawn_pkt_resumeRxChannelReg(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_RX_CHANNEL_T  channel,
+    const HAL_LT_DAWN_PKT_RX_CHANNEL_T  channel,
     const UI32_T                    gpd_num)
 {
-    HAL_LIGHTNING_PKT_RCH_CMD_REG_T       rch_cmd;
+    HAL_LT_DAWN_PKT_RCH_CMD_REG_T       rch_cmd;
 
     rch_cmd.reg                     = 0x0;
     rch_cmd.field.rch_resume        = 0x1;
@@ -569,13 +568,13 @@ _hal_lightning_pkt_resumeRxChannelReg(
     rch_cmd.field.rch_gpd_add_no_hi = (gpd_num & 0xff00) >> 8;
 
     osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_PDMA_RCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_RCH_CMD), channel),
-        &rch_cmd.reg, sizeof(HAL_LIGHTNING_PKT_RCH_CMD_REG_T));
+        HAL_LT_DAWN_PKT_GET_PDMA_RCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_RCH_CMD), channel),
+        &rch_cmd.reg, sizeof(HAL_LT_DAWN_PKT_RCH_CMD_REG_T));
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_stopTxChannelReg
+/* FUNCTION NAME: _hal_lt_dawn_pkt_stopTxChannelReg
  * PURPOSE:
  *      To issue "STOP" command to the target TX channel.
  * INPUT:
@@ -590,23 +589,23 @@ _hal_lightning_pkt_resumeRxChannelReg(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_stopTxChannelReg(
+_hal_lt_dawn_pkt_stopTxChannelReg(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_TX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_TX_CHANNEL_T  channel)
 {
-    HAL_LIGHTNING_PKT_TCH_CMD_REG_T       tch_cmd;
+    HAL_LT_DAWN_PKT_TCH_CMD_REG_T       tch_cmd;
 
     tch_cmd.reg            = 0x0;
     tch_cmd.field.tch_stop = 0x1;
 
     osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_PDMA_TCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_TCH_CMD), channel),
-        &tch_cmd.reg, sizeof(HAL_LIGHTNING_PKT_TCH_CMD_REG_T));
+        HAL_LT_DAWN_PKT_GET_PDMA_TCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_TCH_CMD), channel),
+        &tch_cmd.reg, sizeof(HAL_LT_DAWN_PKT_TCH_CMD_REG_T));
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_stopRxChannelReg
+/* FUNCTION NAME: _hal_lt_dawn_pkt_stopRxChannelReg
  * PURPOSE:
  *      To issue "STOP" command to the target RX channel.
  * INPUT:
@@ -621,24 +620,24 @@ _hal_lightning_pkt_stopTxChannelReg(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_stopRxChannelReg(
+_hal_lt_dawn_pkt_stopRxChannelReg(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_RX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_RX_CHANNEL_T  channel)
 {
-    HAL_LIGHTNING_PKT_RCH_CMD_REG_T       rch_cmd;
+    HAL_LT_DAWN_PKT_RCH_CMD_REG_T       rch_cmd;
 
     rch_cmd.reg            = 0x0;
     rch_cmd.field.rch_stop = 0x1;
 
     osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_PDMA_RCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_RCH_CMD), channel),
-        &rch_cmd.reg, sizeof(HAL_LIGHTNING_PKT_RCH_CMD_REG_T));
+        HAL_LT_DAWN_PKT_GET_PDMA_RCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_RCH_CMD), channel),
+        &rch_cmd.reg, sizeof(HAL_LT_DAWN_PKT_RCH_CMD_REG_T));
 
     return (CLX_E_OK);
 }
 
 /* ----------------------------------------------------------------------------------- Init HW Regs */
-/* FUNCTION NAME: _hal_lightning_pkt_setTxGpdStartAddrReg
+/* FUNCTION NAME: _hal_lt_dawn_pkt_setTxGpdStartAddrReg
  * PURPOSE:
  *      To configure the start address and the length of target GPD ring of TX channel.
  * INPUT:
@@ -655,9 +654,9 @@ _hal_lightning_pkt_stopRxChannelReg(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_setTxGpdStartAddrReg(
+_hal_lt_dawn_pkt_setTxGpdStartAddrReg(
     const UI32_T                        unit,
-    const HAL_LIGHTNING_PKT_TX_CHANNEL_T      channel,
+    const HAL_LT_DAWN_PKT_TX_CHANNEL_T      channel,
     const CLX_ADDR_T                    gpd_start_addr,
     const UI32_T                        gpd_ring_sz)
 {
@@ -670,7 +669,7 @@ _hal_lightning_pkt_setTxGpdStartAddrReg(
     tch_gpd_ring_start_addr_lo = (UI32_T)CLX_ADDR_64_LOW(gpd_start_addr);
 
     rc = osal_mdc_writePciReg(unit,
-            HAL_LIGHTNING_PKT_GET_PDMA_TCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_TCH_GPD_RING_START_ADDR_LO), channel),
+            HAL_LT_DAWN_PKT_GET_PDMA_TCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_TCH_GPD_RING_START_ADDR_LO), channel),
             &tch_gpd_ring_start_addr_lo, sizeof(UI32_T));
 
     /* Configure the high 32-bit address. */
@@ -679,7 +678,7 @@ _hal_lightning_pkt_setTxGpdStartAddrReg(
         tch_gpd_ring_start_addr_hi = (UI32_T)CLX_ADDR_64_HI(gpd_start_addr);
 
         rc = osal_mdc_writePciReg(unit,
-            HAL_LIGHTNING_PKT_GET_PDMA_TCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_TCH_GPD_RING_START_ADDR_HI), channel),
+            HAL_LT_DAWN_PKT_GET_PDMA_TCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_TCH_GPD_RING_START_ADDR_HI), channel),
             &tch_gpd_ring_start_addr_hi, sizeof(UI32_T));
     }
 
@@ -689,14 +688,14 @@ _hal_lightning_pkt_setTxGpdStartAddrReg(
         tch_gpd_ring_size = gpd_ring_sz;
 
         rc = osal_mdc_writePciReg(unit,
-            HAL_LIGHTNING_PKT_GET_PDMA_TCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_TCH_GPD_RING_SIZE), channel),
+            HAL_LT_DAWN_PKT_GET_PDMA_TCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_TCH_GPD_RING_SIZE), channel),
             &tch_gpd_ring_size, sizeof(UI32_T));
     }
 
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_setRxGpdStartAddrReg
+/* FUNCTION NAME: _hal_lt_dawn_pkt_setRxGpdStartAddrReg
  * PURPOSE:
  *      To configure the start address and the length of target GPD ring of RX channel.
  * INPUT:
@@ -713,9 +712,9 @@ _hal_lightning_pkt_setTxGpdStartAddrReg(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_setRxGpdStartAddrReg(
+_hal_lt_dawn_pkt_setRxGpdStartAddrReg(
     const UI32_T                        unit,
-    const HAL_LIGHTNING_PKT_RX_CHANNEL_T      channel,
+    const HAL_LT_DAWN_PKT_RX_CHANNEL_T      channel,
     const CLX_ADDR_T                    gpd_start_addr,
     const UI32_T                        gpd_ring_sz)
 {
@@ -728,7 +727,7 @@ _hal_lightning_pkt_setRxGpdStartAddrReg(
     rch_gpd_ring_start_addr_lo = (UI32_T)CLX_ADDR_64_LOW(gpd_start_addr);
 
     rc = osal_mdc_writePciReg(unit,
-            HAL_LIGHTNING_PKT_GET_PDMA_RCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_RCH_GPD_RING_START_ADDR_LO), channel),
+            HAL_LT_DAWN_PKT_GET_PDMA_RCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_RCH_GPD_RING_START_ADDR_LO), channel),
             &rch_gpd_ring_start_addr_lo, sizeof(UI32_T));
 
     /* Configure the high 32-bit address. */
@@ -737,7 +736,7 @@ _hal_lightning_pkt_setRxGpdStartAddrReg(
         rch_gpd_ring_start_addr_hi = (UI32_T)CLX_ADDR_64_HI(gpd_start_addr);
 
         rc = osal_mdc_writePciReg(unit,
-            HAL_LIGHTNING_PKT_GET_PDMA_RCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_RCH_GPD_RING_START_ADDR_HI), channel),
+            HAL_LT_DAWN_PKT_GET_PDMA_RCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_RCH_GPD_RING_START_ADDR_HI), channel),
             &rch_gpd_ring_start_addr_hi, sizeof(UI32_T));
     }
 
@@ -747,7 +746,7 @@ _hal_lightning_pkt_setRxGpdStartAddrReg(
         rch_gpd_ring_size = gpd_ring_sz;
 
         rc = osal_mdc_writePciReg(unit,
-            HAL_LIGHTNING_PKT_GET_PDMA_RCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_RCH_GPD_RING_SIZE), channel),
+            HAL_LT_DAWN_PKT_GET_PDMA_RCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_RCH_GPD_RING_SIZE), channel),
             &rch_gpd_ring_size, sizeof(UI32_T));
     }
 
@@ -755,7 +754,7 @@ _hal_lightning_pkt_setRxGpdStartAddrReg(
 }
 
 /* ----------------------------------------------------------------------------------- ISR HW Regs */
-/* FUNCTION NAME: _hal_lightning_pkt_maskAllTxL2IsrReg
+/* FUNCTION NAME: _hal_lt_dawn_pkt_maskAllTxL2IsrReg
  * PURPOSE:
  *      To mask all the TX L2 interrupts for the specified channel.
  * INPUT:
@@ -769,37 +768,37 @@ _hal_lightning_pkt_setRxGpdStartAddrReg(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_maskAllTxL2IsrReg(
+_hal_lt_dawn_pkt_maskAllTxL2IsrReg(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_TX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_TX_CHANNEL_T  channel)
 {
     UI32_T                          reg = 0;
 
-    HAL_LIGHTNING_PKT_CLR_BITMAP(reg,
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_HWO_ERROR          |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR        |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_NO_OVFL_ERROR      |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_DMA_READ_ERROR     |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_BUF_SIZE_ERROR         |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_RUNT_ERROR             |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_OVSZ_ERROR             |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_LEN_MISMATCH_ERROR     |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_PKTPL_DMA_READ_ERROR   |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_COS_ERROR              |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_GT255_ERROR        |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_PFC                    |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_CREDIT_UDFL_ERROR      |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_DMA_WRITE_ERROR        |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_STOP_CMD_CPLT);
+    HAL_LT_DAWN_PKT_CLR_BITMAP(reg,
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_HWO_ERROR          |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR        |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_NO_OVFL_ERROR      |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_DMA_READ_ERROR     |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_BUF_SIZE_ERROR         |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_RUNT_ERROR             |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_OVSZ_ERROR             |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_LEN_MISMATCH_ERROR     |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_PKTPL_DMA_READ_ERROR   |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_COS_ERROR              |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_GT255_ERROR        |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_PFC                    |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_CREDIT_UDFL_ERROR      |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_DMA_WRITE_ERROR        |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_STOP_CMD_CPLT);
 
     osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_PDMA_TCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_TCH_INT_MASK), channel),
+        HAL_LT_DAWN_PKT_GET_PDMA_TCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_TCH_INT_MASK), channel),
         &reg, sizeof(UI32_T));
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_maskAllRxL2IsrReg
+/* FUNCTION NAME: _hal_lt_dawn_pkt_maskAllRxL2IsrReg
  * PURPOSE:
  *      To mask all the L2 interrupts for the specified channel.
  * INPUT:
@@ -813,36 +812,36 @@ _hal_lightning_pkt_maskAllTxL2IsrReg(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_maskAllRxL2IsrReg(
+_hal_lt_dawn_pkt_maskAllRxL2IsrReg(
     const UI32_T                     unit,
-    const HAL_LIGHTNING_PKT_RX_CHANNEL_T   channel)
+    const HAL_LT_DAWN_PKT_RX_CHANNEL_T   channel)
 {
     UI32_T                           reg = 0;
 
-    HAL_LIGHTNING_PKT_CLR_BITMAP(reg,
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_LOW    |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_EMPTY  |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_ERROR  |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR  |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_DMA_READ_ERROR   |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_DMA_WRITE_ERROR  |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_STOP_CMD_CPLT    |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_GPD_GT255_ERROR  |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_TOD_UNINIT       |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_PKT_ERROR_DROP   |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_UDSZ_DROP        |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_OVSZ_DROP        |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_CMDQ_OVF_DROP    |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_FIFO_OVF_DROP);
+    HAL_LT_DAWN_PKT_CLR_BITMAP(reg,
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_LOW    |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_EMPTY  |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_ERROR  |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR  |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_DMA_READ_ERROR   |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_DMA_WRITE_ERROR  |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_STOP_CMD_CPLT    |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_GPD_GT255_ERROR  |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_TOD_UNINIT       |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_PKT_ERROR_DROP   |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_UDSZ_DROP        |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_OVSZ_DROP        |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_CMDQ_OVF_DROP    |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_FIFO_OVF_DROP);
 
     osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_PDMA_RCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_RCH_INT_MASK), channel),
+        HAL_LT_DAWN_PKT_GET_PDMA_RCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_RCH_INT_MASK), channel),
         &reg, sizeof(UI32_T));
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_unmaskAllTxL2IsrReg
+/* FUNCTION NAME: _hal_lt_dawn_pkt_unmaskAllTxL2IsrReg
  * PURPOSE:
  *      To unmask all the TX L2 interrupts for the specified channel.
  * INPUT:
@@ -856,37 +855,37 @@ _hal_lightning_pkt_maskAllRxL2IsrReg(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_unmaskAllTxL2IsrReg(
+_hal_lt_dawn_pkt_unmaskAllTxL2IsrReg(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_TX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_TX_CHANNEL_T  channel)
 {
     UI32_T                          reg = 0;
 
-    HAL_LIGHTNING_PKT_SET_BITMAP(reg,
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_HWO_ERROR          |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR        |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_NO_OVFL_ERROR      |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_DMA_READ_ERROR     |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_BUF_SIZE_ERROR         |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_RUNT_ERROR             |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_OVSZ_ERROR             |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_LEN_MISMATCH_ERROR     |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_PKTPL_DMA_READ_ERROR   |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_COS_ERROR              |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_GT255_ERROR        |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_PFC                    |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_CREDIT_UDFL_ERROR      |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_DMA_WRITE_ERROR        |
-                           HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_STOP_CMD_CPLT);
+    HAL_LT_DAWN_PKT_SET_BITMAP(reg,
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_HWO_ERROR          |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR        |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_NO_OVFL_ERROR      |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_DMA_READ_ERROR     |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_BUF_SIZE_ERROR         |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_RUNT_ERROR             |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_OVSZ_ERROR             |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_LEN_MISMATCH_ERROR     |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_PKTPL_DMA_READ_ERROR   |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_COS_ERROR              |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_GT255_ERROR        |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_PFC                    |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_CREDIT_UDFL_ERROR      |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_DMA_WRITE_ERROR        |
+                           HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_STOP_CMD_CPLT);
 
     osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_PDMA_TCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_TCH_INT_MASK), channel),
+        HAL_LT_DAWN_PKT_GET_PDMA_TCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_TCH_INT_MASK), channel),
         &reg, sizeof(UI32_T));
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_unmaskAllRxL2IsrReg
+/* FUNCTION NAME: _hal_lt_dawn_pkt_unmaskAllRxL2IsrReg
  * PURPOSE:
  *      To unmask all the L2 interrupts for the specified channel.
  * INPUT:
@@ -900,36 +899,36 @@ _hal_lightning_pkt_unmaskAllTxL2IsrReg(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_unmaskAllRxL2IsrReg(
+_hal_lt_dawn_pkt_unmaskAllRxL2IsrReg(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_RX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_RX_CHANNEL_T  channel)
 {
     UI32_T                          reg = 0;
 
-    HAL_LIGHTNING_PKT_SET_BITMAP(reg,
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_LOW    |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_EMPTY  |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_ERROR  |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR  |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_DMA_READ_ERROR   |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_DMA_WRITE_ERROR  |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_STOP_CMD_CPLT    |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_GPD_GT255_ERROR  |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_TOD_UNINIT       |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_PKT_ERROR_DROP   |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_UDSZ_DROP        |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_OVSZ_DROP        |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_CMDQ_OVF_DROP    |
-                           HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_FIFO_OVF_DROP);
+    HAL_LT_DAWN_PKT_SET_BITMAP(reg,
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_LOW    |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_EMPTY  |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_ERROR  |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR  |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_DMA_READ_ERROR   |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_DMA_WRITE_ERROR  |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_STOP_CMD_CPLT    |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_GPD_GT255_ERROR  |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_TOD_UNINIT       |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_PKT_ERROR_DROP   |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_UDSZ_DROP        |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_OVSZ_DROP        |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_CMDQ_OVF_DROP    |
+                           HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_FIFO_OVF_DROP);
 
     osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_PDMA_RCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_RCH_INT_MASK), channel),
+        HAL_LT_DAWN_PKT_GET_PDMA_RCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_RCH_INT_MASK), channel),
         &reg, sizeof(UI32_T));
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_clearTxL2IsrStatusReg
+/* FUNCTION NAME: _hal_lt_dawn_pkt_clearTxL2IsrStatusReg
  * PURPOSE:
  *      To clear the status of TX L2 interrupts for the specified channel.
  * INPUT:
@@ -944,23 +943,23 @@ _hal_lightning_pkt_unmaskAllRxL2IsrReg(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_clearTxL2IsrStatusReg(
+_hal_lt_dawn_pkt_clearTxL2IsrStatusReg(
     const UI32_T                             unit,
-    const HAL_LIGHTNING_PKT_TX_CHANNEL_T           channel,
-    const HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_T    isr_bitmap)
+    const HAL_LT_DAWN_PKT_TX_CHANNEL_T           channel,
+    const HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_T    isr_bitmap)
 {
     UI32_T                                   reg = 0;
 
-    HAL_LIGHTNING_PKT_SET_BITMAP(reg, isr_bitmap);
+    HAL_LT_DAWN_PKT_SET_BITMAP(reg, isr_bitmap);
 
     osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_PDMA_TCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_TCH_INT_CLR), channel),
+        HAL_LT_DAWN_PKT_GET_PDMA_TCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_TCH_INT_CLR), channel),
         &reg, sizeof(UI32_T));
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_clearRxL2IsrStatusReg
+/* FUNCTION NAME: _hal_lt_dawn_pkt_clearRxL2IsrStatusReg
  * PURPOSE:
  *      To clear the status of RX L2 interrupts for the specified channel.
  * INPUT:
@@ -975,23 +974,23 @@ _hal_lightning_pkt_clearTxL2IsrStatusReg(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_clearRxL2IsrStatusReg(
+_hal_lt_dawn_pkt_clearRxL2IsrStatusReg(
     const UI32_T                             unit,
-    const HAL_LIGHTNING_PKT_RX_CHANNEL_T           channel,
-    const HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_T    isr_bitmap)
+    const HAL_LT_DAWN_PKT_RX_CHANNEL_T           channel,
+    const HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_T    isr_bitmap)
 {
     UI32_T                                   reg = 0;
 
-    HAL_LIGHTNING_PKT_SET_BITMAP(reg, isr_bitmap);
+    HAL_LT_DAWN_PKT_SET_BITMAP(reg, isr_bitmap);
 
     osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_PDMA_RCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_RCH_INT_CLR), channel),
+        HAL_LT_DAWN_PKT_GET_PDMA_RCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_RCH_INT_CLR), channel),
         &reg, sizeof(UI32_T));
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: hal_lightning_pkt_getTxIntrCnt
+/* FUNCTION NAME: hal_lt_dawn_pkt_getTxIntrCnt
  * PURPOSE:
  *      To get the PDMA TX interrupt counters of the target channel.
  * INPUT:
@@ -1005,16 +1004,16 @@ _hal_lightning_pkt_clearRxL2IsrStatusReg(
  *      None
  */
 CLX_ERROR_NO_T
-hal_lightning_pkt_getTxIntrCnt(
+hal_lt_dawn_pkt_getTxIntrCnt(
     const UI32_T            unit,
     const UI32_T            channel,
     UI32_T                  *ptr_intr_cnt)
 {
-    *ptr_intr_cnt = HAL_LIGHTNING_PKT_TCH_CNT(unit, channel);
+    *ptr_intr_cnt = HAL_LT_DAWN_PKT_TCH_CNT(unit, channel);
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: hal_lightning_pkt_getRxIntrCnt
+/* FUNCTION NAME: hal_lt_dawn_pkt_getRxIntrCnt
  * PURPOSE:
  *      To get the PDMA RX interrupt counters of the target channel.
  * INPUT:
@@ -1028,16 +1027,16 @@ hal_lightning_pkt_getTxIntrCnt(
  *      None
  */
 CLX_ERROR_NO_T
-hal_lightning_pkt_getRxIntrCnt(
+hal_lt_dawn_pkt_getRxIntrCnt(
     const UI32_T            unit,
     const UI32_T            channel,
     UI32_T                  *ptr_intr_cnt)
 {
-    *ptr_intr_cnt = HAL_LIGHTNING_PKT_RCH_CNT(unit, channel);
+    *ptr_intr_cnt = HAL_LT_DAWN_PKT_RCH_CNT(unit, channel);
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: hal_lightning_pkt_getTxKnlCnt
+/* FUNCTION NAME: hal_lt_dawn_pkt_getTxKnlCnt
  * PURPOSE:
  *      To get the PDMA TX counters of the target channel.
  * INPUT:
@@ -1051,18 +1050,18 @@ hal_lightning_pkt_getRxIntrCnt(
  *      None
  */
 CLX_ERROR_NO_T
-hal_lightning_pkt_getTxKnlCnt(
+hal_lt_dawn_pkt_getTxKnlCnt(
     const UI32_T                        unit,
     void                                *ptr_data)
 {
-    HAL_LIGHTNING_PKT_IOCTL_CH_CNT_COOKIE_T   *ptr_cookie = ptr_data;
-    HAL_LIGHTNING_PKT_TX_CB_T                 *ptr_tx_cb = HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_IOCTL_CH_CNT_COOKIE_T   *ptr_cookie = ptr_data;
+    HAL_LT_DAWN_PKT_TX_CB_T                 *ptr_tx_cb = HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit);
 
     ptr_cookie->tx_cnt = ptr_tx_cb->cnt;
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: hal_lightning_pkt_getRxKnlCnt
+/* FUNCTION NAME: hal_lt_dawn_pkt_getRxKnlCnt
  * PURPOSE:
  *      To get the PDMA RX counters of the target channel.
  * INPUT:
@@ -1076,18 +1075,18 @@ hal_lightning_pkt_getTxKnlCnt(
  *      None
  */
 CLX_ERROR_NO_T
-hal_lightning_pkt_getRxKnlCnt(
+hal_lt_dawn_pkt_getRxKnlCnt(
     const UI32_T                        unit,
     void                                *ptr_data)
 {
-    HAL_LIGHTNING_PKT_IOCTL_CH_CNT_COOKIE_T   *ptr_cookie = ptr_data;
-    HAL_LIGHTNING_PKT_RX_CB_T             *ptr_rx_cb = HAL_LIGHTNING_PKT_GET_RX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_IOCTL_CH_CNT_COOKIE_T   *ptr_cookie = ptr_data;
+    HAL_LT_DAWN_PKT_RX_CB_T             *ptr_rx_cb = HAL_LT_DAWN_PKT_GET_RX_CB_PTR(unit);
 
     ptr_cookie->rx_cnt = ptr_rx_cb->cnt;
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: hal_lightning_pkt_clearTxKnlCnt
+/* FUNCTION NAME: hal_lt_dawn_pkt_clearTxKnlCnt
  * PURPOSE:
  *      To clear the PDMA TX counters of the target channel.
  * INPUT:
@@ -1101,17 +1100,17 @@ hal_lightning_pkt_getRxKnlCnt(
  *      None
  */
 CLX_ERROR_NO_T
-hal_lightning_pkt_clearTxKnlCnt(
+hal_lt_dawn_pkt_clearTxKnlCnt(
     const UI32_T                    unit,
     void                            *ptr_data)
 {
-    HAL_LIGHTNING_PKT_TX_CB_T             *ptr_tx_cb = HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_TX_CB_T             *ptr_tx_cb = HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit);
 
-    osal_memset(&ptr_tx_cb->cnt, 0, sizeof(HAL_LIGHTNING_PKT_TX_CNT_T));
+    osal_memset(&ptr_tx_cb->cnt, 0, sizeof(HAL_LT_DAWN_PKT_TX_CNT_T));
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: hal_lightning_pkt_clearRxKnlCnt
+/* FUNCTION NAME: hal_lt_dawn_pkt_clearRxKnlCnt
  * PURPOSE:
  *      To clear the PDMA RX counters of the target channel.
  * INPUT:
@@ -1125,18 +1124,18 @@ hal_lightning_pkt_clearTxKnlCnt(
  *      None
  */
 CLX_ERROR_NO_T
-hal_lightning_pkt_clearRxKnlCnt(
+hal_lt_dawn_pkt_clearRxKnlCnt(
     const UI32_T                    unit,
     void                            *ptr_data)
 {
-    HAL_LIGHTNING_PKT_RX_CB_T             *ptr_rx_cb = HAL_LIGHTNING_PKT_GET_RX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_RX_CB_T             *ptr_rx_cb = HAL_LT_DAWN_PKT_GET_RX_CB_PTR(unit);
 
-    osal_memset(&ptr_rx_cb->cnt, 0, sizeof(HAL_LIGHTNING_PKT_RX_CNT_T));
+    osal_memset(&ptr_rx_cb->cnt, 0, sizeof(HAL_LT_DAWN_PKT_RX_CNT_T));
     return (CLX_E_OK);
 }
 
 /* ----------------------------------------------------------------------------------- independent func */
-/* FUNCTION NAME: _hal_lightning_pkt_enQueue
+/* FUNCTION NAME: _hal_lt_dawn_pkt_enQueue
  * PURPOSE:
  *      To enqueue the target data.
  * INPUT:
@@ -1150,8 +1149,8 @@ hal_lightning_pkt_clearRxKnlCnt(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_enQueue(
-    HAL_PKT_SW_QUEUE_T  *ptr_que,
+_hal_lt_dawn_pkt_enQueue(
+    HAL_LT_DAWN_PKT_SW_QUEUE_T  *ptr_que,
     void                    *ptr_data)
 {
     CLX_ERROR_NO_T          rc = CLX_E_OK;
@@ -1163,7 +1162,7 @@ _hal_lightning_pkt_enQueue(
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_deQueue
+/* FUNCTION NAME: _hal_lt_dawn_pkt_deQueue
  * PURPOSE:
  *      To dequeue the target data.
  * INPUT:
@@ -1177,8 +1176,8 @@ _hal_lightning_pkt_enQueue(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_deQueue(
-    HAL_PKT_SW_QUEUE_T  *ptr_que,
+_hal_lt_dawn_pkt_deQueue(
+    HAL_LT_DAWN_PKT_SW_QUEUE_T  *ptr_que,
     void                    **pptr_data)
 {
     CLX_ERROR_NO_T          rc = CLX_E_OK;
@@ -1190,7 +1189,7 @@ _hal_lightning_pkt_deQueue(
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_getQueueCount
+/* FUNCTION NAME: _hal_lt_dawn_pkt_getQueueCount
  * PURPOSE:
  *      To obtain the current GPD number in the target RX queue.
  * INPUT:
@@ -1205,8 +1204,8 @@ _hal_lightning_pkt_deQueue(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_getQueueCount(
-    HAL_PKT_SW_QUEUE_T  *ptr_que,
+_hal_lt_dawn_pkt_getQueueCount(
+    HAL_LT_DAWN_PKT_SW_QUEUE_T  *ptr_que,
     UI32_T                  *ptr_count)
 {
     CLX_ERROR_NO_T          rc = CLX_E_OK;
@@ -1218,7 +1217,7 @@ _hal_lightning_pkt_getQueueCount(
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_allocRxPayloadBuf
+/* FUNCTION NAME: _hal_lt_dawn_pkt_allocRxPayloadBuf
  * PURPOSE:
  *      To allocate the RX packet payload buffer for the GPD.
  * INPUT:
@@ -1234,17 +1233,17 @@ _hal_lightning_pkt_getQueueCount(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_allocRxPayloadBuf(
+_hal_lt_dawn_pkt_allocRxPayloadBuf(
     const UI32_T                    unit,
     const UI32_T                    channel,
     const UI32_T                    gpd_idx)
 {
     CLX_ERROR_NO_T                  rc = CLX_E_NO_MEMORY;
-    HAL_PKT_DRV_CB_T                      *ptr_cb = HAL_LIGHTNING_PKT_GET_DRV_CB_PTR(unit);
-    volatile HAL_LIGHTNING_PKT_RX_GPD_T   *ptr_rx_gpd = HAL_LIGHTNING_PKT_GET_RX_GPD_PTR(unit, channel, gpd_idx);
+    HAL_PKT_DRV_CB_T                      *ptr_cb = HAL_LT_DAWN_PKT_GET_DRV_CB_PTR(unit);
+    volatile HAL_LT_DAWN_PKT_RX_GPD_T   *ptr_rx_gpd = HAL_LT_DAWN_PKT_GET_RX_GPD_PTR(unit, channel, gpd_idx);
     CLX_ADDR_T                      phy_addr = 0;
 
-    HAL_LIGHTNING_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LIGHTNING_PKT_GET_RX_PDMA_PTR(unit, channel);
+    HAL_LT_DAWN_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LT_DAWN_PKT_GET_RX_PDMA_PTR(unit, channel);
     struct sk_buff                  *ptr_skb = NULL;
 
     ptr_skb = osal_skb_alloc(ptr_cb->buf_len);
@@ -1254,7 +1253,7 @@ _hal_lightning_pkt_allocRxPayloadBuf(
         phy_addr = osal_skb_mapDma(ptr_skb, DMA_FROM_DEVICE);
         if (0x0 == phy_addr)
         {
-            DIAG_PRINT(HAL_DBG_ERR,
+            OSAL_PRINT(OSAL_DBG_ERR,
                             "u=%u, rxch=%u, skb dma map err, size=%u\n",
                             unit, channel, ptr_skb->len);
             osal_skb_free(ptr_skb);
@@ -1277,7 +1276,7 @@ _hal_lightning_pkt_allocRxPayloadBuf(
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_freeRxPayloadBuf
+/* FUNCTION NAME: _hal_lt_dawn_pkt_freeRxPayloadBuf
  * PURPOSE:
  *      To free the RX packet payload buffer for the GPD.
  * INPUT:
@@ -1292,16 +1291,16 @@ _hal_lightning_pkt_allocRxPayloadBuf(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_freeRxPayloadBuf(
+_hal_lt_dawn_pkt_freeRxPayloadBuf(
     const UI32_T                    unit,
     const UI32_T                    channel,
     const UI32_T                    gpd_idx)
 {
     CLX_ERROR_NO_T                  rc = CLX_E_OTHERS;
-    volatile HAL_LIGHTNING_PKT_RX_GPD_T   *ptr_rx_gpd = HAL_LIGHTNING_PKT_GET_RX_GPD_PTR(unit, channel, gpd_idx);
+    volatile HAL_LT_DAWN_PKT_RX_GPD_T   *ptr_rx_gpd = HAL_LT_DAWN_PKT_GET_RX_GPD_PTR(unit, channel, gpd_idx);
     CLX_ADDR_T                      phy_addr = 0;
 
-    HAL_LIGHTNING_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LIGHTNING_PKT_GET_RX_PDMA_PTR(unit, channel);
+    HAL_LT_DAWN_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LT_DAWN_PKT_GET_RX_PDMA_PTR(unit, channel);
     struct sk_buff                  *ptr_skb = NULL;
 
     phy_addr = CLX_ADDR_32_TO_64(ptr_rx_gpd->data_buf_addr_hi, ptr_rx_gpd->data_buf_addr_lo);
@@ -1323,7 +1322,7 @@ _hal_lightning_pkt_freeRxPayloadBuf(
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_freeRxPayloadBufGpd
+/* FUNCTION NAME: _hal_lt_dawn_pkt_freeRxPayloadBufGpd
  * PURPOSE:
  *      To free the RX packet payload buffer for the GPD.
  * INPUT:
@@ -1337,9 +1336,9 @@ _hal_lightning_pkt_freeRxPayloadBuf(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_freeRxPayloadBufGpd(
+_hal_lt_dawn_pkt_freeRxPayloadBufGpd(
     const UI32_T                    unit,
-    HAL_LIGHTNING_PKT_RX_SW_GPD_T         *ptr_sw_gpd)
+    HAL_LT_DAWN_PKT_RX_SW_GPD_T         *ptr_sw_gpd)
 {
     CLX_ERROR_NO_T                  rc = CLX_E_OTHERS;
     CLX_ADDR_T                      phy_addr = 0;
@@ -1357,7 +1356,7 @@ _hal_lightning_pkt_freeRxPayloadBufGpd(
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_initTxPdmaRing
+/* FUNCTION NAME: _hal_lt_dawn_initTxPdmaRing
  * PURPOSE:
  *      To initialize the GPD ring of target TX channel.
  *
@@ -1372,33 +1371,33 @@ _hal_lightning_pkt_freeRxPayloadBufGpd(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_initTxPdmaRing(
+_hal_lt_dawn_pkt_initTxPdmaRing(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_TX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_TX_CHANNEL_T  channel)
 {
     CLX_ERROR_NO_T                  rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LIGHTNING_PKT_GET_TX_PDMA_PTR(unit, channel);
-    volatile HAL_LIGHTNING_PKT_TX_GPD_T   *ptr_tx_gpd = NULL;
+    HAL_LT_DAWN_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LT_DAWN_PKT_GET_TX_PDMA_PTR(unit, channel);
+    volatile HAL_LT_DAWN_PKT_TX_GPD_T   *ptr_tx_gpd = NULL;
     CLX_ADDR_T                      phy_addr = 0;
     UI32_T                          gpd_idx = 0;
 
     for (gpd_idx = 0; gpd_idx < ptr_tx_pdma->gpd_num; gpd_idx++)
     {
-        ptr_tx_gpd = HAL_LIGHTNING_PKT_GET_TX_GPD_PTR(unit, channel, gpd_idx);
-        osal_memset((void *)ptr_tx_gpd, 0x0, sizeof(HAL_LIGHTNING_PKT_TX_GPD_T));
-        ptr_tx_gpd->ioc = HAL_LIGHTNING_PKT_IOC_HAS_INTR;
-        ptr_tx_gpd->ch  = HAL_LIGHTNING_PKT_CH_LAST_GPD;
-        ptr_tx_gpd->hwo = HAL_LIGHTNING_PKT_HWO_SW_OWN;
-        osal_dma_flushCache((void *)ptr_tx_gpd, sizeof(HAL_LIGHTNING_PKT_TX_GPD_T));
+        ptr_tx_gpd = HAL_LT_DAWN_PKT_GET_TX_GPD_PTR(unit, channel, gpd_idx);
+        osal_memset((void *)ptr_tx_gpd, 0x0, sizeof(HAL_LT_DAWN_PKT_TX_GPD_T));
+        ptr_tx_gpd->ioc = HAL_LT_DAWN_PKT_IOC_HAS_INTR;
+        ptr_tx_gpd->ch  = HAL_LT_DAWN_PKT_CH_LAST_GPD;
+        ptr_tx_gpd->hwo = HAL_LT_DAWN_PKT_HWO_SW_OWN;
+        osal_dma_flushCache((void *)ptr_tx_gpd, sizeof(HAL_LT_DAWN_PKT_TX_GPD_T));
     }
 
     phy_addr = osal_dma_convertVirtToPhy(ptr_tx_pdma->ptr_gpd_align_start_addr);
-    rc = _hal_lightning_pkt_setTxGpdStartAddrReg(unit, channel, phy_addr, ptr_tx_pdma->gpd_num);
+    rc = _hal_lt_dawn_pkt_setTxGpdStartAddrReg(unit, channel, phy_addr, ptr_tx_pdma->gpd_num);
 
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_initRxPdmaRing
+/* FUNCTION NAME: _hal_lt_dawn_pkt_initRxPdmaRing
  * PURPOSE:
  *      To initialize the RX GPD ring.
  * INPUT:
@@ -1412,32 +1411,32 @@ _hal_lightning_pkt_initTxPdmaRing(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_initRxPdmaRing(
+_hal_lt_dawn_pkt_initRxPdmaRing(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_RX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_RX_CHANNEL_T  channel)
 {
     CLX_ERROR_NO_T                  rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LIGHTNING_PKT_GET_RX_PDMA_PTR(unit, channel);
-    volatile HAL_LIGHTNING_PKT_RX_GPD_T   *ptr_rx_gpd = NULL;
+    HAL_LT_DAWN_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LT_DAWN_PKT_GET_RX_PDMA_PTR(unit, channel);
+    volatile HAL_LT_DAWN_PKT_RX_GPD_T   *ptr_rx_gpd = NULL;
     CLX_ADDR_T                      phy_addr = 0;
     UI32_T                          gpd_idx = 0;
 
     for (gpd_idx = 0; gpd_idx < ptr_rx_pdma->gpd_num; gpd_idx++)
     {
-        ptr_rx_gpd = HAL_LIGHTNING_PKT_GET_RX_GPD_PTR(unit, channel, gpd_idx);
-        osal_memset((void *)ptr_rx_gpd, 0x0, sizeof(HAL_LIGHTNING_PKT_RX_GPD_T));
-        ptr_rx_gpd->ioc = HAL_LIGHTNING_PKT_IOC_NO_INTR;
-        ptr_rx_gpd->hwo = HAL_LIGHTNING_PKT_HWO_SW_OWN;
-        osal_dma_flushCache((void *)ptr_rx_gpd, sizeof(HAL_LIGHTNING_PKT_RX_GPD_T));
+        ptr_rx_gpd = HAL_LT_DAWN_PKT_GET_RX_GPD_PTR(unit, channel, gpd_idx);
+        osal_memset((void *)ptr_rx_gpd, 0x0, sizeof(HAL_LT_DAWN_PKT_RX_GPD_T));
+        ptr_rx_gpd->ioc = HAL_LT_DAWN_PKT_IOC_NO_INTR;
+        ptr_rx_gpd->hwo = HAL_LT_DAWN_PKT_HWO_SW_OWN;
+        osal_dma_flushCache((void *)ptr_rx_gpd, sizeof(HAL_LT_DAWN_PKT_RX_GPD_T));
     }
 
     phy_addr = osal_dma_convertVirtToPhy(ptr_rx_pdma->ptr_gpd_align_start_addr);
-    rc = _hal_lightning_pkt_setRxGpdStartAddrReg(unit, channel, phy_addr, ptr_rx_pdma->gpd_num);
+    rc = _hal_lt_dawn_pkt_setRxGpdStartAddrReg(unit, channel, phy_addr, ptr_rx_pdma->gpd_num);
 
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_initRxPdmaRingBuf
+/* FUNCTION NAME: _hal_lt_dawn_pkt_initRxPdmaRingBuf
  * PURPOSE:
  *      To de-init the Rx PDMA ring configuration.
  * INPUT:
@@ -1451,15 +1450,15 @@ _hal_lightning_pkt_initRxPdmaRing(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_initRxPdmaRingBuf(
+_hal_lt_dawn_pkt_initRxPdmaRingBuf(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_RX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_RX_CHANNEL_T  channel)
 {
     CLX_ERROR_NO_T                  rc = CLX_E_OK;
-    HAL_PKT_DRV_CB_T                      *ptr_cb = HAL_LIGHTNING_PKT_GET_DRV_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_RX_CB_T             *ptr_rx_cb = HAL_LIGHTNING_PKT_GET_RX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LIGHTNING_PKT_GET_RX_PDMA_PTR(unit, channel);
-    volatile HAL_LIGHTNING_PKT_RX_GPD_T   *ptr_rx_gpd = NULL;
+    HAL_PKT_DRV_CB_T                      *ptr_cb = HAL_LT_DAWN_PKT_GET_DRV_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_RX_CB_T             *ptr_rx_cb = HAL_LT_DAWN_PKT_GET_RX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LT_DAWN_PKT_GET_RX_PDMA_PTR(unit, channel);
+    volatile HAL_LT_DAWN_PKT_RX_GPD_T   *ptr_rx_gpd = NULL;
     UI32_T                          gpd_idx = 0;
 
     if (0 == ptr_cb->buf_len)
@@ -1469,15 +1468,15 @@ _hal_lightning_pkt_initRxPdmaRingBuf(
 
     for (gpd_idx = 0; gpd_idx < ptr_rx_pdma->gpd_num; gpd_idx++)
     {
-        ptr_rx_gpd = HAL_LIGHTNING_PKT_GET_RX_GPD_PTR(unit, channel, gpd_idx);
-        osal_dma_invalidateCache((void *)ptr_rx_gpd, sizeof(HAL_LIGHTNING_PKT_RX_GPD_T));
+        ptr_rx_gpd = HAL_LT_DAWN_PKT_GET_RX_GPD_PTR(unit, channel, gpd_idx);
+        osal_dma_invalidateCache((void *)ptr_rx_gpd, sizeof(HAL_LT_DAWN_PKT_RX_GPD_T));
 
-        rc = _hal_lightning_pkt_allocRxPayloadBuf(unit, channel, gpd_idx);
+        rc = _hal_lt_dawn_pkt_allocRxPayloadBuf(unit, channel, gpd_idx);
         if (CLX_E_OK == rc)
         {
-            ptr_rx_gpd->ioc = HAL_LIGHTNING_PKT_IOC_HAS_INTR;
-            ptr_rx_gpd->hwo = HAL_LIGHTNING_PKT_HWO_HW_OWN;
-            osal_dma_flushCache((void *)ptr_rx_gpd, sizeof(HAL_LIGHTNING_PKT_RX_GPD_T));
+            ptr_rx_gpd->ioc = HAL_LT_DAWN_PKT_IOC_HAS_INTR;
+            ptr_rx_gpd->hwo = HAL_LT_DAWN_PKT_HWO_HW_OWN;
+            osal_dma_flushCache((void *)ptr_rx_gpd, sizeof(HAL_LT_DAWN_PKT_RX_GPD_T));
         }
         else
         {
@@ -1489,7 +1488,7 @@ _hal_lightning_pkt_initRxPdmaRingBuf(
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_deinitRxPdmaRingBuf
+/* FUNCTION NAME: _hal_lt_dawn_pkt_deinitRxPdmaRingBuf
  * PURPOSE:
  *      To de-init the Rx PDMA ring configuration.
  * INPUT:
@@ -1503,28 +1502,28 @@ _hal_lightning_pkt_initRxPdmaRingBuf(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_deinitRxPdmaRingBuf(
+_hal_lt_dawn_pkt_deinitRxPdmaRingBuf(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_RX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_RX_CHANNEL_T  channel)
 {
     CLX_ERROR_NO_T                  rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LIGHTNING_PKT_GET_RX_PDMA_PTR(unit, channel);
-    volatile HAL_LIGHTNING_PKT_RX_GPD_T   *ptr_rx_gpd = NULL;
+    HAL_LT_DAWN_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LT_DAWN_PKT_GET_RX_PDMA_PTR(unit, channel);
+    volatile HAL_LT_DAWN_PKT_RX_GPD_T   *ptr_rx_gpd = NULL;
     UI32_T                          gpd_idx = 0;
 
     for (gpd_idx = 0; ((gpd_idx < ptr_rx_pdma->gpd_num) && (CLX_E_OK == rc)); gpd_idx++)
     {
         /* mark the GPD as invalid to prevent Rx-done task to process it */
-        ptr_rx_gpd = HAL_LIGHTNING_PKT_GET_RX_GPD_PTR(unit, channel, gpd_idx);
-        ptr_rx_gpd->hwo = HAL_LIGHTNING_PKT_HWO_HW_OWN;
-        osal_dma_flushCache((void *)ptr_rx_gpd, sizeof(HAL_LIGHTNING_PKT_RX_GPD_T));
+        ptr_rx_gpd = HAL_LT_DAWN_PKT_GET_RX_GPD_PTR(unit, channel, gpd_idx);
+        ptr_rx_gpd->hwo = HAL_LT_DAWN_PKT_HWO_HW_OWN;
+        osal_dma_flushCache((void *)ptr_rx_gpd, sizeof(HAL_LT_DAWN_PKT_RX_GPD_T));
 
-        rc = _hal_lightning_pkt_freeRxPayloadBuf(unit, channel, gpd_idx);
+        rc = _hal_lt_dawn_pkt_freeRxPayloadBuf(unit, channel, gpd_idx);
     }
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_recoverTxPdma
+/* FUNCTION NAME: _hal_lt_dawn_pkt_recoverTxPdma
  * PURPOSE:
  *      To recover the PDMA status to the initial state.
  * INPUT:
@@ -1538,12 +1537,12 @@ _hal_lightning_pkt_deinitRxPdmaRingBuf(
  *
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_recoverTxPdma(
+_hal_lt_dawn_pkt_recoverTxPdma(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_TX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_TX_CHANNEL_T  channel)
 {
     CLX_ERROR_NO_T                  rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LIGHTNING_PKT_GET_TX_PDMA_PTR(unit, channel);
+    HAL_LT_DAWN_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LT_DAWN_PKT_GET_TX_PDMA_PTR(unit, channel);
 
     /* Release the software GPD ring and configure it again. */
     ptr_tx_pdma->used_idx     = 0;
@@ -1551,14 +1550,14 @@ _hal_lightning_pkt_recoverTxPdma(
     ptr_tx_pdma->used_gpd_num = 0;
     ptr_tx_pdma->free_gpd_num = ptr_tx_pdma->gpd_num;
 
-    _hal_lightning_pkt_stopTxChannelReg(unit, channel);
-    rc = _hal_lightning_pkt_initTxPdmaRing(unit, channel);
-    _hal_lightning_pkt_startTxChannelReg(unit, channel, 0);
+    _hal_lt_dawn_pkt_stopTxChannelReg(unit, channel);
+    rc = _hal_lt_dawn_pkt_initTxPdmaRing(unit, channel);
+    _hal_lt_dawn_pkt_startTxChannelReg(unit, channel, 0);
 
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_recoverRxPdma
+/* FUNCTION NAME: _hal_lt_dawn_pkt_recoverRxPdma
  * PURPOSE:
  *      To recover the RX PDMA from the error state.
  * INPUT:
@@ -1572,38 +1571,38 @@ _hal_lightning_pkt_recoverTxPdma(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_recoverRxPdma(
+_hal_lt_dawn_pkt_recoverRxPdma(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_RX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_RX_CHANNEL_T  channel)
 {
     CLX_ERROR_NO_T                  rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LIGHTNING_PKT_GET_RX_PDMA_PTR(unit, channel);
+    HAL_LT_DAWN_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LT_DAWN_PKT_GET_RX_PDMA_PTR(unit, channel);
 
     /* Release the software GPD ring and configure it again. */
     ptr_rx_pdma->cur_idx = 0;
 
-    _hal_lightning_pkt_stopRxChannelReg(unit, channel);
-    rc = _hal_lightning_pkt_deinitRxPdmaRingBuf(unit, channel);
+    _hal_lt_dawn_pkt_stopRxChannelReg(unit, channel);
+    rc = _hal_lt_dawn_pkt_deinitRxPdmaRingBuf(unit, channel);
     if (CLX_E_OK != rc)
     {
         return (rc);
     }
-    rc = _hal_lightning_pkt_initRxPdmaRing(unit, channel);
+    rc = _hal_lt_dawn_pkt_initRxPdmaRing(unit, channel);
     if (CLX_E_OK != rc)
     {
         return (rc);
     }
-    rc = _hal_lightning_pkt_initRxPdmaRingBuf(unit, channel);
+    rc = _hal_lt_dawn_pkt_initRxPdmaRingBuf(unit, channel);
     if (CLX_E_OK != rc)
     {
         return (rc);
     }
-    _hal_lightning_pkt_startRxChannelReg(unit, channel, ptr_rx_pdma->gpd_num);
+    _hal_lt_dawn_pkt_startRxChannelReg(unit, channel, ptr_rx_pdma->gpd_num);
 
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_freeTxGpdList
+/* FUNCTION NAME: _hal_lt_dawn_pkt_freeTxGpdList
  * PURPOSE:
  *      To free the TX SW GPD link list.
  * INPUT:
@@ -1617,11 +1616,11 @@ _hal_lightning_pkt_recoverRxPdma(
  *      None
  */
 static void
-_hal_lightning_pkt_freeTxGpdList(
+_hal_lt_dawn_pkt_freeTxGpdList(
     UI32_T                          unit,
-    HAL_LIGHTNING_PKT_TX_SW_GPD_T         *ptr_sw_gpd)
+    HAL_LT_DAWN_PKT_TX_SW_GPD_T         *ptr_sw_gpd)
 {
-    HAL_LIGHTNING_PKT_TX_SW_GPD_T         *ptr_sw_gpd_cur = NULL;
+    HAL_LT_DAWN_PKT_TX_SW_GPD_T         *ptr_sw_gpd_cur = NULL;
 
     while (NULL != ptr_sw_gpd)
     {
@@ -1631,7 +1630,7 @@ _hal_lightning_pkt_freeTxGpdList(
     }
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_freeRxGpdList
+/* FUNCTION NAME: _hal_lt_dawn_pkt_freeRxGpdList
  * PURPOSE:
  *      To free the RX SW GPD link list.
  * INPUT:
@@ -1646,12 +1645,12 @@ _hal_lightning_pkt_freeTxGpdList(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_freeRxGpdList(
+_hal_lt_dawn_pkt_freeRxGpdList(
     UI32_T                          unit,
-    HAL_LIGHTNING_PKT_RX_SW_GPD_T         *ptr_sw_gpd,
+    HAL_LT_DAWN_PKT_RX_SW_GPD_T         *ptr_sw_gpd,
     BOOL_T                          free_payload)
 {
-    HAL_LIGHTNING_PKT_RX_SW_GPD_T         *ptr_sw_gpd_cur = NULL;
+    HAL_LT_DAWN_PKT_RX_SW_GPD_T         *ptr_sw_gpd_cur = NULL;
 
     while (NULL != ptr_sw_gpd)
     {
@@ -1659,7 +1658,7 @@ _hal_lightning_pkt_freeRxGpdList(
         ptr_sw_gpd = ptr_sw_gpd->ptr_next;
         if (TRUE == free_payload)
         {
-            _hal_lightning_pkt_freeRxPayloadBufGpd(unit, ptr_sw_gpd_cur);
+            _hal_lt_dawn_pkt_freeRxPayloadBufGpd(unit, ptr_sw_gpd_cur);
         }
         osal_free(ptr_sw_gpd_cur);
     }
@@ -1668,7 +1667,7 @@ _hal_lightning_pkt_freeRxGpdList(
 }
 
 /* ----------------------------------------------------------------------------------- pkt_drv */
-/* FUNCTION NAME: _hal_lightning_pkt_txEnQueueBulk
+/* FUNCTION NAME: _hal_lt_dawn_pkt_txEnQueueBulk
  * PURPOSE:
  *      To enqueue numbers of packet in the bulk buffer
  * INPUT:
@@ -1683,13 +1682,13 @@ _hal_lightning_pkt_freeRxGpdList(
  *      None
  */
 static void
-_hal_lightning_pkt_txEnQueueBulk(
+_hal_lt_dawn_pkt_txEnQueueBulk(
     const UI32_T                    unit,
     const UI32_T                    channel,
     const UI32_T                    number)
 {
-    HAL_LIGHTNING_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LIGHTNING_PKT_GET_TX_PDMA_PTR(unit, channel);
-    HAL_LIGHTNING_PKT_TX_SW_GPD_T         *ptr_sw_gpd = NULL;
+    HAL_LT_DAWN_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LT_DAWN_PKT_GET_TX_PDMA_PTR(unit, channel);
+    HAL_LT_DAWN_PKT_TX_SW_GPD_T         *ptr_sw_gpd = NULL;
     UI32_T                          idx;
 
     for (idx = 0; idx < number; idx++)
@@ -1704,7 +1703,7 @@ _hal_lightning_pkt_txEnQueueBulk(
 }
 
 
-/* FUNCTION NAME: _hal_lightning_pkt_strictTxDeQueue
+/* FUNCTION NAME: _hal_lt_dawn_pkt_strictTxDeQueue
  * PURPOSE:
  *      To dequeue the packets based on the strict algorithm.
  * INPUT:
@@ -1718,19 +1717,19 @@ _hal_lightning_pkt_txEnQueueBulk(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_strictTxDeQueue(
+_hal_lt_dawn_pkt_strictTxDeQueue(
     const UI32_T                    unit,
     void                            *ptr_data)
 {
-    HAL_LIGHTNING_PKT_IOCTL_TX_COOKIE_T   *ptr_cookie = ptr_data;
+    HAL_LT_DAWN_PKT_IOCTL_TX_COOKIE_T   *ptr_cookie = ptr_data;
     CLX_ERROR_NO_T                  rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_TX_CB_T             *ptr_tx_cb = HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_TX_SW_GPD_T         *ptr_sw_gpd = NULL;
+    HAL_LT_DAWN_PKT_TX_CB_T             *ptr_tx_cb = HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_TX_SW_GPD_T         *ptr_sw_gpd = NULL;
     CLX_ADDR_T                      sw_gpd_addr;
     UI32_T                          que_cnt = 0;
 
     /* get queue count */
-    _hal_lightning_pkt_getQueueCount(&ptr_tx_cb->sw_queue, &que_cnt);
+    _hal_lt_dawn_pkt_getQueueCount(&ptr_tx_cb->sw_queue, &que_cnt);
 
     /* wait txTask event */
     if (0 == que_cnt)
@@ -1744,13 +1743,13 @@ _hal_lightning_pkt_strictTxDeQueue(
         ptr_tx_cb->cnt.wait_event++;
 
         /* re-get queue count */
-        _hal_lightning_pkt_getQueueCount(&ptr_tx_cb->sw_queue, &que_cnt);
+        _hal_lt_dawn_pkt_getQueueCount(&ptr_tx_cb->sw_queue, &que_cnt);
     }
 
     /* deque */
     if (que_cnt > 0)
     {
-        rc = _hal_lightning_pkt_deQueue(&ptr_tx_cb->sw_queue, (void **)&ptr_sw_gpd);
+        rc = _hal_lt_dawn_pkt_deQueue(&ptr_tx_cb->sw_queue, (void **)&ptr_sw_gpd);
         if (CLX_E_OK == rc)
         {
             ptr_tx_cb->cnt.deque_ok++;
@@ -1763,7 +1762,7 @@ _hal_lightning_pkt_strictTxDeQueue(
                                sizeof(CLX_ADDR_T));
 
             /* free kernel sw_gpd */
-            _hal_lightning_pkt_freeTxGpdList(unit, ptr_sw_gpd);
+            _hal_lt_dawn_pkt_freeTxGpdList(unit, ptr_sw_gpd);
         }
         else
         {
@@ -1779,7 +1778,7 @@ _hal_lightning_pkt_strictTxDeQueue(
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_rxCheckReason
+/* FUNCTION NAME: _hal_lt_dawn_pkt_rxCheckReason
  * PURPOSE:
  *      To check the packets to linux kernel/user.
  * INPUT:
@@ -1793,8 +1792,8 @@ _hal_lightning_pkt_strictTxDeQueue(
  *      Reference to pkt_srv.
  */
 static void
-_hal_lightning_pkt_rxCheckReason(
-    volatile HAL_LIGHTNING_PKT_RX_GPD_T   *ptr_rx_gpd,
+_hal_lt_dawn_pkt_rxCheckReason(
+    volatile HAL_LT_DAWN_PKT_RX_GPD_T   *ptr_rx_gpd,
     HAL_PKT_NETIF_PROFILE_T     *ptr_profile,
     BOOL_T                          *ptr_hit_prof)
 {
@@ -1809,20 +1808,20 @@ _hal_lightning_pkt_rxCheckReason(
         return;
     }
 
-#define HAL_LIGHTNING_PKT_DI_NON_L3_CPU_MIN   (HAL_EXCPT_CPU_BASE_ID + HAL_EXCPT_CPU_NON_L3_MIN)
-#define HAL_LIGHTNING_PKT_DI_NON_L3_CPU_MAX   (HAL_EXCPT_CPU_BASE_ID + HAL_EXCPT_CPU_NON_L3_MAX)
-#define HAL_LIGHTNING_PKT_DI_L3_CPU_MIN       (HAL_EXCPT_CPU_BASE_ID + HAL_EXCPT_CPU_L3_MIN)
-#define HAL_LIGHTNING_PKT_DI_L3_CPU_MAX       (HAL_EXCPT_CPU_BASE_ID + HAL_EXCPT_CPU_L3_MAX)
+#define HAL_LT_DAWN_PKT_DI_NON_L3_CPU_MIN   (HAL_EXCPT_CPU_BASE_ID + HAL_EXCPT_CPU_NON_L3_MIN)
+#define HAL_LT_DAWN_PKT_DI_NON_L3_CPU_MAX   (HAL_EXCPT_CPU_BASE_ID + HAL_EXCPT_CPU_NON_L3_MAX)
+#define HAL_LT_DAWN_PKT_DI_L3_CPU_MIN       (HAL_EXCPT_CPU_BASE_ID + HAL_EXCPT_CPU_L3_MIN)
+#define HAL_LT_DAWN_PKT_DI_L3_CPU_MAX       (HAL_EXCPT_CPU_BASE_ID + HAL_EXCPT_CPU_L3_MAX)
 
     switch (ptr_rx_gpd->itmh_eth.typ)
     {
-        case HAL_LIGHTNING_PKT_TMH_TYPE_ITMH_ETH:
+        case HAL_LT_DAWN_PKT_TMH_TYPE_ITMH_ETH:
 
             /* IPP non-L3 exception */
-            if (ptr_rx_gpd->itmh_eth.dst_idx >= HAL_LIGHTNING_PKT_DI_NON_L3_CPU_MIN &&
-                ptr_rx_gpd->itmh_eth.dst_idx <= HAL_LIGHTNING_PKT_DI_NON_L3_CPU_MAX)
+            if (ptr_rx_gpd->itmh_eth.dst_idx >= HAL_LT_DAWN_PKT_DI_NON_L3_CPU_MIN &&
+                ptr_rx_gpd->itmh_eth.dst_idx <= HAL_LT_DAWN_PKT_DI_NON_L3_CPU_MAX)
             {
-                bitval = ptr_rx_gpd->itmh_eth.dst_idx - HAL_LIGHTNING_PKT_DI_NON_L3_CPU_MIN;
+                bitval = ptr_rx_gpd->itmh_eth.dst_idx - HAL_LT_DAWN_PKT_DI_NON_L3_CPU_MIN;
                 bitmap = 1UL << (bitval % 32);
                 if (0 != (ptr_reason_bitmap->ipp_excpt_bitmap[bitval / 32] & bitmap))
                 {
@@ -1832,10 +1831,10 @@ _hal_lightning_pkt_rxCheckReason(
             }
 
             /* IPP L3 exception */
-            if (ptr_rx_gpd->itmh_eth.dst_idx >= HAL_LIGHTNING_PKT_DI_L3_CPU_MIN &&
-                ptr_rx_gpd->itmh_eth.dst_idx <= HAL_LIGHTNING_PKT_DI_L3_CPU_MAX)
+            if (ptr_rx_gpd->itmh_eth.dst_idx >= HAL_LT_DAWN_PKT_DI_L3_CPU_MIN &&
+                ptr_rx_gpd->itmh_eth.dst_idx <= HAL_LT_DAWN_PKT_DI_L3_CPU_MAX)
             {
-                bitmap = ptr_rx_gpd->itmh_eth.dst_idx - HAL_LIGHTNING_PKT_DI_L3_CPU_MIN;
+                bitmap = ptr_rx_gpd->itmh_eth.dst_idx - HAL_LT_DAWN_PKT_DI_L3_CPU_MIN;
                 if (0 != (ptr_reason_bitmap->ipp_l3_excpt_bitmap[0] & bitmap))
                 {
                     *ptr_hit_prof = TRUE;
@@ -1861,11 +1860,11 @@ _hal_lightning_pkt_rxCheckReason(
             }
             break;
 
-        case HAL_LIGHTNING_PKT_TMH_TYPE_ITMH_FAB:
-        case HAL_LIGHTNING_PKT_TMH_TYPE_ETMH_FAB:
+        case HAL_LT_DAWN_PKT_TMH_TYPE_ITMH_FAB:
+        case HAL_LT_DAWN_PKT_TMH_TYPE_ETMH_FAB:
             break;
 
-        case HAL_LIGHTNING_PKT_TMH_TYPE_ETMH_ETH:
+        case HAL_LT_DAWN_PKT_TMH_TYPE_ETMH_ETH:
 
             /* EPP exception */
             if (1 == ptr_rx_gpd->etmh_eth.redir)
@@ -1896,8 +1895,8 @@ _hal_lightning_pkt_rxCheckReason(
 }
 
 static BOOL_T
-_hal_lightning_pkt_comparePatternWithPayload(
-    volatile HAL_LIGHTNING_PKT_RX_GPD_T   *ptr_rx_gpd,
+_hal_lt_dawn_pkt_comparePatternWithPayload(
+    volatile HAL_LT_DAWN_PKT_RX_GPD_T   *ptr_rx_gpd,
     const UI8_T                     *ptr_pattern,
     const UI8_T                     *ptr_mask,
     const UI32_T                    offset)
@@ -1915,7 +1914,7 @@ _hal_lightning_pkt_comparePatternWithPayload(
         /* per-byte comparison  */
         if ((ptr_virt_addr[offset+idx] & ptr_mask[idx]) != (ptr_pattern[idx] & ptr_mask[idx]))
         {
-            DIAG_PRINT(HAL_DBG_PROFILE,
+            OSAL_PRINT(OSAL_DBG_PROFILE,
                             "prof match failed, byte idx=%d, pattern=0x%02X != 0x%02X, mask=0x%02X\n",
                             offset+idx, ptr_pattern[idx], ptr_virt_addr[offset+idx], ptr_mask[idx]);
             return (FALSE);
@@ -1927,8 +1926,8 @@ _hal_lightning_pkt_comparePatternWithPayload(
 
 
 static void
-_hal_lightning_pkt_rxCheckPattern(
-    volatile HAL_LIGHTNING_PKT_RX_GPD_T   *ptr_rx_gpd,
+_hal_lt_dawn_pkt_rxCheckPattern(
+    volatile HAL_LT_DAWN_PKT_RX_GPD_T   *ptr_rx_gpd,
     HAL_PKT_NETIF_PROFILE_T     *ptr_profile,
     BOOL_T                          *ptr_hit_prof)
 {
@@ -1954,11 +1953,11 @@ _hal_lightning_pkt_rxCheckPattern(
 
     for (idx=0; idx<CLX_NETIF_PROFILE_PATTERN_NUM; idx++)
     {
-        DIAG_PRINT(HAL_DBG_PROFILE,
+        OSAL_PRINT(OSAL_DBG_PROFILE,
                         "compare pattern id=%d\n", idx);
         if (0 != (ptr_profile->flags & (HAL_PKT_NETIF_PROFILE_FLAGS_PATTERN_0 << idx)))
         {
-            match = _hal_lightning_pkt_comparePatternWithPayload(ptr_rx_gpd,
+            match = _hal_lt_dawn_pkt_comparePatternWithPayload(ptr_rx_gpd,
                                                            ptr_profile->pattern[idx],
                                                            ptr_profile->mask[idx],
                                                            ptr_profile->offset[idx]);
@@ -1977,8 +1976,8 @@ _hal_lightning_pkt_rxCheckPattern(
 }
 
 static void
-_hal_lightning_pkt_matchUserProfile(
-    volatile HAL_LIGHTNING_PKT_RX_GPD_T   *ptr_rx_gpd,
+_hal_lt_dawn_pkt_matchUserProfile(
+    volatile HAL_LT_DAWN_PKT_RX_GPD_T   *ptr_rx_gpd,
     HAL_PKT_PROFILE_NODE_T      *ptr_profile_list,
     HAL_PKT_NETIF_PROFILE_T     **pptr_profile_hit)
 {
@@ -1990,17 +1989,17 @@ _hal_lightning_pkt_matchUserProfile(
     while (NULL != ptr_curr_node)
     {
         /* 1st match reason */
-        _hal_lightning_pkt_rxCheckReason(ptr_rx_gpd, ptr_curr_node->ptr_profile, &hit);
+        _hal_lt_dawn_pkt_rxCheckReason(ptr_rx_gpd, ptr_curr_node->ptr_profile, &hit);
         if (TRUE == hit)
         {
-            DIAG_PRINT(HAL_DBG_PROFILE,
+            OSAL_PRINT(OSAL_DBG_PROFILE,
                             "rx prof matched by reason\n");
 
             /* Then, check pattern */
-            _hal_lightning_pkt_rxCheckPattern(ptr_rx_gpd, ptr_curr_node->ptr_profile, &hit);
+            _hal_lt_dawn_pkt_rxCheckPattern(ptr_rx_gpd, ptr_curr_node->ptr_profile, &hit);
             if (TRUE == hit)
             {
-                DIAG_PRINT(HAL_DBG_PROFILE,
+                OSAL_PRINT(OSAL_DBG_PROFILE,
                                 "rx prof matched by pattern\n");
 
                 *pptr_profile_hit = ptr_curr_node->ptr_profile;
@@ -2014,9 +2013,9 @@ _hal_lightning_pkt_matchUserProfile(
 }
 
 static void
-_hal_lightning_pkt_getPacketDest(
-    volatile HAL_LIGHTNING_PKT_RX_GPD_T   *ptr_rx_gpd,
-    HAL_LIGHTNING_PKT_DEST_T              *ptr_dest,
+_hal_lt_dawn_pkt_getPacketDest(
+    volatile HAL_LT_DAWN_PKT_RX_GPD_T   *ptr_rx_gpd,
+    HAL_LT_DAWN_PKT_DEST_T              *ptr_dest,
     void                            **pptr_cookie)
 {
     UI32_T                          port;
@@ -2024,9 +2023,9 @@ _hal_lightning_pkt_getPacketDest(
     HAL_PKT_NETIF_PROFILE_T         *ptr_profile_hit;
 
     port = ptr_rx_gpd->itmh_eth.igr_phy_port;
-    ptr_profile_list = HAL_LIGHTNING_PKT_GET_PORT_PROFILE_LIST(port);
+    ptr_profile_list = HAL_LT_DAWN_PKT_GET_PORT_PROFILE_LIST(port);
 
-    _hal_lightning_pkt_matchUserProfile(ptr_rx_gpd,
+    _hal_lt_dawn_pkt_matchUserProfile(ptr_rx_gpd,
                                   ptr_profile_list,
                                   &ptr_profile_hit);
     if (NULL != ptr_profile_hit)
@@ -2034,24 +2033,24 @@ _hal_lightning_pkt_getPacketDest(
 #if defined(NETIF_EN_NETLINK)
         if (HAL_PKT_NETIF_RX_DST_NETLINK == ptr_profile_hit->dst_type)
         {
-            *ptr_dest = HAL_LIGHTNING_PKT_DEST_NETLINK;
+            *ptr_dest = HAL_LT_DAWN_PKT_DEST_NETLINK;
             *pptr_cookie = (void *)&ptr_profile_hit->netlink;
         }
         else
         {
-            *ptr_dest = HAL_LIGHTNING_PKT_DEST_SDK;
+            *ptr_dest = HAL_LT_DAWN_PKT_DEST_SDK;
         }
 #else
-        *ptr_dest = HAL_LIGHTNING_PKT_DEST_SDK;
+        *ptr_dest = HAL_LT_DAWN_PKT_DEST_SDK;
 #endif
     }
     else
     {
-        *ptr_dest = HAL_LIGHTNING_PKT_DEST_NETDEV;
+        *ptr_dest = HAL_LT_DAWN_PKT_DEST_NETDEV;
     }
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_rxEnQueue
+/* FUNCTION NAME: _hal_lt_dawn_pkt_rxEnQueue
  * PURPOSE:
  *      To enqueue the packets to multiple queues.
  * INPUT:
@@ -2066,17 +2065,17 @@ _hal_lightning_pkt_getPacketDest(
  *      None
  */
 static void
-_hal_lightning_pkt_rxEnQueue(
+_hal_lt_dawn_pkt_rxEnQueue(
     const UI32_T                    unit,
     const UI32_T                    channel,
-    HAL_LIGHTNING_PKT_RX_SW_GPD_T         *ptr_sw_gpd)
+    HAL_LT_DAWN_PKT_RX_SW_GPD_T         *ptr_sw_gpd)
 {
-    HAL_PKT_DRV_CB_T                      *ptr_cb = HAL_LIGHTNING_PKT_GET_DRV_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_RX_CB_T             *ptr_rx_cb = HAL_LIGHTNING_PKT_GET_RX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_RX_SW_GPD_T         *ptr_sw_first_gpd = ptr_sw_gpd;
+    HAL_PKT_DRV_CB_T                      *ptr_cb = HAL_LT_DAWN_PKT_GET_DRV_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_RX_CB_T             *ptr_rx_cb = HAL_LT_DAWN_PKT_GET_RX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_RX_SW_GPD_T         *ptr_sw_first_gpd = ptr_sw_gpd;
     void                            *ptr_virt_addr = NULL;
     CLX_ADDR_T                      phy_addr = 0;
-    HAL_LIGHTNING_PKT_DEST_T              dest_type;
+    HAL_LT_DAWN_PKT_DEST_T              dest_type;
 
     /* skb meta */
     UI32_T                          port = 0, len = 0, total_len = 0;
@@ -2092,7 +2091,7 @@ _hal_lightning_pkt_rxEnQueue(
     {
         while (NULL != ptr_sw_gpd)
         {
-            len += (HAL_LIGHTNING_PKT_CH_LAST_GPD == ptr_sw_gpd->rx_gpd.ch)?
+            len += (HAL_LT_DAWN_PKT_CH_LAST_GPD == ptr_sw_gpd->rx_gpd.ch)?
                 ptr_sw_gpd->rx_gpd.cnsm_buf_len : ptr_sw_gpd->rx_gpd.avbl_buf_len;
 
             total_len += len;
@@ -2104,25 +2103,25 @@ _hal_lightning_pkt_rxEnQueue(
             ptr_sw_gpd = ptr_sw_gpd->ptr_next;
         }
         perf_rxCallback(total_len);
-        _hal_lightning_pkt_freeRxGpdList(unit, ptr_sw_first_gpd, TRUE);
+        _hal_lt_dawn_pkt_freeRxGpdList(unit, ptr_sw_first_gpd, TRUE);
         return ;
     }
 #endif
 
-    _hal_lightning_pkt_getPacketDest(&ptr_sw_gpd->rx_gpd, &dest_type, &ptr_dest);
+    _hal_lt_dawn_pkt_getPacketDest(&ptr_sw_gpd->rx_gpd, &dest_type, &ptr_dest);
 
 #if defined(NETIF_EN_NETLINK)
-    if ((HAL_LIGHTNING_PKT_DEST_NETDEV  == dest_type) ||
-        (HAL_LIGHTNING_PKT_DEST_NETLINK == dest_type))
+    if ((HAL_LT_DAWN_PKT_DEST_NETDEV  == dest_type) ||
+        (HAL_LT_DAWN_PKT_DEST_NETLINK == dest_type))
 #else
-    if (HAL_LIGHTNING_PKT_DEST_NETDEV == dest_type)
+    if (HAL_LT_DAWN_PKT_DEST_NETDEV == dest_type)
 #endif
     {
         /* need to encap the packet as skb */
         ptr_sw_gpd = ptr_sw_first_gpd;
         while (NULL != ptr_sw_gpd)
         {
-            len = (HAL_LIGHTNING_PKT_CH_LAST_GPD == ptr_sw_gpd->rx_gpd.ch)?
+            len = (HAL_LT_DAWN_PKT_CH_LAST_GPD == ptr_sw_gpd->rx_gpd.ch)?
                 ptr_sw_gpd->rx_gpd.cnsm_buf_len : ptr_sw_gpd->rx_gpd.avbl_buf_len;
 
             total_len += len;
@@ -2156,12 +2155,12 @@ _hal_lightning_pkt_rxEnQueue(
         }
 
         port = ptr_sw_first_gpd->rx_gpd.itmh_eth.igr_phy_port;
-        ptr_net_dev = HAL_LIGHTNING_PKT_GET_PORT_NETDEV(port);
+        ptr_net_dev = HAL_LT_DAWN_PKT_GET_PORT_NETDEV(port);
 
         /* if the packet is composed of multiple gpd (skb), need to merge it into a single skb */
         if (NULL != ptr_sw_first_gpd->ptr_next)
         {
-            DIAG_PRINT(HAL_DBG_RX,
+            OSAL_PRINT(OSAL_DBG_RX,
                             "u=%u, rxch=%u, rcv pkt size=%u > gpd buf size=%u\n",
                             unit, channel, total_len, ptr_cb->buf_len);
             ptr_merge_skb = osal_skb_alloc(total_len - ETH_FCS_LEN);
@@ -2172,7 +2171,7 @@ _hal_lightning_pkt_rxEnQueue(
                 while (NULL != ptr_sw_gpd)
                 {
                     ptr_skb = (struct sk_buff *)ptr_sw_gpd->ptr_cookie;
-                    DIAG_PRINT(HAL_DBG_RX,
+                    OSAL_PRINT(OSAL_DBG_RX,
                                     "u=%u, rxch=%u, copy size=%u to buf offset=%u\n",
                                     unit, channel, ptr_skb->len, copy_offset);
 
@@ -2186,18 +2185,18 @@ _hal_lightning_pkt_rxEnQueue(
             }
             else
             {
-                DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
+                OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX),
                                 "u=%u, rxch=%u, alloc skb failed, size=%u\n",
                                 unit, channel, (total_len - ETH_FCS_LEN));
             }
 
             /* free both sw_gpd and the skb attached on it */
-            _hal_lightning_pkt_freeRxGpdList(unit, ptr_sw_first_gpd, TRUE);
+            _hal_lt_dawn_pkt_freeRxGpdList(unit, ptr_sw_first_gpd, TRUE);
         }
         else
         {
             /* free only sw_gpd */
-            _hal_lightning_pkt_freeRxGpdList(unit, ptr_sw_first_gpd, FALSE);
+            _hal_lt_dawn_pkt_freeRxGpdList(unit, ptr_sw_first_gpd, FALSE);
         }
 
         /* if NULL netdev, drop the skb */
@@ -2205,7 +2204,7 @@ _hal_lightning_pkt_rxEnQueue(
         {
             ptr_rx_cb->cnt.channel[channel].netdev_miss++;
             osal_skb_free(ptr_skb);
-            DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
+            OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX),
                             "u=%u, rxch=%u, find netdev failed\n",
                             unit, channel);
             return;
@@ -2217,7 +2216,7 @@ _hal_lightning_pkt_rxEnQueue(
         ptr_skb->ip_summed = CHECKSUM_UNNECESSARY; /* skip checksum */
 
         /* send to linux */
-        if (dest_type == HAL_LIGHTNING_PKT_DEST_NETDEV)
+        if (dest_type == HAL_LT_DAWN_PKT_DEST_NETDEV)
         {
             /* skip ethernet header only for Linux net interface*/
             ptr_skb->protocol = eth_type_trans(ptr_skb, ptr_net_dev);
@@ -2232,7 +2231,7 @@ _hal_lightning_pkt_rxEnQueue(
 #if defined(NETIF_EN_NETLINK)
         else
         {
-            DIAG_PRINT(HAL_DBG_PROFILE,
+            OSAL_PRINT(OSAL_DBG_PROFILE,
                             "hit profile dest=netlink, name=%s, mcgrp=%s\n",
                             ((NETIF_NL_RX_DST_NETLINK_T *)ptr_dest)->name,
                             ((NETIF_NL_RX_DST_NETLINK_T *)ptr_dest)->mc_group_name);
@@ -2240,44 +2239,44 @@ _hal_lightning_pkt_rxEnQueue(
         }
 #endif
     }
-    else if (HAL_LIGHTNING_PKT_DEST_SDK == dest_type)
+    else if (HAL_LT_DAWN_PKT_DEST_SDK == dest_type)
     {
-        while (0 != _hal_lightning_pkt_enQueue(&ptr_rx_cb->sw_queue[channel], ptr_sw_gpd))
+        while (0 != _hal_lt_dawn_pkt_enQueue(&ptr_rx_cb->sw_queue[channel], ptr_sw_gpd))
         {
             ptr_rx_cb->cnt.channel[channel].enque_retry++;
-            HAL_LIGHTNING_PKT_RX_ENQUE_RETRY_SLEEP();
+            HAL_LT_DAWN_PKT_RX_ENQUE_RETRY_SLEEP();
         }
         ptr_rx_cb->cnt.channel[channel].enque_ok++;
 
         osal_triggerEvent(&ptr_rx_cb->sync_sema);
         ptr_rx_cb->cnt.channel[channel].trig_event++;
     }
-    else if (HAL_LIGHTNING_PKT_DEST_DROP == dest_type)
+    else if (HAL_LT_DAWN_PKT_DEST_DROP == dest_type)
     {
-        _hal_lightning_pkt_freeRxGpdList(unit, ptr_sw_first_gpd, TRUE);
+        _hal_lt_dawn_pkt_freeRxGpdList(unit, ptr_sw_first_gpd, TRUE);
     }
     else
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX),
                         "u=%u, rxch=%u, invalid pkt dest=%d\n",
                         unit, channel, dest_type);
     }
 }
 
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_flushRxQueue(
+_hal_lt_dawn_pkt_flushRxQueue(
     const UI32_T                unit,
-    HAL_PKT_SW_QUEUE_T      *ptr_que)
+    HAL_LT_DAWN_PKT_SW_QUEUE_T      *ptr_que)
 {
-    HAL_LIGHTNING_PKT_RX_SW_GPD_T     *ptr_sw_gpd_knl = NULL;
+    HAL_LT_DAWN_PKT_RX_SW_GPD_T     *ptr_sw_gpd_knl = NULL;
     CLX_ERROR_NO_T              rc;
 
     while (1)
     {
-        rc = _hal_lightning_pkt_deQueue(ptr_que, (void **)&ptr_sw_gpd_knl);
+        rc = _hal_lt_dawn_pkt_deQueue(ptr_que, (void **)&ptr_sw_gpd_knl);
         if (CLX_E_OK == rc)
         {
-            _hal_lightning_pkt_freeRxGpdList(unit, ptr_sw_gpd_knl, TRUE);
+            _hal_lt_dawn_pkt_freeRxGpdList(unit, ptr_sw_gpd_knl, TRUE);
         }
         else
         {
@@ -2288,7 +2287,7 @@ _hal_lightning_pkt_flushRxQueue(
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_schedRxDeQueue
+/* FUNCTION NAME: _hal_lt_dawn_pkt_schedRxDeQueue
  * PURPOSE:
  *      To dequeue the packets based on the configured algorithm.
  * INPUT:
@@ -2302,22 +2301,22 @@ _hal_lightning_pkt_flushRxQueue(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_schedRxDeQueue(
+_hal_lt_dawn_pkt_schedRxDeQueue(
     const UI32_T                    unit,
     void                            *ptr_data)
 {
     HAL_PKT_IOCTL_RX_COOKIE_T             *ptr_cookie = ptr_data;
     HAL_PKT_IOCTL_RX_COOKIE_T             ioctl_data;
-    HAL_LIGHTNING_PKT_IOCTL_RX_GPD_T      ioctl_gpd;
-    HAL_LIGHTNING_PKT_RX_CB_T             *ptr_rx_cb = HAL_LIGHTNING_PKT_GET_RX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_RX_SW_GPD_T         *ptr_sw_gpd_knl = NULL;
-    HAL_LIGHTNING_PKT_RX_SW_GPD_T         *ptr_sw_first_gpd_knl = NULL;
+    HAL_LT_DAWN_PKT_IOCTL_RX_GPD_T      ioctl_gpd;
+    HAL_LT_DAWN_PKT_RX_CB_T             *ptr_rx_cb = HAL_LT_DAWN_PKT_GET_RX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_RX_SW_GPD_T         *ptr_sw_gpd_knl = NULL;
+    HAL_LT_DAWN_PKT_RX_SW_GPD_T         *ptr_sw_first_gpd_knl = NULL;
     UI32_T                                que_cnt = 0;
     UI32_T                                queue   = 0;
     UI32_T                                idx     = 0;
     UI32_T                                gpd_idx = 0;
     /* copy Rx sw_gpd */
-    volatile HAL_LIGHTNING_PKT_RX_GPD_T   *ptr_rx_gpd = NULL;
+    volatile HAL_LT_DAWN_PKT_RX_GPD_T   *ptr_rx_gpd = NULL;
     void                            *ptr_virt_addr = NULL;
     CLX_ADDR_T                      phy_addr = 0;
     UI32_T                          buf_len = 0;
@@ -2327,14 +2326,14 @@ _hal_lightning_pkt_schedRxDeQueue(
     if (TRUE == ptr_rx_cb->running)
     {
         /* get queue and count */
-        for (idx = 0; idx < HAL_LIGHTNING_PKT_RX_QUEUE_NUM; idx++)
+        for (idx = 0; idx < HAL_LT_DAWN_PKT_RX_QUEUE_NUM; idx++)
         {
             /* to gurantee the opportunity where each queue can be handler */
-            queue = ((ptr_rx_cb->deque_idx + idx) % HAL_LIGHTNING_PKT_RX_QUEUE_NUM);
-            _hal_lightning_pkt_getQueueCount(&ptr_rx_cb->sw_queue[queue], &que_cnt);
+            queue = ((ptr_rx_cb->deque_idx + idx) % HAL_LT_DAWN_PKT_RX_QUEUE_NUM);
+            _hal_lt_dawn_pkt_getQueueCount(&ptr_rx_cb->sw_queue[queue], &que_cnt);
             if (que_cnt > 0)
             {
-                ptr_rx_cb->deque_idx = ((queue + 1) % HAL_LIGHTNING_PKT_RX_QUEUE_NUM);
+                ptr_rx_cb->deque_idx = ((queue + 1) % HAL_LT_DAWN_PKT_RX_QUEUE_NUM);
                 break;
             }
         }
@@ -2347,21 +2346,21 @@ _hal_lightning_pkt_schedRxDeQueue(
             ptr_rx_cb->cnt.wait_event++;
 
             /* re-get queue and count */
-            for (queue = 0; queue < HAL_LIGHTNING_PKT_RX_QUEUE_NUM; queue++)
+            for (queue = 0; queue < HAL_LT_DAWN_PKT_RX_QUEUE_NUM; queue++)
             {
-                _hal_lightning_pkt_getQueueCount(&ptr_rx_cb->sw_queue[queue], &que_cnt);
+                _hal_lt_dawn_pkt_getQueueCount(&ptr_rx_cb->sw_queue[queue], &que_cnt);
                 if (que_cnt > 0)
                 {
-                    ptr_rx_cb->deque_idx = ((queue + 1) % HAL_LIGHTNING_PKT_RX_QUEUE_NUM);
+                    ptr_rx_cb->deque_idx = ((queue + 1) % HAL_LT_DAWN_PKT_RX_QUEUE_NUM);
                     break;
                 }
             }
         }
 
         /* deque */
-        if ((que_cnt > 0) && (queue < HAL_LIGHTNING_PKT_RX_QUEUE_NUM))
+        if ((que_cnt > 0) && (queue < HAL_LT_DAWN_PKT_RX_QUEUE_NUM))
         {
-            rc = _hal_lightning_pkt_deQueue(&ptr_rx_cb->sw_queue[queue], (void **)&ptr_sw_gpd_knl);
+            rc = _hal_lt_dawn_pkt_deQueue(&ptr_rx_cb->sw_queue[queue], (void **)&ptr_sw_gpd_knl);
             if (CLX_E_OK == rc)
             {
                 ptr_rx_cb->cnt.channel[queue].deque_ok++;
@@ -2374,8 +2373,8 @@ _hal_lightning_pkt_schedRxDeQueue(
                     /* get the IOCTL GPD from user */
                     osal_io_copyFromUser(&ioctl_gpd,
                                          ((void *)((CLX_HUGE_T)ioctl_data.ioctl_gpd_addr))
-                                             + gpd_idx*sizeof(HAL_LIGHTNING_PKT_IOCTL_RX_GPD_T),
-                                         sizeof(HAL_LIGHTNING_PKT_IOCTL_RX_GPD_T));
+                                             + gpd_idx*sizeof(HAL_LT_DAWN_PKT_IOCTL_RX_GPD_T),
+                                         sizeof(HAL_LT_DAWN_PKT_IOCTL_RX_GPD_T));
 
                     /* get knl buf addr */
                     ptr_rx_gpd = &ptr_sw_gpd_knl->rx_gpd;
@@ -2384,7 +2383,7 @@ _hal_lightning_pkt_schedRxDeQueue(
                     ptr_virt_addr = ptr_sw_gpd_knl->ptr_cookie;
                     osal_skb_unmapDma(phy_addr, ((struct sk_buff *)ptr_virt_addr)->len, DMA_FROM_DEVICE);
 
-                    buf_len = (HAL_LIGHTNING_PKT_CH_LAST_GPD == ptr_rx_gpd->ch)?
+                    buf_len = (HAL_LT_DAWN_PKT_CH_LAST_GPD == ptr_rx_gpd->ch)?
                         ptr_rx_gpd->cnsm_buf_len : ptr_rx_gpd->avbl_buf_len;
 
                     /* overwrite whole rx_gpd to user
@@ -2393,7 +2392,7 @@ _hal_lightning_pkt_schedRxDeQueue(
                      */
                     osal_io_copyToUser((void *)((CLX_HUGE_T)ioctl_gpd.hw_gpd_addr),
                                        &ptr_sw_gpd_knl->rx_gpd,
-                                       sizeof(HAL_LIGHTNING_PKT_RX_GPD_T));
+                                       sizeof(HAL_LT_DAWN_PKT_RX_GPD_T));
                     /* copy buf */
                     /* DMA buf address allocated by the user is store in ptr_ioctl_data->gpd[idx].cookie */
                     osal_io_copyToUser((void *)((CLX_HUGE_T)ioctl_gpd.dma_buf_addr),
@@ -2406,7 +2405,7 @@ _hal_lightning_pkt_schedRxDeQueue(
                 }
 
                 /* Must free kernel sw_gpd */
-                _hal_lightning_pkt_freeRxGpdList(unit, ptr_sw_first_gpd_knl, TRUE);
+                _hal_lt_dawn_pkt_freeRxGpdList(unit, ptr_sw_first_gpd_knl, TRUE);
             }
             else
             {
@@ -2423,7 +2422,7 @@ _hal_lightning_pkt_schedRxDeQueue(
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_waitTxDone
+/* FUNCTION NAME: _hal_lt_dawn_pkt_waitTxDone
  * PURPOSE:
  *      To determine the next action after transfer the packet to HW.
  * INPUT:
@@ -2438,15 +2437,15 @@ _hal_lightning_pkt_schedRxDeQueue(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_waitTxDone(
+_hal_lt_dawn_pkt_waitTxDone(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_TX_CHANNEL_T  channel,
-          HAL_LIGHTNING_PKT_TX_SW_GPD_T   *ptr_sw_gpd)
+    const HAL_LT_DAWN_PKT_TX_CHANNEL_T  channel,
+          HAL_LT_DAWN_PKT_TX_SW_GPD_T   *ptr_sw_gpd)
 {
     CLX_ERROR_NO_T                  rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_TX_CB_T             *ptr_tx_cb = HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LIGHTNING_PKT_GET_TX_PDMA_PTR(unit, channel);
-    volatile HAL_LIGHTNING_PKT_TX_GPD_T   *ptr_tx_gpd = NULL;
+    HAL_LT_DAWN_PKT_TX_CB_T             *ptr_tx_cb = HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LT_DAWN_PKT_GET_TX_PDMA_PTR(unit, channel);
+    volatile HAL_LT_DAWN_PKT_TX_GPD_T   *ptr_tx_gpd = NULL;
     UI32_T                          last_gpd_idx = 0;
     UI32_T                          loop_cnt = 0;
 
@@ -2456,27 +2455,27 @@ _hal_lightning_pkt_waitTxDone(
     }
     else if (HAL_PKT_TX_WAIT_SYNC_INTR == ptr_tx_cb->wait_mode)
     {
-        osal_takeSemaphore(&ptr_tx_pdma->sync_intr_sema, HAL_LIGHTNING_PKT_PDMA_TX_INTR_TIMEOUT);
-        /* rc = _hal_lightning_pkt_invokeTxGpdCallback(unit, ptr_sw_gpd); */
+        osal_takeSemaphore(&ptr_tx_pdma->sync_intr_sema, HAL_LT_DAWN_PKT_PDMA_TX_INTR_TIMEOUT);
+        /* rc = _hal_lt_dawn_pkt_invokeTxGpdCallback(unit, ptr_sw_gpd); */
     }
     else if (HAL_PKT_TX_WAIT_SYNC_POLL == ptr_tx_cb->wait_mode)
     {
         last_gpd_idx  = ptr_tx_pdma->free_idx + ptr_tx_pdma->used_gpd_num;
         last_gpd_idx %= ptr_tx_pdma->gpd_num;
-        ptr_tx_gpd    = HAL_LIGHTNING_PKT_GET_TX_GPD_PTR(unit, channel, last_gpd_idx);
+        ptr_tx_gpd    = HAL_LT_DAWN_PKT_GET_TX_GPD_PTR(unit, channel, last_gpd_idx);
 
-        while (HAL_LIGHTNING_PKT_HWO_HW_OWN == ptr_tx_gpd->hwo)
+        while (HAL_LT_DAWN_PKT_HWO_HW_OWN == ptr_tx_gpd->hwo)
         {
-            osal_dma_invalidateCache((void *)ptr_tx_gpd, sizeof(HAL_LIGHTNING_PKT_TX_GPD_T));
+            osal_dma_invalidateCache((void *)ptr_tx_gpd, sizeof(HAL_LT_DAWN_PKT_TX_GPD_T));
             loop_cnt++;
-            if (0 == loop_cnt % HAL_LIGHTNING_PKT_PDMA_TX_POLL_MAX_LOOP)
+            if (0 == loop_cnt % HAL_LT_DAWN_PKT_PDMA_TX_POLL_MAX_LOOP)
             {
                 ptr_tx_cb->cnt.channel[channel].poll_timeout++;
                 rc = CLX_E_OTHERS;
                 break;
             }
         }
-        if (HAL_LIGHTNING_PKT_ECC_ERROR_OCCUR == ptr_tx_gpd->ecce)
+        if (HAL_LT_DAWN_PKT_ECC_ERROR_OCCUR == ptr_tx_gpd->ecce)
         {
             ptr_tx_cb->cnt.channel[channel].ecc_err++;
         }
@@ -2485,14 +2484,14 @@ _hal_lightning_pkt_waitTxDone(
             ptr_tx_pdma->free_gpd_num += ptr_tx_pdma->used_gpd_num;
             ptr_tx_pdma->used_gpd_num  = 0;
             ptr_tx_pdma->free_idx      = ptr_tx_pdma->used_idx;
-            /* rc = _hal_lightning_pkt_invokeTxGpdCallback(unit, ptr_sw_gpd); */
+            /* rc = _hal_lt_dawn_pkt_invokeTxGpdCallback(unit, ptr_sw_gpd); */
         }
     }
 
     return (rc);
 }
 
-/* FUNCTION NAME: hal_lightning_pkt_sendGpd
+/* FUNCTION NAME: hal_lt_dawn_pkt_sendGpd
  * PURPOSE:
  *      To perform the packet transmission form CPU to the switch.
  * INPUT:
@@ -2507,24 +2506,24 @@ _hal_lightning_pkt_waitTxDone(
  *      None
  */
 CLX_ERROR_NO_T
-hal_lightning_pkt_sendGpd(
+hal_lt_dawn_pkt_sendGpd(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_TX_CHANNEL_T  channel,
-          HAL_LIGHTNING_PKT_TX_SW_GPD_T   *ptr_sw_gpd)
+    const HAL_LT_DAWN_PKT_TX_CHANNEL_T  channel,
+          HAL_LT_DAWN_PKT_TX_SW_GPD_T   *ptr_sw_gpd)
 {
     CLX_ERROR_NO_T                  rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_TX_CB_T             *ptr_tx_cb = HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LIGHTNING_PKT_GET_TX_PDMA_PTR(unit, channel);
-    volatile HAL_LIGHTNING_PKT_TX_GPD_T   *ptr_tx_gpd = NULL;
-    HAL_LIGHTNING_PKT_TX_SW_GPD_T         *ptr_sw_first_gpd = ptr_sw_gpd;
+    HAL_LT_DAWN_PKT_TX_CB_T             *ptr_tx_cb = HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LT_DAWN_PKT_GET_TX_PDMA_PTR(unit, channel);
+    volatile HAL_LT_DAWN_PKT_TX_GPD_T   *ptr_tx_gpd = NULL;
+    HAL_LT_DAWN_PKT_TX_SW_GPD_T         *ptr_sw_first_gpd = ptr_sw_gpd;
     UI32_T                          used_idx = 0;
     UI32_T                          used_gpd_num = ptr_sw_gpd->gpd_num;
     CLX_IRQ_FLAGS_T                 irq_flags;
-    HAL_PKT_DRV_CB_T            *ptr_cb = HAL_LIGHTNING_PKT_GET_DRV_CB_PTR(unit);
+    HAL_PKT_DRV_CB_T            *ptr_cb = HAL_LT_DAWN_PKT_GET_DRV_CB_PTR(unit);
 
     if(ptr_cb->init_stage != HAL_PKT_INIT_DONE)
     {
-        DIAG_PRINT(HAL_DBG_ERR,
+        OSAL_PRINT(OSAL_DBG_ERR,
                         "u=%u, send Gpd failed. init_stage=%d\n", unit, ptr_cb->init_stage);
         return CLX_E_OTHERS;
     }
@@ -2540,12 +2539,12 @@ hal_lightning_pkt_sendGpd(
             used_idx = ptr_tx_pdma->used_idx;
             while (NULL != ptr_sw_gpd)
             {
-                ptr_tx_gpd = HAL_LIGHTNING_PKT_GET_TX_GPD_PTR(unit, channel, used_idx);
-                osal_dma_invalidateCache((void *)ptr_tx_gpd, sizeof(HAL_LIGHTNING_PKT_TX_GPD_T));
+                ptr_tx_gpd = HAL_LT_DAWN_PKT_GET_TX_GPD_PTR(unit, channel, used_idx);
+                osal_dma_invalidateCache((void *)ptr_tx_gpd, sizeof(HAL_LT_DAWN_PKT_TX_GPD_T));
 
-                if (HAL_LIGHTNING_PKT_HWO_HW_OWN == ptr_tx_gpd->hwo)
+                if (HAL_LT_DAWN_PKT_HWO_HW_OWN == ptr_tx_gpd->hwo)
                 {
-                    DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
+                    OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_TX),
                                     "u=%u, txch=%u, free gpd idx out-of-sync\n",
                                     unit, channel);
                     rc = CLX_E_TABLE_FULL;
@@ -2553,8 +2552,8 @@ hal_lightning_pkt_sendGpd(
                 }
 
                 /* Fill in HW-GPD Ring */
-                osal_memcpy((void *)ptr_tx_gpd, &ptr_sw_gpd->tx_gpd, sizeof(HAL_LIGHTNING_PKT_TX_GPD_T));
-                osal_dma_flushCache((void *)ptr_tx_gpd, sizeof(HAL_LIGHTNING_PKT_TX_GPD_T));
+                osal_memcpy((void *)ptr_tx_gpd, &ptr_sw_gpd->tx_gpd, sizeof(HAL_LT_DAWN_PKT_TX_GPD_T));
+                osal_dma_flushCache((void *)ptr_tx_gpd, sizeof(HAL_LT_DAWN_PKT_TX_GPD_T));
 
                 /* next */
                 used_idx++;
@@ -2573,18 +2572,18 @@ hal_lightning_pkt_sendGpd(
             ptr_tx_pdma->used_gpd_num += used_gpd_num;
             ptr_tx_pdma->free_gpd_num -= used_gpd_num;
 
-            _hal_lightning_pkt_resumeTxChannelReg(unit, channel, used_gpd_num);
+            _hal_lt_dawn_pkt_resumeTxChannelReg(unit, channel, used_gpd_num);
             ptr_tx_cb->cnt.channel[channel].send_ok++;
 
-            _hal_lightning_pkt_waitTxDone(unit, channel, ptr_sw_first_gpd);
+            _hal_lt_dawn_pkt_waitTxDone(unit, channel, ptr_sw_first_gpd);
 
             /* reserve 1 packet buffer for each port in case that the suspension is too late */
-#define HAL_LIGHTNING_PKT_KNL_TX_RING_AVBL_GPD_LOW      (HAL_LIGHTNING_PORT_NUM)
-            if (ptr_tx_pdma->free_gpd_num < HAL_LIGHTNING_PKT_KNL_TX_RING_AVBL_GPD_LOW)
+#define HAL_LT_DAWN_PKT_KNL_TX_RING_AVBL_GPD_LOW      (HAL_LT_DAWN_PORT_NUM)
+            if (ptr_tx_pdma->free_gpd_num < HAL_LT_DAWN_PKT_KNL_TX_RING_AVBL_GPD_LOW)
             {
-                DIAG_PRINT(HAL_DBG_TX,
+                OSAL_PRINT(OSAL_DBG_TX,
                                 "u=%u, txch=%u, tx avbl gpd < %d, suspend all netdev\n",
-                                unit, channel, HAL_LIGHTNING_PKT_KNL_TX_RING_AVBL_GPD_LOW);
+                                unit, channel, HAL_LT_DAWN_PKT_KNL_TX_RING_AVBL_GPD_LOW);
                 hal_pkt_suspendAllIntf(unit);
             }
         }
@@ -2595,7 +2594,7 @@ hal_lightning_pkt_sendGpd(
     }
     else
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_TX),
                         "u=%u, txch=%u, pdma hw err\n",
                         unit, channel);
         rc = CLX_E_OTHERS;
@@ -2609,23 +2608,23 @@ hal_lightning_pkt_sendGpd(
 /* ----------------------------------------------------------------------------------- pkt_srv */
 /* ----------------------------------------------------------------------------------- Rx Init */
 CLX_ERROR_NO_T
-hal_lightning_pkt_rxStop(
+hal_lt_dawn_pkt_rxStop(
     const UI32_T                unit)
 {
     CLX_ERROR_NO_T                    rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_RX_CHANNEL_T    channel = 0;
+    HAL_LT_DAWN_PKT_RX_CHANNEL_T    channel = 0;
     UI32_T                            idx;
-    HAL_LIGHTNING_PKT_RX_CB_T         *ptr_rx_cb = HAL_LIGHTNING_PKT_GET_RX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_RX_PDMA_T       *ptr_rx_pdma = NULL;
+    HAL_LT_DAWN_PKT_RX_CB_T         *ptr_rx_cb = HAL_LT_DAWN_PKT_GET_RX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_RX_PDMA_T       *ptr_rx_pdma = NULL;
 
     /* Deinit Rx PDMA and free buf for Rx GPD */
-    for (channel = 0; channel < HAL_LIGHTNING_PKT_RX_CHANNEL_LAST; channel++)
+    for (channel = 0; channel < HAL_LT_DAWN_PKT_RX_CHANNEL_LAST; channel++)
     {
-        ptr_rx_pdma = HAL_LIGHTNING_PKT_GET_RX_PDMA_PTR(unit, channel);
+        ptr_rx_pdma = HAL_LT_DAWN_PKT_GET_RX_PDMA_PTR(unit, channel);
 
         osal_takeSemaphore(&ptr_rx_pdma->sema, CLX_SEMAPHORE_WAIT_FOREVER);
-        _hal_lightning_pkt_stopRxChannelReg(unit, channel);
-        rc = _hal_lightning_pkt_deinitRxPdmaRingBuf(unit, channel);
+        _hal_lt_dawn_pkt_stopRxChannelReg(unit, channel);
+        rc = _hal_lt_dawn_pkt_deinitRxPdmaRingBuf(unit, channel);
         osal_giveSemaphore(&ptr_rx_pdma->sema);
     }
 
@@ -2633,9 +2632,9 @@ hal_lightning_pkt_rxStop(
     /* flush packets in all queues since Rx task may be blocked in user space
      * in this case it won't do ioctl to kernel to handle remaining packets
      */
-    for (idx = 0; idx < HAL_LIGHTNING_PKT_RX_QUEUE_NUM; idx++)
+    for (idx = 0; idx < HAL_LT_DAWN_PKT_RX_QUEUE_NUM; idx++)
     {
-        _hal_lightning_pkt_flushRxQueue(unit, &ptr_rx_cb->sw_queue[idx]);
+        _hal_lt_dawn_pkt_flushRxQueue(unit, &ptr_rx_cb->sw_queue[idx]);
     }
 
     /* Return user thread */
@@ -2647,25 +2646,25 @@ hal_lightning_pkt_rxStop(
 }
 
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_rxStart(
+_hal_lt_dawn_pkt_rxStart(
     const UI32_T                unit)
 {
     CLX_ERROR_NO_T              rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_RX_CHANNEL_T    channel = 0;
-    HAL_LIGHTNING_PKT_RX_CB_T       *ptr_rx_cb = HAL_LIGHTNING_PKT_GET_RX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_RX_PDMA_T       *ptr_rx_pdma = NULL;
+    HAL_LT_DAWN_PKT_RX_CHANNEL_T    channel = 0;
+    HAL_LT_DAWN_PKT_RX_CB_T       *ptr_rx_cb = HAL_LT_DAWN_PKT_GET_RX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_RX_PDMA_T       *ptr_rx_pdma = NULL;
 
     /* init Rx PDMA and alloc buf for Rx GPD */
-    for (channel = 0; channel < HAL_LIGHTNING_PKT_RX_CHANNEL_LAST; channel++)
+    for (channel = 0; channel < HAL_LT_DAWN_PKT_RX_CHANNEL_LAST; channel++)
     {
-        ptr_rx_pdma = HAL_LIGHTNING_PKT_GET_RX_PDMA_PTR(unit, channel);
+        ptr_rx_pdma = HAL_LT_DAWN_PKT_GET_RX_PDMA_PTR(unit, channel);
 
         osal_takeSemaphore(&ptr_rx_pdma->sema, CLX_SEMAPHORE_WAIT_FOREVER);
-        rc = _hal_lightning_pkt_initRxPdmaRingBuf(unit, channel);
+        rc = _hal_lt_dawn_pkt_initRxPdmaRingBuf(unit, channel);
         if (CLX_E_OK == rc)
         {
             ptr_rx_pdma->cur_idx = 0;
-            _hal_lightning_pkt_startRxChannelReg(unit, channel, ptr_rx_pdma->gpd_num);
+            _hal_lt_dawn_pkt_startRxChannelReg(unit, channel, ptr_rx_pdma->gpd_num);
         }
 
         osal_giveSemaphore(&ptr_rx_pdma->sema);
@@ -2678,7 +2677,7 @@ _hal_lightning_pkt_rxStart(
 }
 
 /* ----------------------------------------------------------------------------------- Deinit */
-/* FUNCTION NAME: hal_lightning_pkt_deinitTask
+/* FUNCTION NAME: hal_lt_dawn_pkt_deinitTask
  * PURPOSE:
  *      To de-initialize the Task for packet module.
  * INPUT:
@@ -2692,11 +2691,11 @@ _hal_lightning_pkt_rxStart(
  *      None
  */
 CLX_ERROR_NO_T
-hal_lightning_pkt_deinitTask(
+hal_lt_dawn_pkt_deinitTask(
     const UI32_T            unit)
 {
-    HAL_LIGHTNING_PKT_TX_CB_T     *ptr_tx_cb = HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_RX_CB_T     *ptr_rx_cb = HAL_LIGHTNING_PKT_GET_RX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_TX_CB_T     *ptr_tx_cb = HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_RX_CB_T     *ptr_rx_cb = HAL_LT_DAWN_PKT_GET_RX_CB_PTR(unit);
     UI32_T                  channel = 0;
     /* Make the Rx IOCTL from userspace return back*/
     osal_triggerEvent(&ptr_rx_cb->sync_sema);
@@ -2709,30 +2708,30 @@ hal_lightning_pkt_deinitTask(
     }
 
     /* Destroy handleRxDoneTask */
-    for (channel = 0; channel < HAL_LIGHTNING_PKT_RX_CHANNEL_LAST; channel++)
+    for (channel = 0; channel < HAL_LT_DAWN_PKT_RX_CHANNEL_LAST; channel++)
     {
         osal_stopThread(&ptr_rx_cb->isr_task_id[channel]);
-        osal_triggerEvent(HAL_LIGHTNING_PKT_RCH_EVENT(unit, channel));
+        osal_triggerEvent(HAL_LT_DAWN_PKT_RCH_EVENT(unit, channel));
         osal_destroyThread(&ptr_rx_cb->isr_task_id[channel]);
     }
 
     /* Destroy handleTxDoneTask */
-    for (channel = 0; channel < HAL_LIGHTNING_PKT_TX_CHANNEL_LAST; channel++)
+    for (channel = 0; channel < HAL_LT_DAWN_PKT_TX_CHANNEL_LAST; channel++)
     {
         osal_stopThread(&ptr_tx_cb->isr_task_id[channel]);
-        osal_triggerEvent(HAL_LIGHTNING_PKT_TCH_EVENT(unit, channel));
+        osal_triggerEvent(HAL_LT_DAWN_PKT_TCH_EVENT(unit, channel));
         osal_destroyThread(&ptr_tx_cb->isr_task_id[channel]);
     }
 
     /* Destroy handleErrorTask */
     osal_stopThread(&err_task_id);
-    osal_triggerEvent(HAL_LIGHTNING_PKT_ERR_EVENT(unit));
+    osal_triggerEvent(HAL_LT_DAWN_PKT_ERR_EVENT(unit));
     osal_destroyThread(&err_task_id);
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_deinitTxPdma
+/* FUNCTION NAME: _hal_lt_dawn_pkt_deinitTxPdma
  * PURPOSE:
  *      To de-initialize the Tx PDMA configuration of the specified channel.
  * INPUT:
@@ -2747,14 +2746,14 @@ hal_lightning_pkt_deinitTask(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_deinitTxPdma(
+_hal_lt_dawn_pkt_deinitTxPdma(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_TX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_TX_CHANNEL_T  channel)
 {
-    HAL_LIGHTNING_PKT_TX_CB_T             *ptr_tx_cb   = HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LIGHTNING_PKT_GET_TX_PDMA_PTR(unit, channel);
+    HAL_LT_DAWN_PKT_TX_CB_T             *ptr_tx_cb   = HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LT_DAWN_PKT_GET_TX_PDMA_PTR(unit, channel);
 
-    _hal_lightning_pkt_stopTxChannelReg(unit, channel);
+    _hal_lt_dawn_pkt_stopTxChannelReg(unit, channel);
 
     /* Free DMA and flush queue */
     osal_dma_free(ptr_tx_pdma->ptr_gpd_start_addr);
@@ -2774,7 +2773,7 @@ _hal_lightning_pkt_deinitTxPdma(
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_deinitRxPdma
+/* FUNCTION NAME: _hal_lt_dawn_pkt_deinitRxPdma
  * PURPOSE:
  *      To de-initialize the Rx PDMA configuration of the specified channel.
  * INPUT:
@@ -2788,11 +2787,11 @@ _hal_lightning_pkt_deinitTxPdma(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_deinitRxPdma(
+_hal_lt_dawn_pkt_deinitRxPdma(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_RX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_RX_CHANNEL_T  channel)
 {
-    HAL_LIGHTNING_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LIGHTNING_PKT_GET_RX_PDMA_PTR(unit, channel);
+    HAL_LT_DAWN_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LT_DAWN_PKT_GET_RX_PDMA_PTR(unit, channel);
 
     /* Free DMA */
     osal_takeSemaphore(&ptr_rx_pdma->sema, CLX_SEMAPHORE_WAIT_FOREVER);
@@ -2803,7 +2802,7 @@ _hal_lightning_pkt_deinitRxPdma(
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_deinitPktCb
+/* FUNCTION NAME: _hal_lt_dawn_pkt_deinitPktCb
  * PURPOSE:
  *      To de-init the control block of Drv.
  * INPUT:
@@ -2816,16 +2815,16 @@ _hal_lightning_pkt_deinitRxPdma(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_deinitPktCb(
+_hal_lt_dawn_pkt_deinitPktCb(
     const UI32_T                unit)
 {
-    HAL_PKT_DRV_CB_T        *ptr_cb = HAL_LIGHTNING_PKT_GET_DRV_CB_PTR(unit);
-    UI32_T                      idx = 0, vec = sizeof(_hal_lightning_pkt_intr_vec) / sizeof(HAL_LIGHTNING_PKT_INTR_VEC_T);
+    HAL_PKT_DRV_CB_T        *ptr_cb = HAL_LT_DAWN_PKT_GET_DRV_CB_PTR(unit);
+    UI32_T                      idx = 0, vec = sizeof(_hal_lt_dawn_pkt_intr_vec) / sizeof(HAL_LT_DAWN_PKT_INTR_VEC_T);
 
     for (idx = 0; idx < vec; idx++)
     {
-        osal_destroyEvent(&_hal_lightning_pkt_intr_vec[idx].intr_event);
-        ptr_cb->intr_bitmap &= ~(_hal_lightning_pkt_intr_vec[idx].intr_reg);
+        osal_destroyEvent(&_hal_lt_dawn_pkt_intr_vec[idx].intr_event);
+        ptr_cb->intr_bitmap &= ~(_hal_lt_dawn_pkt_intr_vec[idx].intr_reg);
     }
 
     /* Unregister PKT interrupt functions */
@@ -2835,7 +2834,7 @@ _hal_lightning_pkt_deinitPktCb(
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_deinitPktTxCb
+/* FUNCTION NAME: _hal_lt_dawn_pkt_deinitPktTxCb
  * PURPOSE:
  *      To de-init the control block of Tx PDMA.
  * INPUT:
@@ -2848,17 +2847,17 @@ _hal_lightning_pkt_deinitPktCb(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_deinitPktTxCb(
+_hal_lt_dawn_pkt_deinitPktTxCb(
     const UI32_T                unit)
 {
     CLX_ERROR_NO_T              rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_TX_CB_T         *ptr_tx_cb = HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_TX_CHANNEL_T    channel = 0;
+    HAL_LT_DAWN_PKT_TX_CB_T         *ptr_tx_cb = HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_TX_CHANNEL_T    channel = 0;
 
     /* Deinitialize TX PDMA sub-system.*/
-    for (channel = 0; channel < HAL_LIGHTNING_PKT_TX_CHANNEL_LAST; channel++)
+    for (channel = 0; channel < HAL_LT_DAWN_PKT_TX_CHANNEL_LAST; channel++)
     {
-        _hal_lightning_pkt_deinitTxPdma(unit, channel);
+        _hal_lt_dawn_pkt_deinitTxPdma(unit, channel);
     }
 
     if (HAL_PKT_TX_WAIT_ASYNC == ptr_tx_cb->wait_mode)
@@ -2874,7 +2873,7 @@ _hal_lightning_pkt_deinitPktTxCb(
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_deinitPktRxCb
+/* FUNCTION NAME: _hal_lt_dawn_pkt_deinitPktRxCb
  * PURPOSE:
  *      To de-init the control block of Rx PDMA.
  * INPUT:
@@ -2887,25 +2886,25 @@ _hal_lightning_pkt_deinitPktTxCb(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_deinitPktRxCb(
+_hal_lt_dawn_pkt_deinitPktRxCb(
     const UI32_T                unit)
 {
     CLX_ERROR_NO_T              rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_RX_CB_T         *ptr_rx_cb = HAL_LIGHTNING_PKT_GET_RX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_RX_CHANNEL_T    channel = 0;
+    HAL_LT_DAWN_PKT_RX_CB_T         *ptr_rx_cb = HAL_LT_DAWN_PKT_GET_RX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_RX_CHANNEL_T    channel = 0;
     UI32_T                      queue = 0;
 
     /* Deinitialize RX PDMA sub-system */
-    for (channel = 0; channel < HAL_LIGHTNING_PKT_RX_CHANNEL_LAST; channel++)
+    for (channel = 0; channel < HAL_LT_DAWN_PKT_RX_CHANNEL_LAST; channel++)
     {
-        _hal_lightning_pkt_deinitRxPdma(unit, channel);
+        _hal_lt_dawn_pkt_deinitRxPdma(unit, channel);
     }
 
     /* Destroy the sync semaphore of rxTask */
     osal_destroyEvent(&ptr_rx_cb->sync_sema);
 
     /* Deinitialize Rx GPD-queue (of first SW-GPD) from handleRxDoneTask to rxTask */
-    for (queue = 0; queue < HAL_LIGHTNING_PKT_RX_QUEUE_NUM; queue++)
+    for (queue = 0; queue < HAL_LT_DAWN_PKT_RX_QUEUE_NUM; queue++)
     {
         osal_destroySemaphore(&ptr_rx_cb->sw_queue[queue].sema);
         osal_que_destroy(&ptr_rx_cb->sw_queue[queue].que_id);
@@ -2914,7 +2913,7 @@ _hal_lightning_pkt_deinitPktRxCb(
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_deinitL1Isr
+/* FUNCTION NAME: _hal_lt_dawn_pkt_deinitL1Isr
  * PURPOSE:
  *      To de-initialize the PDMA L1 ISR configuration.
  * INPUT:
@@ -2927,21 +2926,21 @@ _hal_lightning_pkt_deinitPktRxCb(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_deinitL1Isr(
+_hal_lt_dawn_pkt_deinitL1Isr(
     const UI32_T            unit)
 {
-    UI32_T                  idx = 0, vec = sizeof(_hal_lightning_pkt_intr_vec) / sizeof(HAL_LIGHTNING_PKT_INTR_VEC_T);
+    UI32_T                  idx = 0, vec = sizeof(_hal_lt_dawn_pkt_intr_vec) / sizeof(HAL_LT_DAWN_PKT_INTR_VEC_T);
 
     for (idx = 0; idx < vec; idx++)
     {
-        _hal_lightning_pkt_maskIntr(unit, _hal_lightning_pkt_intr_vec[idx].intr_reg);
-        _hal_lightning_pkt_disableIntr(unit, _hal_lightning_pkt_intr_vec[idx].intr_reg);
+        _hal_lt_dawn_pkt_maskIntr(unit, _hal_lt_dawn_pkt_intr_vec[idx].intr_reg);
+        _hal_lt_dawn_pkt_disableIntr(unit, _hal_lt_dawn_pkt_intr_vec[idx].intr_reg);
     }
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_deinitL2Isr
+/* FUNCTION NAME: _hal_lt_dawn_pkt_deinitL2Isr
  * PURPOSE:
  *      To initialize the PDMA L2 ISR configuration.
  * INPUT:
@@ -2955,62 +2954,62 @@ _hal_lightning_pkt_deinitL1Isr(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_deinitL2Isr(
+_hal_lt_dawn_pkt_deinitL2Isr(
     const UI32_T            unit)
 {
-    HAL_LIGHTNING_PKT_L2_ISR_T    isr_status = 0x0;
+    HAL_LT_DAWN_PKT_L2_ISR_T    isr_status = 0x0;
 
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_RCH0);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_RCH1);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_RCH2);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_RCH3);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_TCH0);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_TCH1);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_TCH2);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_TCH3);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_RX_QID_MAP_ERR);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_RX_FRAME_ERR);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_RCH0);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_RCH1);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_RCH2);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_RCH3);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_TCH0);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_TCH1);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_TCH2);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_TCH3);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_RX_QID_MAP_ERR);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_RX_FRAME_ERR);
 
     osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_ERR_INT_MASK_SET),
+        HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_ERR_INT_MASK_SET),
         &isr_status, sizeof(UI32_T));
 
     isr_status = 0x0;
     osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_ERR_INT_EN),
+        HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_ERR_INT_EN),
         &isr_status, sizeof(UI32_T));
 
     return (CLX_E_OK);
 }
 
 CLX_ERROR_NO_T
-hal_lightning_pkt_deinit_pkt_drv(
+hal_lt_dawn_pkt_deinit_pkt_drv(
     const UI32_T            unit)
 {
     CLX_ERROR_NO_T          rc = CLX_E_OK;
-    rc = _hal_lightning_pkt_deinitL2Isr(unit);
+    rc = _hal_lt_dawn_pkt_deinitL2Isr(unit);
 
     if (CLX_E_OK == rc)
     {
-        rc = _hal_lightning_pkt_deinitL1Isr(unit);
+        rc = _hal_lt_dawn_pkt_deinitL1Isr(unit);
     }
     if (CLX_E_OK == rc)
     {
-        rc = _hal_lightning_pkt_deinitPktRxCb(unit);
+        rc = _hal_lt_dawn_pkt_deinitPktRxCb(unit);
     }
     if (CLX_E_OK == rc)
     {
-        rc = _hal_lightning_pkt_deinitPktTxCb(unit);
+        rc = _hal_lt_dawn_pkt_deinitPktTxCb(unit);
     }
     if (CLX_E_OK == rc)
     {
-        rc = _hal_lightning_pkt_deinitPktCb(unit);
+        rc = _hal_lt_dawn_pkt_deinitPktCb(unit);
     }
     return rc;
 }
 
 /* ----------------------------------------------------------------------------------- Init */
-/* FUNCTION NAME: _hal_lightning_pkt_handleTxErrStat
+/* FUNCTION NAME: _hal_lt_dawn_pkt_handleTxErrStat
  * PURPOSE:
  *      To handle the TX flow control ISR.
  * INPUT:
@@ -3024,12 +3023,12 @@ hal_lightning_pkt_deinit_pkt_drv(
  *
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_handleTxErrStat(
+_hal_lt_dawn_pkt_handleTxErrStat(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_TX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_TX_CHANNEL_T  channel)
 {
-    HAL_LIGHTNING_PKT_TX_CB_T             *ptr_tx_cb   = HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LIGHTNING_PKT_GET_TX_PDMA_PTR(unit, channel);
+    HAL_LT_DAWN_PKT_TX_CB_T             *ptr_tx_cb   = HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LT_DAWN_PKT_GET_TX_PDMA_PTR(unit, channel);
     CLX_IRQ_FLAGS_T                 irg_flags;
 
     if (HAL_PKT_TX_WAIT_SYNC_INTR == ptr_tx_cb->wait_mode)
@@ -3044,12 +3043,12 @@ _hal_lightning_pkt_handleTxErrStat(
     ptr_tx_pdma->err_flag = TRUE;
     osal_giveIsrLock(&ptr_tx_pdma->ring_lock, &irg_flags);
 
-    osal_triggerEvent(HAL_LIGHTNING_PKT_TCH_EVENT(unit, channel));
+    osal_triggerEvent(HAL_LT_DAWN_PKT_TCH_EVENT(unit, channel));
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_handleRxErrStat
+/* FUNCTION NAME: _hal_lt_dawn_pkt_handleRxErrStat
  * PURPOSE:
  *      To handle the error which occurs in RX channels.
  * INPUT:
@@ -3063,23 +3062,23 @@ _hal_lightning_pkt_handleTxErrStat(
  *
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_handleRxErrStat(
+_hal_lt_dawn_pkt_handleRxErrStat(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_RX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_RX_CHANNEL_T  channel)
 {
-    HAL_LIGHTNING_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LIGHTNING_PKT_GET_RX_PDMA_PTR(unit, channel);
+    HAL_LT_DAWN_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LT_DAWN_PKT_GET_RX_PDMA_PTR(unit, channel);
 
     /* Set the error flag. */
     osal_takeSemaphore(&ptr_rx_pdma->sema, CLX_SEMAPHORE_WAIT_FOREVER);
     ptr_rx_pdma->err_flag = TRUE;
     osal_giveSemaphore(&ptr_rx_pdma->sema);
 
-    osal_triggerEvent(HAL_LIGHTNING_PKT_RCH_EVENT(unit, channel));
+    osal_triggerEvent(HAL_LT_DAWN_PKT_RCH_EVENT(unit, channel));
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_handleTxL2Isr
+/* FUNCTION NAME: _hal_lt_dawn_pkt_handleTxL2Isr
  * PURPOSE:
  *      To handle the TX L2 interrupt according to the ISR status.
  * INPUT:
@@ -3093,142 +3092,142 @@ _hal_lightning_pkt_handleRxErrStat(
  *
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_handleTxL2Isr(
+_hal_lt_dawn_pkt_handleTxL2Isr(
     const UI32_T                        unit,
-    const HAL_LIGHTNING_PKT_TX_CHANNEL_T      channel)
+    const HAL_LT_DAWN_PKT_TX_CHANNEL_T      channel)
 {
-    HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_T     isr_status = 0x0;
-    HAL_LIGHTNING_PKT_TX_CB_T                 *ptr_tx_cb = HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_T     isr_status = 0x0;
+    HAL_LT_DAWN_PKT_TX_CB_T                 *ptr_tx_cb = HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit);
 
     osal_mdc_readPciReg(unit,
-        HAL_LIGHTNING_PKT_GET_PDMA_TCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_TCH_INT_STAT), channel),
+        HAL_LT_DAWN_PKT_GET_PDMA_TCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_TCH_INT_STAT), channel),
         &isr_status, sizeof(isr_status));
 
-    _hal_lightning_pkt_maskAllTxL2IsrReg(unit, channel);
+    _hal_lt_dawn_pkt_maskAllTxL2IsrReg(unit, channel);
 
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_HWO_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_HWO_ERROR))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_TX),
                         "u=%u, txch=%u, pdma gpd hwo err\n", unit, channel);
-        _hal_lightning_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_HWO_ERROR);
+        _hal_lt_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_HWO_ERROR);
         ptr_tx_cb->cnt.channel[channel].gpd_hwo_err++;
-        _hal_lightning_pkt_handleTxErrStat(unit, channel);
+        _hal_lt_dawn_pkt_handleTxErrStat(unit, channel);
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_TX),
                         "u=%u, txch=%u, pdma gpd chksum err\n", unit, channel);
-        _hal_lightning_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR);
+        _hal_lt_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR);
         ptr_tx_cb->cnt.channel[channel].gpd_chksm_err++;
-        _hal_lightning_pkt_handleTxErrStat(unit, channel);
+        _hal_lt_dawn_pkt_handleTxErrStat(unit, channel);
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_NO_OVFL_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_NO_OVFL_ERROR))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_TX),
                         "u=%u, txch=%u, pdma gpd num overflow err\n", unit, channel);
-        _hal_lightning_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_NO_OVFL_ERROR);
+        _hal_lt_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_NO_OVFL_ERROR);
         ptr_tx_cb->cnt.channel[channel].gpd_no_ovfl_err++;
-        _hal_lightning_pkt_handleTxErrStat(unit, channel);
+        _hal_lt_dawn_pkt_handleTxErrStat(unit, channel);
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_DMA_READ_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_DMA_READ_ERROR))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_TX),
                         "u=%u, txch=%u, pdma gpd dma read err\n", unit, channel);
-        _hal_lightning_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_DMA_READ_ERROR);
+        _hal_lt_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_DMA_READ_ERROR);
         ptr_tx_cb->cnt.channel[channel].gpd_dma_read_err++;
-        _hal_lightning_pkt_handleTxErrStat(unit, channel);
+        _hal_lt_dawn_pkt_handleTxErrStat(unit, channel);
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_BUF_SIZE_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_BUF_SIZE_ERROR))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_TX),
                         "u=%u, txch=%u, pdma buf size err\n", unit, channel);
-        _hal_lightning_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_BUF_SIZE_ERROR);
+        _hal_lt_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_BUF_SIZE_ERROR);
         ptr_tx_cb->cnt.channel[channel].buf_size_err++;
-        _hal_lightning_pkt_handleTxErrStat(unit, channel);
+        _hal_lt_dawn_pkt_handleTxErrStat(unit, channel);
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_RUNT_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_RUNT_ERROR))
     {
-        DIAG_PRINT(HAL_DBG_TX,
+        OSAL_PRINT(OSAL_DBG_TX,
                         "u=%u, txch=%u, pdma pkt runt\n", unit, channel);
-        _hal_lightning_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_RUNT_ERROR);
+        _hal_lt_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_RUNT_ERROR);
         ptr_tx_cb->cnt.channel[channel].runt_err++;
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_OVSZ_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_OVSZ_ERROR))
     {
-        DIAG_PRINT(HAL_DBG_TX,
+        OSAL_PRINT(OSAL_DBG_TX,
                         "u=%u, txch=%u, pdma pkt over size\n", unit, channel);
-        _hal_lightning_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_OVSZ_ERROR);
+        _hal_lt_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_OVSZ_ERROR);
         ptr_tx_cb->cnt.channel[channel].ovsz_err++;
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_LEN_MISMATCH_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_LEN_MISMATCH_ERROR))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_TX),
                         "u=%u, txch=%u, pdma len mismatch err\n", unit, channel);
-        _hal_lightning_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_LEN_MISMATCH_ERROR);
+        _hal_lt_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_LEN_MISMATCH_ERROR);
         ptr_tx_cb->cnt.channel[channel].len_mismatch_err++;
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_PKTPL_DMA_READ_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_PKTPL_DMA_READ_ERROR))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_TX),
                         "u=%u, txch=%u, pdma pkt buf dma read err\n", unit, channel);
-        _hal_lightning_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_PKTPL_DMA_READ_ERROR);
+        _hal_lt_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_PKTPL_DMA_READ_ERROR);
         ptr_tx_cb->cnt.channel[channel].pktpl_dma_read_err++;
-        _hal_lightning_pkt_handleTxErrStat(unit, channel);
+        _hal_lt_dawn_pkt_handleTxErrStat(unit, channel);
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_COS_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_COS_ERROR))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_TX),
                         "u=%u, txch=%u, pdma tx cos err\n", unit, channel);
-        _hal_lightning_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_COS_ERROR);
+        _hal_lt_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_COS_ERROR);
         ptr_tx_cb->cnt.channel[channel].cos_err++;
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_GT255_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_GT255_ERROR))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_TX),
                         "u=%u, txch=%u, pdma gpd num > 255 err\n", unit, channel);
-        _hal_lightning_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_GT255_ERROR);
+        _hal_lt_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_GT255_ERROR);
         ptr_tx_cb->cnt.channel[channel].gpd_gt255_err++;
-        _hal_lightning_pkt_handleTxErrStat(unit, channel);
+        _hal_lt_dawn_pkt_handleTxErrStat(unit, channel);
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_PFC))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_PFC))
     {
-        DIAG_PRINT(HAL_DBG_TX,
+        OSAL_PRINT(OSAL_DBG_TX,
                         "u=%u, txch=%u, pdma flow ctrl\n", unit, channel);
-        _hal_lightning_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_PFC);
+        _hal_lt_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_PFC);
         ptr_tx_cb->cnt.channel[channel].pfc++;
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_CREDIT_UDFL_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_CREDIT_UDFL_ERROR))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_TX),
                         "u=%u, txch=%u, pdma credit underflow err\n", unit, channel);
-        _hal_lightning_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_CREDIT_UDFL_ERROR);
+        _hal_lt_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_CREDIT_UDFL_ERROR);
         ptr_tx_cb->cnt.channel[channel].credit_udfl_err++;
-        _hal_lightning_pkt_handleTxErrStat(unit, channel);
+        _hal_lt_dawn_pkt_handleTxErrStat(unit, channel);
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_DMA_WRITE_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_DMA_WRITE_ERROR))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_TX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_TX),
                         "u=%u, txch=%u, pdma dma write err\n", unit, channel);
-        _hal_lightning_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_DMA_WRITE_ERROR);
+        _hal_lt_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_DMA_WRITE_ERROR);
         ptr_tx_cb->cnt.channel[channel].dma_write_err++;
-        _hal_lightning_pkt_handleTxErrStat(unit, channel);
+        _hal_lt_dawn_pkt_handleTxErrStat(unit, channel);
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_STOP_CMD_CPLT))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_STOP_CMD_CPLT))
     {
-        DIAG_PRINT(HAL_DBG_TX,
+        OSAL_PRINT(OSAL_DBG_TX,
                         "u=%u, txch=%u, pdma stop done\n", unit, channel);
-        _hal_lightning_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_STOP_CMD_CPLT);
+        _hal_lt_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_STOP_CMD_CPLT);
         ptr_tx_cb->cnt.channel[channel].sw_issue_stop++;
     }
     if (0 != isr_status)
     {
-        _hal_lightning_pkt_unmaskAllTxL2IsrReg(unit, channel);
+        _hal_lt_dawn_pkt_unmaskAllTxL2IsrReg(unit, channel);
     }
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_handleRxL2Isr
+/* FUNCTION NAME: _hal_lt_dawn_pkt_handleRxL2Isr
  * PURPOSE:
  *      To handle the RX L2 interrupt according to the ISR status.
  * INPUT:
@@ -3242,132 +3241,132 @@ _hal_lightning_pkt_handleTxL2Isr(
  *
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_handleRxL2Isr(
+_hal_lt_dawn_pkt_handleRxL2Isr(
     const UI32_T                        unit,
-    const HAL_LIGHTNING_PKT_RX_CHANNEL_T      channel)
+    const HAL_LT_DAWN_PKT_RX_CHANNEL_T      channel)
 {
-    HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_T     isr_status = 0x0;
-    HAL_LIGHTNING_PKT_RX_CB_T                 *ptr_rx_cb = HAL_LIGHTNING_PKT_GET_RX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_T     isr_status = 0x0;
+    HAL_LT_DAWN_PKT_RX_CB_T                 *ptr_rx_cb = HAL_LT_DAWN_PKT_GET_RX_CB_PTR(unit);
 
     osal_mdc_readPciReg(unit,
-        HAL_LIGHTNING_PKT_GET_PDMA_RCH_REG(HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_RCH_INT_STAT), channel),
+        HAL_LT_DAWN_PKT_GET_PDMA_RCH_REG(HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_RCH_INT_STAT), channel),
         &isr_status, sizeof(isr_status));
 
-    _hal_lightning_pkt_maskAllRxL2IsrReg(unit, channel);
+    _hal_lt_dawn_pkt_maskAllRxL2IsrReg(unit, channel);
 
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_LOW))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_LOW))
     {
-        DIAG_PRINT(HAL_DBG_RX,
+        OSAL_PRINT(OSAL_DBG_RX,
                         "u=%u, rxch=%u, pdma avbl gpd low\n", unit, channel);
-        _hal_lightning_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_LOW);
+        _hal_lt_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_LOW);
         ptr_rx_cb->cnt.channel[channel].avbl_gpd_low++;
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_EMPTY))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_EMPTY))
     {
-        DIAG_PRINT(HAL_DBG_RX,
+        OSAL_PRINT(OSAL_DBG_RX,
                         "u=%u, rxch=%u, pdma avbl gpd empty\n", unit, channel);
-        _hal_lightning_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_EMPTY);
+        _hal_lt_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_EMPTY);
         ptr_rx_cb->cnt.channel[channel].avbl_gpd_empty++;
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_ERROR))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX),
                         "u=%u, rxch=%u, pdma avbl gpd err\n", unit, channel);
-        _hal_lightning_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_ERROR);
+        _hal_lt_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_ERROR);
         ptr_rx_cb->cnt.channel[channel].avbl_gpd_err++;
-        _hal_lightning_pkt_handleRxErrStat(unit, channel);
+        _hal_lt_dawn_pkt_handleRxErrStat(unit, channel);
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX),
                         "u=%u, rxch=%u, pdma gpd chksum err\n", unit, channel);
-        _hal_lightning_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR);
+        _hal_lt_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR);
         ptr_rx_cb->cnt.channel[channel].gpd_chksm_err++;
-        _hal_lightning_pkt_handleRxErrStat(unit, channel);
+        _hal_lt_dawn_pkt_handleRxErrStat(unit, channel);
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_DMA_READ_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_DMA_READ_ERROR))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX),
                         "u=%u, rxch=%u, pdma dma read err\n", unit, channel);
-        _hal_lightning_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_DMA_READ_ERROR);
+        _hal_lt_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_DMA_READ_ERROR);
         ptr_rx_cb->cnt.channel[channel].dma_read_err++;
-        _hal_lightning_pkt_handleRxErrStat(unit, channel);
+        _hal_lt_dawn_pkt_handleRxErrStat(unit, channel);
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_DMA_WRITE_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_DMA_WRITE_ERROR))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX),
                         "u=%u, rxch=%u, pdma dma write err\n", unit, channel);
-        _hal_lightning_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_DMA_WRITE_ERROR);
+        _hal_lt_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_DMA_WRITE_ERROR);
         ptr_rx_cb->cnt.channel[channel].dma_write_err++;
-        _hal_lightning_pkt_handleRxErrStat(unit, channel);
+        _hal_lt_dawn_pkt_handleRxErrStat(unit, channel);
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_STOP_CMD_CPLT))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_STOP_CMD_CPLT))
     {
-        DIAG_PRINT(HAL_DBG_RX,
+        OSAL_PRINT(OSAL_DBG_RX,
                         "u=%u, rxch=%u, pdma stop done\n", unit, channel);
-        _hal_lightning_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_STOP_CMD_CPLT);
+        _hal_lt_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_STOP_CMD_CPLT);
         ptr_rx_cb->cnt.channel[channel].sw_issue_stop++;
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_GPD_GT255_ERROR))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_GPD_GT255_ERROR))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX),
                         "u=%u, rxch=%u, pdma gpd num > 255 err\n", unit, channel);
-        _hal_lightning_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_GPD_GT255_ERROR);
+        _hal_lt_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_GPD_GT255_ERROR);
         ptr_rx_cb->cnt.channel[channel].gpd_gt255_err++;
-        _hal_lightning_pkt_handleRxErrStat(unit, channel);
+        _hal_lt_dawn_pkt_handleRxErrStat(unit, channel);
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_TOD_UNINIT))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_TOD_UNINIT))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX),
                         "u=%u, rxch=%u, pdma tod ununit err\n", unit, channel);
-        _hal_lightning_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_TOD_UNINIT);
+        _hal_lt_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_TOD_UNINIT);
         ptr_rx_cb->cnt.channel[channel].tod_uninit++;
-        _hal_lightning_pkt_handleRxErrStat(unit, channel);
+        _hal_lt_dawn_pkt_handleRxErrStat(unit, channel);
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_PKT_ERROR_DROP))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_PKT_ERROR_DROP))
     {
-        DIAG_PRINT((HAL_DBG_ERR | HAL_DBG_RX),
+        OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX),
                         "u=%u, rxch=%u, pdma pkt err drop\n", unit, channel);
-        _hal_lightning_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_PKT_ERROR_DROP);
+        _hal_lt_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_PKT_ERROR_DROP);
         ptr_rx_cb->cnt.channel[channel].pkt_err_drop++;
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_UDSZ_DROP))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_UDSZ_DROP))
     {
-        DIAG_PRINT(HAL_DBG_RX,
+        OSAL_PRINT(OSAL_DBG_RX,
                         "u=%u, rxch=%u, pdma pkt under size\n", unit, channel);
-        _hal_lightning_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_UDSZ_DROP);
+        _hal_lt_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_UDSZ_DROP);
         ptr_rx_cb->cnt.channel[channel].udsz_drop++;
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_OVSZ_DROP))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_OVSZ_DROP))
     {
-        DIAG_PRINT(HAL_DBG_RX,
+        OSAL_PRINT(OSAL_DBG_RX,
                         "u=%u, rxch=%u, pdma pkt over size\n", unit, channel);
-        _hal_lightning_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_OVSZ_DROP);
+        _hal_lt_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_OVSZ_DROP);
         ptr_rx_cb->cnt.channel[channel].ovsz_drop++;
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_CMDQ_OVF_DROP))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_CMDQ_OVF_DROP))
     {
-        DIAG_PRINT(HAL_DBG_RX,
+        OSAL_PRINT(OSAL_DBG_RX,
                         "u=%u, rxch=%u, pdma cmdq overflow\n", unit, channel);
-        _hal_lightning_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_CMDQ_OVF_DROP);
+        _hal_lt_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_CMDQ_OVF_DROP);
         ptr_rx_cb->cnt.channel[channel].cmdq_ovf_drop++;
     }
-    if (0 != (isr_status & HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_FIFO_OVF_DROP))
+    if (0 != (isr_status & HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_FIFO_OVF_DROP))
     {
-        DIAG_PRINT(HAL_DBG_RX,
+        OSAL_PRINT(OSAL_DBG_RX,
                         "u=%u, rxch=%u, pdma fifo overflow\n", unit, channel);
-        _hal_lightning_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_FIFO_OVF_DROP);
+        _hal_lt_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, HAL_LT_DAWN_PKT_RX_CHANNEL_L2_ISR_FIFO_OVF_DROP);
         ptr_rx_cb->cnt.channel[channel].fifo_ovf_drop++;
     }
     if (0 != isr_status)
     {
-        _hal_lightning_pkt_unmaskAllRxL2IsrReg(unit, channel);
+        _hal_lt_dawn_pkt_unmaskAllRxL2IsrReg(unit, channel);
     }
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_handleErrorTask
+/* FUNCTION NAME: _hal_lt_dawn_pkt_handleErrorTask
  * PURPOSE:
  *      To invoke the corresponding handler for the L2 interrupts.
  * INPUT:
@@ -3380,100 +3379,100 @@ _hal_lightning_pkt_handleRxL2Isr(
  *      None
  */
 static void
-_hal_lightning_pkt_handleErrorTask(
+_hal_lt_dawn_pkt_handleErrorTask(
     void                    *ptr_argv)
 {
     UI32_T                  unit = (UI32_T)((CLX_HUGE_T)ptr_argv);
-    HAL_LIGHTNING_PKT_L2_ISR_T    isr_status = 0x0;
+    HAL_LT_DAWN_PKT_L2_ISR_T    isr_status = 0x0;
 
     osal_initRunThread();
     do
     {
         /* receive Error-ISR */
-        osal_waitEvent(HAL_LIGHTNING_PKT_ERR_EVENT(unit));
+        osal_waitEvent(HAL_LT_DAWN_PKT_ERR_EVENT(unit));
         if (CLX_E_OK != osal_isRunThread())
         {
-            DIAG_PRINT(HAL_DBG_COMMON,
+            OSAL_PRINT(OSAL_DBG_COMMON,
                             "u=%u, err task destroyed\n", unit);
             break; /* deinit-thread */
         }
 
         osal_mdc_readPciReg(unit,
-            HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_ERR_INT_STAT),
+            HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_ERR_INT_STAT),
             &isr_status, sizeof(UI32_T));
 
-        if (0 != (HAL_LIGHTNING_PKT_L2_ISR_RCH0 & isr_status))
+        if (0 != (HAL_LT_DAWN_PKT_L2_ISR_RCH0 & isr_status))
         {
-            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, rxch=0, rcv err isr, status=0x%x\n",
+            OSAL_PRINT(OSAL_DBG_COMMON, "u=%u, rxch=0, rcv err isr, status=0x%x\n",
                             unit, isr_status);
-            _hal_lightning_pkt_handleRxL2Isr(unit, HAL_LIGHTNING_PKT_RX_CHANNEL_0);
+            _hal_lt_dawn_pkt_handleRxL2Isr(unit, HAL_LT_DAWN_PKT_RX_CHANNEL_0);
         }
-        if (0 != (HAL_LIGHTNING_PKT_L2_ISR_RCH1 & isr_status))
+        if (0 != (HAL_LT_DAWN_PKT_L2_ISR_RCH1 & isr_status))
         {
-            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, rxch=1, rcv err isr, status=0x%x\n",
+            OSAL_PRINT(OSAL_DBG_COMMON, "u=%u, rxch=1, rcv err isr, status=0x%x\n",
                             unit, isr_status);
-            _hal_lightning_pkt_handleRxL2Isr(unit, HAL_LIGHTNING_PKT_RX_CHANNEL_1);
+            _hal_lt_dawn_pkt_handleRxL2Isr(unit, HAL_LT_DAWN_PKT_RX_CHANNEL_1);
         }
-        if (0 != (HAL_LIGHTNING_PKT_L2_ISR_RCH2 & isr_status))
+        if (0 != (HAL_LT_DAWN_PKT_L2_ISR_RCH2 & isr_status))
         {
-            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, rxch=2, rcv err isr, status=0x%x\n",
+            OSAL_PRINT(OSAL_DBG_COMMON, "u=%u, rxch=2, rcv err isr, status=0x%x\n",
                             unit, isr_status);
-            _hal_lightning_pkt_handleRxL2Isr(unit, HAL_LIGHTNING_PKT_RX_CHANNEL_2);
+            _hal_lt_dawn_pkt_handleRxL2Isr(unit, HAL_LT_DAWN_PKT_RX_CHANNEL_2);
         }
-        if (0 != (HAL_LIGHTNING_PKT_L2_ISR_RCH3 & isr_status))
+        if (0 != (HAL_LT_DAWN_PKT_L2_ISR_RCH3 & isr_status))
         {
-            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, rxch=3, rcv err isr, status=0x%x\n",
+            OSAL_PRINT(OSAL_DBG_COMMON, "u=%u, rxch=3, rcv err isr, status=0x%x\n",
                             unit, isr_status);
-            _hal_lightning_pkt_handleRxL2Isr(unit, HAL_LIGHTNING_PKT_RX_CHANNEL_3);
+            _hal_lt_dawn_pkt_handleRxL2Isr(unit, HAL_LT_DAWN_PKT_RX_CHANNEL_3);
         }
-        if (0 != (HAL_LIGHTNING_PKT_L2_ISR_TCH0 & isr_status))
+        if (0 != (HAL_LT_DAWN_PKT_L2_ISR_TCH0 & isr_status))
         {
-            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, txch=0, rcv err isr, status=0x%x\n",
+            OSAL_PRINT(OSAL_DBG_COMMON, "u=%u, txch=0, rcv err isr, status=0x%x\n",
                             unit, isr_status);
-            _hal_lightning_pkt_handleTxL2Isr(unit, HAL_LIGHTNING_PKT_TX_CHANNEL_0);
+            _hal_lt_dawn_pkt_handleTxL2Isr(unit, HAL_LT_DAWN_PKT_TX_CHANNEL_0);
         }
-        if (0 != (HAL_LIGHTNING_PKT_L2_ISR_TCH1 & isr_status))
+        if (0 != (HAL_LT_DAWN_PKT_L2_ISR_TCH1 & isr_status))
         {
-            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, txch=1, rcv err isr, status=0x%x\n",
+            OSAL_PRINT(OSAL_DBG_COMMON, "u=%u, txch=1, rcv err isr, status=0x%x\n",
                             unit, isr_status);
-            _hal_lightning_pkt_handleTxL2Isr(unit, HAL_LIGHTNING_PKT_TX_CHANNEL_1);
+            _hal_lt_dawn_pkt_handleTxL2Isr(unit, HAL_LT_DAWN_PKT_TX_CHANNEL_1);
         }
-        if (0 != (HAL_LIGHTNING_PKT_L2_ISR_TCH2 & isr_status))
+        if (0 != (HAL_LT_DAWN_PKT_L2_ISR_TCH2 & isr_status))
         {
-            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, txch=2, rcv err isr, status=0x%x\n",
+            OSAL_PRINT(OSAL_DBG_COMMON, "u=%u, txch=2, rcv err isr, status=0x%x\n",
                             unit, isr_status);
-            _hal_lightning_pkt_handleTxL2Isr(unit, HAL_LIGHTNING_PKT_TX_CHANNEL_2);
+            _hal_lt_dawn_pkt_handleTxL2Isr(unit, HAL_LT_DAWN_PKT_TX_CHANNEL_2);
         }
-        if (0 != (HAL_LIGHTNING_PKT_L2_ISR_TCH3 & isr_status))
+        if (0 != (HAL_LT_DAWN_PKT_L2_ISR_TCH3 & isr_status))
         {
-            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, txch=3, rcv err isr, status=0x%x\n",
+            OSAL_PRINT(OSAL_DBG_COMMON, "u=%u, txch=3, rcv err isr, status=0x%x\n",
                             unit, isr_status);
-            _hal_lightning_pkt_handleTxL2Isr(unit, HAL_LIGHTNING_PKT_TX_CHANNEL_3);
+            _hal_lt_dawn_pkt_handleTxL2Isr(unit, HAL_LT_DAWN_PKT_TX_CHANNEL_3);
         }
-        if (0 != (HAL_LIGHTNING_PKT_L2_ISR_RX_QID_MAP_ERR & isr_status))
+        if (0 != (HAL_LT_DAWN_PKT_L2_ISR_RX_QID_MAP_ERR & isr_status))
         {
-            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, rcv rx qid map err isr, status=0x%x\n",
+            OSAL_PRINT(OSAL_DBG_COMMON, "u=%u, rcv rx qid map err isr, status=0x%x\n",
                             unit, isr_status);
         }
-        if (0 != (HAL_LIGHTNING_PKT_L2_ISR_RX_FRAME_ERR & isr_status))
+        if (0 != (HAL_LT_DAWN_PKT_L2_ISR_RX_FRAME_ERR & isr_status))
         {
-            DIAG_PRINT(HAL_DBG_COMMON, "u=%u, rcv rx frame err isr, status=0x%x\n",
+            OSAL_PRINT(OSAL_DBG_COMMON, "u=%u, rcv rx frame err isr, status=0x%x\n",
                             unit, isr_status);
         }
         if (0 != isr_status)
         {
             osal_mdc_writePciReg(unit,
-                HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_ERR_INT_CLR),
+                HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_ERR_INT_CLR),
                 &isr_status, sizeof(UI32_T));
 
-            _hal_lightning_pkt_unmaskIntr(unit, HAL_LIGHTNING_PKT_ERR_REG(unit));
+            _hal_lt_dawn_pkt_unmaskIntr(unit, HAL_LT_DAWN_PKT_ERR_REG(unit));
         }
 
     } while (CLX_E_OK == osal_isRunThread());
     osal_exitRunThread();
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_handleTxDoneTask
+/* FUNCTION NAME: _hal_lt_dawn_pkt_handleTxDoneTask
  * PURPOSE:
  *      To handle the TX done interrupt for the specified TX channel.
  * INPUT:
@@ -3486,17 +3485,17 @@ _hal_lightning_pkt_handleErrorTask(
  *      None
  */
 static void
-_hal_lightning_pkt_handleTxDoneTask(
+_hal_lt_dawn_pkt_handleTxDoneTask(
     void                    *ptr_argv)
 {
     /* cookie or index */
-    UI32_T                          unit    = ((HAL_LIGHTNING_PKT_ISR_COOKIE_T *)ptr_argv)->unit;
-    HAL_LIGHTNING_PKT_TX_CHANNEL_T        channel = (HAL_LIGHTNING_PKT_TX_CHANNEL_T)
-                                              ((HAL_LIGHTNING_PKT_ISR_COOKIE_T *)ptr_argv)->channel;
+    UI32_T                          unit    = ((HAL_LT_DAWN_PKT_ISR_COOKIE_T *)ptr_argv)->unit;
+    HAL_LT_DAWN_PKT_TX_CHANNEL_T        channel = (HAL_LT_DAWN_PKT_TX_CHANNEL_T)
+                                              ((HAL_LT_DAWN_PKT_ISR_COOKIE_T *)ptr_argv)->channel;
     /* control block */
-    HAL_LIGHTNING_PKT_TX_CB_T             *ptr_tx_cb = HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LIGHTNING_PKT_GET_TX_PDMA_PTR(unit, channel);
-    volatile HAL_LIGHTNING_PKT_TX_GPD_T   *ptr_tx_gpd = NULL;
+    HAL_LT_DAWN_PKT_TX_CB_T             *ptr_tx_cb = HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LT_DAWN_PKT_GET_TX_PDMA_PTR(unit, channel);
+    volatile HAL_LT_DAWN_PKT_TX_GPD_T   *ptr_tx_gpd = NULL;
     UI32_T                          first_gpd_idx = 0; /* To record the first GPD */
     UI32_T                          loop_cnt = 0;
     CLX_IRQ_FLAGS_T                 irg_flags;
@@ -3507,10 +3506,10 @@ _hal_lightning_pkt_handleTxDoneTask(
     do
     {
         /* receive Tx-Done-ISR */
-        osal_waitEvent(HAL_LIGHTNING_PKT_TCH_EVENT(unit, channel));
+        osal_waitEvent(HAL_LT_DAWN_PKT_TCH_EVENT(unit, channel));
         if (CLX_E_OK != osal_isRunThread())
         {
-            DIAG_PRINT(HAL_DBG_TX,
+            OSAL_PRINT(OSAL_DBG_TX,
                             "u=%u, txch=%u, tx done task destroyed\n", unit, channel);
             break; /* deinit-thread */
         }
@@ -3526,14 +3525,14 @@ _hal_lightning_pkt_handleTxDoneTask(
         loop_cnt = ptr_tx_pdma->used_gpd_num;
         while (loop_cnt > 0)
         {
-            ptr_tx_gpd = HAL_LIGHTNING_PKT_GET_TX_GPD_PTR(unit, channel, ptr_tx_pdma->free_idx);
-            osal_dma_invalidateCache((void *)ptr_tx_gpd, sizeof(HAL_LIGHTNING_PKT_TX_GPD_T));
+            ptr_tx_gpd = HAL_LT_DAWN_PKT_GET_TX_GPD_PTR(unit, channel, ptr_tx_pdma->free_idx);
+            osal_dma_invalidateCache((void *)ptr_tx_gpd, sizeof(HAL_LT_DAWN_PKT_TX_GPD_T));
 
             /* If hwo=HW, it might be:
              * 1. err_flag=TRUE  -> HW breakdown -> enque and recover -> break
              * 2. err_flag=FALSE -> HW busy -> break
              */
-            if (HAL_LIGHTNING_PKT_HWO_HW_OWN == ptr_tx_gpd->hwo)
+            if (HAL_LT_DAWN_PKT_HWO_HW_OWN == ptr_tx_gpd->hwo)
             {
                 if (TRUE == ptr_tx_pdma->err_flag)
                 {
@@ -3554,14 +3553,14 @@ _hal_lightning_pkt_handleTxDoneTask(
 
                     /* do error recover */
                     first_gpd_idx = 0;
-                    if (CLX_E_OK == _hal_lightning_pkt_recoverTxPdma(unit, channel))
+                    if (CLX_E_OK == _hal_lt_dawn_pkt_recoverTxPdma(unit, channel))
                     {
                         ptr_tx_pdma->err_flag = FALSE;
                         ptr_tx_cb->cnt.channel[channel].err_recover++;
                     }
                     else
                     {
-                        DIAG_PRINT((HAL_DBG_TX | HAL_DBG_ERR),
+                        OSAL_PRINT((OSAL_DBG_TX | OSAL_DBG_ERR),
                                         "u=%u, txch=%u, err recover failed\n",
                                         unit, channel);
                     }
@@ -3575,7 +3574,7 @@ _hal_lightning_pkt_handleTxDoneTask(
             if (HAL_PKT_TX_WAIT_ASYNC == ptr_tx_cb->wait_mode)
             {
                 /* If hwo=SW and ch=0, record the head of sw gpd in bulk buf */
-                if (HAL_LIGHTNING_PKT_CH_LAST_GPD == ptr_tx_gpd->ch)
+                if (HAL_LT_DAWN_PKT_CH_LAST_GPD == ptr_tx_gpd->ch)
                 {
                     ptr_tx_pdma->pptr_sw_gpd_bulk[bulk_pkt_cnt]
                         = ptr_tx_pdma->pptr_sw_gpd_ring[first_gpd_idx];
@@ -3589,7 +3588,7 @@ _hal_lightning_pkt_handleTxDoneTask(
                 }
             }
 
-            if (HAL_LIGHTNING_PKT_ECC_ERROR_OCCUR == ptr_tx_gpd->ecce)
+            if (HAL_LT_DAWN_PKT_ECC_ERROR_OCCUR == ptr_tx_gpd->ecce)
             {
                 ptr_tx_cb->cnt.channel[channel].ecc_err++;
             }
@@ -3608,7 +3607,7 @@ _hal_lightning_pkt_handleTxDoneTask(
         /* update ISR and counter */
         ptr_tx_cb->cnt.channel[channel].tx_done++;
 
-        _hal_lightning_pkt_unmaskIntr(unit, HAL_LIGHTNING_PKT_TCH_REG(unit, channel));
+        _hal_lt_dawn_pkt_unmaskIntr(unit, HAL_LT_DAWN_PKT_TCH_REG(unit, channel));
 
         if (HAL_PKT_TX_WAIT_SYNC_INTR != ptr_tx_cb->wait_mode)
         {
@@ -3620,7 +3619,7 @@ _hal_lightning_pkt_handleTxDoneTask(
         }
 
         /* enque packet after releasing the spinlock */
-        _hal_lightning_pkt_txEnQueueBulk(unit, channel, bulk_pkt_cnt);
+        _hal_lt_dawn_pkt_txEnQueueBulk(unit, channel, bulk_pkt_cnt);
         bulk_pkt_cnt = 0;
 
         /* prevent this task from executing too long */
@@ -3634,7 +3633,7 @@ _hal_lightning_pkt_handleTxDoneTask(
     osal_exitRunThread();
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_handleRxDoneTask
+/* FUNCTION NAME: _hal_lt_dawn_pkt_handleRxDoneTask
  * PURPOSE:
  *      To handle the RX done interrupt for the specified RX channel.
  * INPUT:
@@ -3647,24 +3646,24 @@ _hal_lightning_pkt_handleTxDoneTask(
  *      None
  */
 static void
-_hal_lightning_pkt_handleRxDoneTask(
+_hal_lt_dawn_pkt_handleRxDoneTask(
     void                    *ptr_argv)
 {
     /* cookie or index */
-    UI32_T                          unit    = ((HAL_LIGHTNING_PKT_ISR_COOKIE_T *)ptr_argv)->unit;
-    HAL_LIGHTNING_PKT_RX_CHANNEL_T        channel = (HAL_LIGHTNING_PKT_RX_CHANNEL_T)
-                                              ((HAL_LIGHTNING_PKT_ISR_COOKIE_T *)ptr_argv)->channel;
+    UI32_T                          unit    = ((HAL_LT_DAWN_PKT_ISR_COOKIE_T *)ptr_argv)->unit;
+    HAL_LT_DAWN_PKT_RX_CHANNEL_T        channel = (HAL_LT_DAWN_PKT_RX_CHANNEL_T)
+                                              ((HAL_LT_DAWN_PKT_ISR_COOKIE_T *)ptr_argv)->channel;
 
     /* control block */
-    HAL_PKT_DRV_CB_T                      *ptr_cb = HAL_LIGHTNING_PKT_GET_DRV_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_RX_CB_T             *ptr_rx_cb = HAL_LIGHTNING_PKT_GET_RX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LIGHTNING_PKT_GET_RX_PDMA_PTR(unit, channel);
-    volatile HAL_LIGHTNING_PKT_RX_GPD_T   *ptr_rx_gpd = NULL;
+    HAL_PKT_DRV_CB_T                      *ptr_cb = HAL_LT_DAWN_PKT_GET_DRV_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_RX_CB_T             *ptr_rx_cb = HAL_LT_DAWN_PKT_GET_RX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LT_DAWN_PKT_GET_RX_PDMA_PTR(unit, channel);
+    volatile HAL_LT_DAWN_PKT_RX_GPD_T   *ptr_rx_gpd = NULL;
 
     BOOL_T                          first = TRUE;
     BOOL_T                          last = FALSE;
-    HAL_LIGHTNING_PKT_RX_SW_GPD_T         *ptr_sw_gpd = NULL;
-    HAL_LIGHTNING_PKT_RX_SW_GPD_T         *ptr_sw_first_gpd = NULL;
+    HAL_LT_DAWN_PKT_RX_SW_GPD_T         *ptr_sw_gpd = NULL;
+    HAL_LT_DAWN_PKT_RX_SW_GPD_T         *ptr_sw_first_gpd = NULL;
     UI32_T                          loop_cnt = 0;
     unsigned long                   timeout  = 0;
 
@@ -3672,10 +3671,10 @@ _hal_lightning_pkt_handleRxDoneTask(
     do
     {
         /* receive Rx-Done-ISR */
-        osal_waitEvent(HAL_LIGHTNING_PKT_RCH_EVENT(unit, channel));
+        osal_waitEvent(HAL_LT_DAWN_PKT_RCH_EVENT(unit, channel));
         if (CLX_E_OK != osal_isRunThread())
         {
-            DIAG_PRINT(HAL_DBG_RX,
+            OSAL_PRINT(OSAL_DBG_RX,
                             "u=%u, rxch=%u, rx done task destroyed\n", unit, channel);
             break; /* deinit-thread */
         }
@@ -3683,7 +3682,7 @@ _hal_lightning_pkt_handleRxDoneTask(
         /* check if Rx-system is inited */
         if (0 == ptr_cb->buf_len)
         {
-            DIAG_PRINT((HAL_DBG_RX | HAL_DBG_ERR),
+            OSAL_PRINT((OSAL_DBG_RX | OSAL_DBG_ERR),
                             "u=%u, rxch=%u, rx gpd buf len=0\n",
                             unit, channel);
             continue;
@@ -3694,14 +3693,14 @@ _hal_lightning_pkt_handleRxDoneTask(
         loop_cnt = ptr_rx_pdma->gpd_num;
         while (loop_cnt > 0)
         {
-            ptr_rx_gpd = HAL_LIGHTNING_PKT_GET_RX_GPD_PTR(unit, channel, ptr_rx_pdma->cur_idx);
-            osal_dma_invalidateCache((void *)ptr_rx_gpd, sizeof(HAL_LIGHTNING_PKT_RX_GPD_T));
+            ptr_rx_gpd = HAL_LT_DAWN_PKT_GET_RX_GPD_PTR(unit, channel, ptr_rx_pdma->cur_idx);
+            osal_dma_invalidateCache((void *)ptr_rx_gpd, sizeof(HAL_LT_DAWN_PKT_RX_GPD_T));
 
             /* If hwo=HW, it might be:
              * 1. err_flag=TRUE  -> HW breakdown -> enque and recover -> break
              * 2. err_flag=FALSE -> HW busy -> break
              */
-            if (HAL_LIGHTNING_PKT_HWO_HW_OWN == ptr_rx_gpd->hwo)
+            if (HAL_LT_DAWN_PKT_HWO_HW_OWN == ptr_rx_gpd->hwo)
             {
                 if (TRUE == ptr_rx_pdma->err_flag)
                 {
@@ -3711,21 +3710,21 @@ _hal_lightning_pkt_handleRxDoneTask(
                     {
                         ptr_sw_gpd->ptr_next = NULL;
                         ptr_sw_first_gpd->rx_complete = FALSE;
-                        _hal_lightning_pkt_rxEnQueue(unit, channel, ptr_sw_first_gpd);
+                        _hal_lt_dawn_pkt_rxEnQueue(unit, channel, ptr_sw_first_gpd);
                         ptr_sw_first_gpd = NULL;
                     }
 
                     /* do error recover */
                     first = TRUE;
                     last = FALSE;
-                    if (CLX_E_OK == _hal_lightning_pkt_recoverRxPdma(unit, channel))
+                    if (CLX_E_OK == _hal_lt_dawn_pkt_recoverRxPdma(unit, channel))
                     {
                         ptr_rx_pdma->err_flag = FALSE;
                         ptr_rx_cb->cnt.channel[channel].err_recover++;
                     }
                     else
                     {
-                        DIAG_PRINT((HAL_DBG_RX | HAL_DBG_ERR),
+                        OSAL_PRINT((OSAL_DBG_RX | OSAL_DBG_ERR),
                                         "u=%u, rxch=%u, err recover failed\n",
                                         unit, channel);
                     }
@@ -3739,36 +3738,36 @@ _hal_lightning_pkt_handleRxDoneTask(
             /* Move HW-GPD to SW-GPD and append to a link-list */
             if (TRUE == first)
             {
-                ptr_sw_first_gpd = (HAL_LIGHTNING_PKT_RX_SW_GPD_T *)osal_alloc(sizeof(HAL_LIGHTNING_PKT_RX_SW_GPD_T));
+                ptr_sw_first_gpd = (HAL_LT_DAWN_PKT_RX_SW_GPD_T *)osal_alloc(sizeof(HAL_LT_DAWN_PKT_RX_SW_GPD_T));
                 ptr_sw_gpd = ptr_sw_first_gpd;
                 if (NULL != ptr_sw_gpd)
                 {
-                    memcpy(&ptr_sw_gpd->rx_gpd, (void *)ptr_rx_gpd, sizeof(HAL_LIGHTNING_PKT_RX_GPD_T));
+                    memcpy(&ptr_sw_gpd->rx_gpd, (void *)ptr_rx_gpd, sizeof(HAL_LT_DAWN_PKT_RX_GPD_T));
                     first = FALSE;
                 }
                 else
                 {
                     ptr_rx_cb->cnt.no_memory++;
-                    DIAG_PRINT((HAL_DBG_RX | HAL_DBG_ERR),
+                    OSAL_PRINT((OSAL_DBG_RX | OSAL_DBG_ERR),
                                     "u=%u, rxch=%u, alloc 1st sw gpd failed, size=%zu\n",
-                                    unit, channel, sizeof(HAL_LIGHTNING_PKT_RX_SW_GPD_T));
+                                    unit, channel, sizeof(HAL_LT_DAWN_PKT_RX_SW_GPD_T));
                     break;
                 }
             }
             else
             {
-                ptr_sw_gpd->ptr_next = (HAL_LIGHTNING_PKT_RX_SW_GPD_T *)osal_alloc(sizeof(HAL_LIGHTNING_PKT_RX_SW_GPD_T));
+                ptr_sw_gpd->ptr_next = (HAL_LT_DAWN_PKT_RX_SW_GPD_T *)osal_alloc(sizeof(HAL_LT_DAWN_PKT_RX_SW_GPD_T));
                 ptr_sw_gpd = ptr_sw_gpd->ptr_next;
                 if (NULL != ptr_sw_gpd)
                 {
-                    memcpy(&ptr_sw_gpd->rx_gpd, (void *)ptr_rx_gpd, sizeof(HAL_LIGHTNING_PKT_RX_GPD_T));
+                    memcpy(&ptr_sw_gpd->rx_gpd, (void *)ptr_rx_gpd, sizeof(HAL_LT_DAWN_PKT_RX_GPD_T));
                 }
                 else
                 {
                     ptr_rx_cb->cnt.no_memory++;
-                    DIAG_PRINT((HAL_DBG_RX | HAL_DBG_ERR),
+                    OSAL_PRINT((OSAL_DBG_RX | OSAL_DBG_ERR),
                                     "u=%u, rxch=%u, alloc mid sw gpd failed, size=%zu\n",
-                                    unit, channel, sizeof(HAL_LIGHTNING_PKT_RX_SW_GPD_T));
+                                    unit, channel, sizeof(HAL_LT_DAWN_PKT_RX_SW_GPD_T));
                     break;
                 }
             }
@@ -3776,27 +3775,27 @@ _hal_lightning_pkt_handleRxDoneTask(
             ptr_sw_gpd->ptr_cookie = ptr_rx_pdma->pptr_skb_ring[ptr_rx_pdma->cur_idx];
 
             /* If hwo=SW and ch=0, enque SW-GPD and signal rxTask */
-            if (HAL_LIGHTNING_PKT_CH_LAST_GPD == ptr_rx_gpd->ch)
+            if (HAL_LT_DAWN_PKT_CH_LAST_GPD == ptr_rx_gpd->ch)
             {
                 last = TRUE;
             }
 
             /* If hwo=SW and ch=*, re-alloc-buf and resume */
-            while (CLX_E_OK != _hal_lightning_pkt_allocRxPayloadBuf(unit, channel, ptr_rx_pdma->cur_idx))
+            while (CLX_E_OK != _hal_lt_dawn_pkt_allocRxPayloadBuf(unit, channel, ptr_rx_pdma->cur_idx))
             {
                 ptr_rx_cb->cnt.no_memory++;
-                HAL_LIGHTNING_PKT_ALLOC_MEM_RETRY_SLEEP();
+                HAL_LT_DAWN_PKT_ALLOC_MEM_RETRY_SLEEP();
             }
-            ptr_rx_gpd->ioc = HAL_LIGHTNING_PKT_IOC_HAS_INTR;
-            ptr_rx_gpd->hwo = HAL_LIGHTNING_PKT_HWO_HW_OWN;
-            osal_dma_flushCache((void *)ptr_rx_gpd, sizeof(HAL_LIGHTNING_PKT_RX_GPD_T));
+            ptr_rx_gpd->ioc = HAL_LT_DAWN_PKT_IOC_HAS_INTR;
+            ptr_rx_gpd->hwo = HAL_LT_DAWN_PKT_HWO_HW_OWN;
+            osal_dma_flushCache((void *)ptr_rx_gpd, sizeof(HAL_LT_DAWN_PKT_RX_GPD_T));
 
             /* Enque the SW-GPD to rxTask */
             if (TRUE == last)
             {
                 ptr_sw_gpd->ptr_next = NULL;
                 ptr_sw_first_gpd->rx_complete = TRUE;
-                _hal_lightning_pkt_rxEnQueue(unit, channel, ptr_sw_first_gpd);
+                _hal_lt_dawn_pkt_rxEnQueue(unit, channel, ptr_sw_first_gpd);
                 ptr_sw_first_gpd = NULL;
 
                 /* To rebuild the SW GPD link list */
@@ -3804,7 +3803,7 @@ _hal_lightning_pkt_handleRxDoneTask(
                 last = FALSE;
             }
 
-            _hal_lightning_pkt_resumeRxChannelReg(unit, channel, 1);
+            _hal_lt_dawn_pkt_resumeRxChannelReg(unit, channel, 1);
 
             /* update Rx PDMA */
             ptr_rx_pdma->cur_idx++;
@@ -3817,7 +3816,7 @@ _hal_lightning_pkt_handleRxDoneTask(
         /* update ISR and counter */
         ptr_rx_cb->cnt.channel[channel].rx_done++;
 
-        _hal_lightning_pkt_unmaskIntr(unit, HAL_LIGHTNING_PKT_RCH_REG(unit, channel));
+        _hal_lt_dawn_pkt_unmaskIntr(unit, HAL_LT_DAWN_PKT_RCH_REG(unit, channel));
 
         /* prevent this task from executing too long */
         if (!(time_before(jiffies, timeout)))
@@ -3830,9 +3829,9 @@ _hal_lightning_pkt_handleRxDoneTask(
     osal_exitRunThread();
 }
 static void
-_hal_lightning_pkt_net_dev_tx_callback(
+_hal_lt_dawn_pkt_net_dev_tx_callback(
     const UI32_T                unit,
-    HAL_LIGHTNING_PKT_TX_SW_GPD_T     *ptr_sw_gpd,
+    HAL_LT_DAWN_PKT_TX_SW_GPD_T     *ptr_sw_gpd,
     struct sk_buff              *ptr_skb)
 {
     CLX_ADDR_T                  phy_addr = 0;
@@ -3847,24 +3846,24 @@ _hal_lightning_pkt_net_dev_tx_callback(
     /* free gpd */
     osal_free(ptr_sw_gpd);
 }
-static netdev_tx_t
-_hal_lightning_pkt_net_dev_tx(
+netdev_tx_t
+_hal_lt_dawn_pkt_net_dev_tx(
     struct sk_buff              *ptr_skb,
     struct net_device           *ptr_net_dev)
 {
     struct net_device_priv      *ptr_priv = netdev_priv(ptr_net_dev);
-    HAL_LIGHTNING_PKT_TX_CB_T   *ptr_tx_cb;
+    HAL_LT_DAWN_PKT_TX_CB_T   *ptr_tx_cb;
     /* chip meta */
     unsigned int                unit;
     unsigned int                channel        = 0;
-    HAL_LIGHTNING_PKT_TX_SW_GPD_T     *ptr_sw_gpd    = NULL;
+    HAL_LT_DAWN_PKT_TX_SW_GPD_T     *ptr_sw_gpd    = NULL;
     void                        *ptr_virt_addr = NULL;
     CLX_ADDR_T                  phy_addr       = 0x0;
 
     if (NULL == ptr_priv)
     {
         /* in case that the netdev has been freed/reset somewhere */
-        DIAG_PRINT(HAL_DBG_ERR, "get netdev_priv failed\n");
+        OSAL_PRINT(OSAL_DBG_ERR, "get netdev_priv failed\n");
         return -EFAULT;
     }
 
@@ -3877,13 +3876,13 @@ _hal_lightning_pkt_net_dev_tx(
 
     unit = ptr_priv->unit;
 
-    ptr_tx_cb = HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
+    ptr_tx_cb = HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit);
 
     /* for warm de-init procedure, if any net intf not destroyed, it is possible
      * that kernel still has packets to send causing segmentation fault
      */
     if (FALSE == ptr_tx_cb->net_tx_allowed) {
-        DIAG_PRINT(HAL_DBG_ERR, "net tx during sdk de-init\n");
+        OSAL_PRINT(OSAL_DBG_ERR, "net tx during sdk de-init\n");
         ptr_priv->stats.tx_dropped++;
         osal_skb_free(ptr_skb);
         return NETDEV_TX_OK;
@@ -3903,7 +3902,7 @@ _hal_lightning_pkt_net_dev_tx(
     ptr_skb->len += ETH_FCS_LEN;
 
     /* alloc gpd */
-    ptr_sw_gpd = osal_alloc(sizeof(HAL_LIGHTNING_PKT_TX_SW_GPD_T));
+    ptr_sw_gpd = osal_alloc(sizeof(HAL_LT_DAWN_PKT_TX_SW_GPD_T));
     if (NULL == ptr_sw_gpd)
     {
         ptr_priv->stats.tx_errors++;
@@ -3916,7 +3915,7 @@ _hal_lightning_pkt_net_dev_tx(
         phy_addr = osal_skb_mapDma(ptr_skb, DMA_TO_DEVICE);
         if (0x0 == phy_addr)
         {
-            DIAG_PRINT(HAL_DBG_ERR, "u=%u, txch=%u, skb dma map err\n",
+            OSAL_PRINT(OSAL_DBG_ERR, "u=%u, txch=%u, skb dma map err\n",
                             unit, channel);
             ptr_priv->stats.tx_errors++;
             osal_skb_free(ptr_skb);
@@ -3925,14 +3924,14 @@ _hal_lightning_pkt_net_dev_tx(
         else
         {
             /* trans skb to gpd */
-            memset(ptr_sw_gpd, 0x0, sizeof(HAL_LIGHTNING_PKT_TX_SW_GPD_T));
-            ptr_sw_gpd->callback   = (void *)_hal_lightning_pkt_net_dev_tx_callback;
+            memset(ptr_sw_gpd, 0x0, sizeof(HAL_LT_DAWN_PKT_TX_SW_GPD_T));
+            ptr_sw_gpd->callback   = (void *)_hal_lt_dawn_pkt_net_dev_tx_callback;
             ptr_sw_gpd->ptr_cookie = (void *)ptr_skb;
             ptr_sw_gpd->gpd_num    = 1;
             ptr_sw_gpd->ptr_next   = NULL;
             ptr_sw_gpd->channel    = channel;
             /* prepare gpd */
-            hal_lightning_pkt_prepareGpd(unit, phy_addr, ptr_skb, ptr_priv->port, ptr_sw_gpd);
+            hal_lt_dawn_pkt_prepareGpd(unit, phy_addr, ptr_skb, ptr_priv->port, ptr_sw_gpd);
 
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(4,6,7)
             ptr_net_dev->trans_start = jiffies;
@@ -3940,7 +3939,7 @@ _hal_lightning_pkt_net_dev_tx(
             netdev_get_tx_queue(ptr_net_dev, 0)->trans_start = jiffies;
 #endif
             /* send gpd */
-            if (CLX_E_OK == hal_lightning_pkt_sendGpd(unit, channel, ptr_sw_gpd))
+            if (CLX_E_OK == hal_lt_dawn_pkt_sendGpd(unit, channel, ptr_sw_gpd))
             {
                 ptr_priv->stats.tx_packets++;
                 ptr_priv->stats.tx_bytes += ptr_skb->len;
@@ -3961,21 +3960,21 @@ _hal_lightning_pkt_net_dev_tx(
 }
 
 CLX_ERROR_NO_T
-hal_lightning_triggerRchEvent(
+hal_lt_dawn_triggerRchEvent(
     const UI32_T            unit,
     const UI32_T            channel)
 {
     return (CLX_E_OK);
 }
 CLX_ERROR_NO_T
-hal_lightning_triggerTchEvent(
+hal_lt_dawn_triggerTchEvent(
     const UI32_T            unit,
     const UI32_T            channel)
 {
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: hal_lightning_pkt_initTask
+/* FUNCTION NAME: hal_lt_dawn_pkt_initTask
  * PURPOSE:
  *      To initialize the Task for packet module.
  * INPUT:
@@ -3989,39 +3988,39 @@ hal_lightning_triggerTchEvent(
  *      None
  */
 CLX_ERROR_NO_T
-hal_lightning_pkt_initTask(
+hal_lt_dawn_pkt_initTask(
     const UI32_T            unit)
 {
     CLX_ERROR_NO_T          rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_TX_CB_T     *ptr_tx_cb = HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_RX_CB_T     *ptr_rx_cb = HAL_LIGHTNING_PKT_GET_RX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_TX_CB_T     *ptr_tx_cb = HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_RX_CB_T     *ptr_rx_cb = HAL_LT_DAWN_PKT_GET_RX_CB_PTR(unit);
     UI32_T                  channel = 0;
 
     /* Init handleErrorTask */
     rc = osal_createThread("ERROR", HAL_DFLT_CFG_PKT_ERROR_ISR_THREAD_STACK,
-                           HAL_DFLT_CFG_PKT_ERROR_ISR_THREAD_PRI, _hal_lightning_pkt_handleErrorTask,
+                           HAL_DFLT_CFG_PKT_ERROR_ISR_THREAD_PRI, _hal_lt_dawn_pkt_handleErrorTask,
                            (void *)((CLX_HUGE_T)unit), &err_task_id);
 
     /* Init handleTxDoneTask */
-    for (channel = 0; ((channel < HAL_LIGHTNING_PKT_TX_CHANNEL_LAST) && (CLX_E_OK == rc)); channel++)
+    for (channel = 0; ((channel < HAL_LT_DAWN_PKT_TX_CHANNEL_LAST) && (CLX_E_OK == rc)); channel++)
     {
         ptr_tx_cb->isr_task_cookie[channel].unit    = unit;
         ptr_tx_cb->isr_task_cookie[channel].channel = channel;
 
         rc = osal_createThread("TX_ISR", HAL_DFLT_CFG_PKT_TX_ISR_THREAD_STACK,
-                               HAL_DFLT_CFG_PKT_TX_ISR_THREAD_PRI, _hal_lightning_pkt_handleTxDoneTask,
+                               HAL_DFLT_CFG_PKT_TX_ISR_THREAD_PRI, _hal_lt_dawn_pkt_handleTxDoneTask,
                                (void *)&ptr_tx_cb->isr_task_cookie[channel],
                                &ptr_tx_cb->isr_task_id[channel]);
     }
 
     /* Init handleRxDoneTask */
-    for (channel = 0; ((channel < HAL_LIGHTNING_PKT_RX_CHANNEL_LAST) && (CLX_E_OK == rc)); channel++)
+    for (channel = 0; ((channel < HAL_LT_DAWN_PKT_RX_CHANNEL_LAST) && (CLX_E_OK == rc)); channel++)
     {
         ptr_rx_cb->isr_task_cookie[channel].unit    = unit;
         ptr_rx_cb->isr_task_cookie[channel].channel = channel;
 
         rc = osal_createThread("RX_ISR", HAL_DFLT_CFG_PKT_RX_ISR_THREAD_STACK,
-                               HAL_DFLT_CFG_PKT_RX_ISR_THREAD_PRI, _hal_lightning_pkt_handleRxDoneTask,
+                               HAL_DFLT_CFG_PKT_RX_ISR_THREAD_PRI, _hal_lt_dawn_pkt_handleRxDoneTask,
                                (void *)&ptr_rx_cb->isr_task_cookie[channel],
                                &ptr_rx_cb->isr_task_id[channel]);
     }
@@ -4037,7 +4036,7 @@ hal_lightning_pkt_initTask(
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_initTxPdma
+/* FUNCTION NAME: _hal_lt_dawn_pkt_initTxPdma
  * PURPOSE:
  *      To initialize the TX PDMA.
  * INPUT:
@@ -4051,13 +4050,13 @@ hal_lightning_pkt_initTask(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_initTxPdma(
+_hal_lt_dawn_pkt_initTxPdma(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_TX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_TX_CHANNEL_T  channel)
 {
     CLX_ERROR_NO_T                  rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_TX_CB_T             *ptr_tx_cb = HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LIGHTNING_PKT_GET_TX_PDMA_PTR(unit, channel);
+    HAL_LT_DAWN_PKT_TX_CB_T             *ptr_tx_cb = HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_TX_PDMA_T           *ptr_tx_pdma = HAL_LT_DAWN_PKT_GET_TX_PDMA_PTR(unit, channel);
     CLX_IRQ_FLAGS_T                 irg_flags;
 
     /* Isr lock to protect Tx PDMA */
@@ -4079,21 +4078,21 @@ _hal_lightning_pkt_initTxPdma(
     ptr_tx_pdma->gpd_num      = HAL_DFLT_CFG_PKT_TX_GPD_NUM;
 
     /* Prepare the HW-GPD ring */
-    ptr_tx_pdma->ptr_gpd_start_addr = (HAL_LIGHTNING_PKT_TX_GPD_T *)osal_dma_alloc(
-        (ptr_tx_pdma->gpd_num + 1) * sizeof(HAL_LIGHTNING_PKT_TX_GPD_T));
+    ptr_tx_pdma->ptr_gpd_start_addr = (HAL_LT_DAWN_PKT_TX_GPD_T *)osal_dma_alloc(
+        (ptr_tx_pdma->gpd_num + 1) * sizeof(HAL_LT_DAWN_PKT_TX_GPD_T));
 
     if (NULL != ptr_tx_pdma->ptr_gpd_start_addr)
     {
         osal_memset(ptr_tx_pdma->ptr_gpd_start_addr, 0x0,
-            (ptr_tx_pdma->gpd_num + 1) * sizeof(HAL_LIGHTNING_PKT_TX_GPD_T));
+            (ptr_tx_pdma->gpd_num + 1) * sizeof(HAL_LT_DAWN_PKT_TX_GPD_T));
 
-        ptr_tx_pdma->ptr_gpd_align_start_addr = (HAL_LIGHTNING_PKT_TX_GPD_T *)HAL_LIGHTNING_PKT_PDMA_ALIGN_ADDR(
-            (CLX_HUGE_T)ptr_tx_pdma->ptr_gpd_start_addr, sizeof(HAL_LIGHTNING_PKT_TX_GPD_T));
+        ptr_tx_pdma->ptr_gpd_align_start_addr = (HAL_LT_DAWN_PKT_TX_GPD_T *)HAL_LT_DAWN_PKT_PDMA_ALIGN_ADDR(
+            (CLX_HUGE_T)ptr_tx_pdma->ptr_gpd_start_addr, sizeof(HAL_LT_DAWN_PKT_TX_GPD_T));
 
-        rc = _hal_lightning_pkt_initTxPdmaRing(unit, channel);
+        rc = _hal_lt_dawn_pkt_initTxPdmaRing(unit, channel);
         if (CLX_E_OK == rc)
         {
-            _hal_lightning_pkt_startTxChannelReg(unit, channel, 0);
+            _hal_lt_dawn_pkt_startTxChannelReg(unit, channel, 0);
         }
     }
     else
@@ -4107,13 +4106,13 @@ _hal_lightning_pkt_initTxPdma(
         if (CLX_E_OK == rc)
         {
             /* Prepare the SW-GPD ring */
-            ptr_tx_pdma->pptr_sw_gpd_ring = (HAL_LIGHTNING_PKT_TX_SW_GPD_T **)osal_alloc(
-                ptr_tx_pdma->gpd_num * sizeof(HAL_LIGHTNING_PKT_TX_SW_GPD_T *));
+            ptr_tx_pdma->pptr_sw_gpd_ring = (HAL_LT_DAWN_PKT_TX_SW_GPD_T **)osal_alloc(
+                ptr_tx_pdma->gpd_num * sizeof(HAL_LT_DAWN_PKT_TX_SW_GPD_T *));
 
             if (NULL != ptr_tx_pdma->pptr_sw_gpd_ring)
             {
                 osal_memset(ptr_tx_pdma->pptr_sw_gpd_ring, 0x0,
-                    ptr_tx_pdma->gpd_num * sizeof(HAL_LIGHTNING_PKT_TX_SW_GPD_T *));
+                    ptr_tx_pdma->gpd_num * sizeof(HAL_LT_DAWN_PKT_TX_SW_GPD_T *));
             }
             else
             {
@@ -4124,13 +4123,13 @@ _hal_lightning_pkt_initTxPdma(
             /* a temp buffer to store the 1st sw gpd for each packet to be enque
              * we cannot enque packet before release a spinlock
              */
-            ptr_tx_pdma->pptr_sw_gpd_bulk = (HAL_LIGHTNING_PKT_TX_SW_GPD_T **)osal_alloc(
-                ptr_tx_pdma->gpd_num * sizeof(HAL_LIGHTNING_PKT_TX_SW_GPD_T *));
+            ptr_tx_pdma->pptr_sw_gpd_bulk = (HAL_LT_DAWN_PKT_TX_SW_GPD_T **)osal_alloc(
+                ptr_tx_pdma->gpd_num * sizeof(HAL_LT_DAWN_PKT_TX_SW_GPD_T *));
 
             if (NULL != ptr_tx_pdma->pptr_sw_gpd_bulk)
             {
                 osal_memset(ptr_tx_pdma->pptr_sw_gpd_bulk, 0x0,
-                    ptr_tx_pdma->gpd_num * sizeof(HAL_LIGHTNING_PKT_TX_SW_GPD_T *));
+                    ptr_tx_pdma->gpd_num * sizeof(HAL_LT_DAWN_PKT_TX_SW_GPD_T *));
             }
             else
             {
@@ -4145,7 +4144,7 @@ _hal_lightning_pkt_initTxPdma(
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_initRxPdma
+/* FUNCTION NAME: _hal_lt_dawn_pkt_initRxPdma
  * PURPOSE:
  *      To initialize the RX PDMA.
  * INPUT:
@@ -4159,13 +4158,13 @@ _hal_lightning_pkt_initTxPdma(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_initRxPdma(
+_hal_lt_dawn_pkt_initRxPdma(
     const UI32_T                    unit,
-    const HAL_LIGHTNING_PKT_RX_CHANNEL_T  channel)
+    const HAL_LT_DAWN_PKT_RX_CHANNEL_T  channel)
 {
     CLX_ERROR_NO_T                  rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_RX_CB_T             *ptr_rx_cb = HAL_LIGHTNING_PKT_GET_RX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LIGHTNING_PKT_GET_RX_PDMA_PTR(unit, channel);
+    HAL_LT_DAWN_PKT_RX_CB_T             *ptr_rx_cb = HAL_LT_DAWN_PKT_GET_RX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_RX_PDMA_T           *ptr_rx_pdma = HAL_LT_DAWN_PKT_GET_RX_PDMA_PTR(unit, channel);
 
     /* Binary semaphore to protect Rx PDMA */
     osal_createSemaphore("RCH_LCK", CLX_SEMAPHORE_BINARY, &ptr_rx_pdma->sema);
@@ -4176,19 +4175,19 @@ _hal_lightning_pkt_initRxPdma(
     ptr_rx_pdma->gpd_num = HAL_DFLT_CFG_PKT_RX_GPD_NUM;
 
     /* Prepare the HW-GPD ring */
-    ptr_rx_pdma->ptr_gpd_start_addr = (HAL_LIGHTNING_PKT_RX_GPD_T *)osal_dma_alloc(
-        (ptr_rx_pdma->gpd_num + 1) * sizeof(HAL_LIGHTNING_PKT_RX_GPD_T));
+    ptr_rx_pdma->ptr_gpd_start_addr = (HAL_LT_DAWN_PKT_RX_GPD_T *)osal_dma_alloc(
+        (ptr_rx_pdma->gpd_num + 1) * sizeof(HAL_LT_DAWN_PKT_RX_GPD_T));
 
     if (NULL != ptr_rx_pdma->ptr_gpd_start_addr)
     {
         osal_memset(ptr_rx_pdma->ptr_gpd_start_addr, 0,
-            (ptr_rx_pdma->gpd_num + 1) * sizeof(HAL_LIGHTNING_PKT_RX_GPD_T));
+            (ptr_rx_pdma->gpd_num + 1) * sizeof(HAL_LT_DAWN_PKT_RX_GPD_T));
 
-        ptr_rx_pdma->ptr_gpd_align_start_addr = (HAL_LIGHTNING_PKT_RX_GPD_T *)HAL_LIGHTNING_PKT_PDMA_ALIGN_ADDR(
-            (CLX_HUGE_T)ptr_rx_pdma->ptr_gpd_start_addr, sizeof(HAL_LIGHTNING_PKT_RX_GPD_T));
+        ptr_rx_pdma->ptr_gpd_align_start_addr = (HAL_LT_DAWN_PKT_RX_GPD_T *)HAL_LT_DAWN_PKT_PDMA_ALIGN_ADDR(
+            (CLX_HUGE_T)ptr_rx_pdma->ptr_gpd_start_addr, sizeof(HAL_LT_DAWN_PKT_RX_GPD_T));
 
         /* will initRxPdmaRingBuf and start RCH after setRxConfig */
-        rc = _hal_lightning_pkt_initRxPdmaRing(unit, channel);
+        rc = _hal_lt_dawn_pkt_initRxPdmaRing(unit, channel);
     }
     else
     {
@@ -4219,7 +4218,39 @@ _hal_lightning_pkt_initRxPdma(
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_initPktTxCb
+/* FUNCTION NAME: _hal_lt_dawn_pkt_initPktCb
+ * PURPOSE:
+ *      To initialize the control block of Drv.
+ * INPUT:
+ *      unit            -- The unit ID
+ * OUTPUT:
+ *      None
+ * RETURN:
+ *      CLX_E_OK        -- Successfully initialize the control block.
+ * NOTES:
+ *      None
+ */
+static CLX_ERROR_NO_T
+_hal_lt_dawn_pkt_initPktCb(
+    const UI32_T                unit)
+{
+    HAL_PKT_DRV_CB_T        *ptr_cb = HAL_LT_DAWN_PKT_GET_DRV_CB_PTR(unit);
+    UI32_T                      idx = 0, vec = sizeof(_hal_lt_dawn_pkt_intr_vec) / sizeof(HAL_LT_DAWN_PKT_INTR_VEC_T);
+
+    /* Register PKT interrupt functions */
+    osal_createIsrLock("ISR_LOCK", &ptr_cb->intr_lock);
+    osal_mdc_registerIsr(unit, _hal_lt_dawn_pkt_dispatcher, (void *)((CLX_HUGE_T)unit));
+
+    for (idx = 0; idx < vec; idx++)
+    {
+        osal_createEvent("ISR_EVENT", &_hal_lt_dawn_pkt_intr_vec[idx].intr_event);
+        ptr_cb->intr_bitmap |= (_hal_lt_dawn_pkt_intr_vec[idx].intr_reg);
+    }
+
+    return (CLX_E_OK);
+}
+
+/* FUNCTION NAME: _hal_lt_dawn_pkt_initPktTxCb
  * PURPOSE:
  *      To initialize the control block of Rx PDMA.
  * INPUT:
@@ -4233,16 +4264,16 @@ _hal_lightning_pkt_initRxPdma(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_initPktTxCb(
+_hal_lt_dawn_pkt_initPktTxCb(
     const UI32_T                unit)
 {
     CLX_ERROR_NO_T              rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_TX_CB_T         *ptr_tx_cb = HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_TX_CHANNEL_T    channel = 0;
+    HAL_LT_DAWN_PKT_TX_CB_T         *ptr_tx_cb = HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_TX_CHANNEL_T    channel = 0;
 
-    osal_memset(ptr_tx_cb, 0x0, sizeof(HAL_LIGHTNING_PKT_TX_CB_T));
+    osal_memset(ptr_tx_cb, 0x0, sizeof(HAL_LT_DAWN_PKT_TX_CB_T));
 
-    ptr_tx_cb->wait_mode = HAL_LIGHTNING_PKT_TX_WAIT_MODE;
+    ptr_tx_cb->wait_mode = HAL_LT_DAWN_PKT_TX_WAIT_MODE;
 
     if (HAL_PKT_TX_WAIT_ASYNC == ptr_tx_cb->wait_mode)
     {
@@ -4259,22 +4290,22 @@ _hal_lightning_pkt_initPktTxCb(
     else if (HAL_PKT_TX_WAIT_SYNC_POLL == ptr_tx_cb->wait_mode)
     {
         /* Disable TX done ISR. */
-        for (channel = 0; channel < HAL_LIGHTNING_PKT_TX_CHANNEL_LAST; channel++)
+        for (channel = 0; channel < HAL_LT_DAWN_PKT_TX_CHANNEL_LAST; channel++)
         {
-            _hal_lightning_pkt_disableIntr(unit, HAL_LIGHTNING_PKT_TCH_REG(unit, channel));
+            _hal_lt_dawn_pkt_disableIntr(unit, HAL_LT_DAWN_PKT_TCH_REG(unit, channel));
         }
     }
 
     /* Init Tx PDMA */
-    for (channel = 0; ((channel < HAL_LIGHTNING_PKT_TX_CHANNEL_LAST) && (CLX_E_OK == rc)); channel++)
+    for (channel = 0; ((channel < HAL_LT_DAWN_PKT_TX_CHANNEL_LAST) && (CLX_E_OK == rc)); channel++)
     {
-        rc = _hal_lightning_pkt_initTxPdma(unit, channel);
+        rc = _hal_lt_dawn_pkt_initTxPdma(unit, channel);
     }
 
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_initPktRxCb
+/* FUNCTION NAME: _hal_lt_dawn_pkt_initPktRxCb
  * PURPOSE:
  *      To initialize the control block of Rx PDMA.
  * INPUT:
@@ -4288,15 +4319,15 @@ _hal_lightning_pkt_initPktTxCb(
  *
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_initPktRxCb(
+_hal_lt_dawn_pkt_initPktRxCb(
     const UI32_T                unit)
 {
     CLX_ERROR_NO_T              rc = CLX_E_OK;
-    HAL_LIGHTNING_PKT_RX_CB_T         *ptr_rx_cb = HAL_LIGHTNING_PKT_GET_RX_CB_PTR(unit);
-    HAL_LIGHTNING_PKT_RX_CHANNEL_T    channel = 0;
+    HAL_LT_DAWN_PKT_RX_CB_T         *ptr_rx_cb = HAL_LT_DAWN_PKT_GET_RX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_RX_CHANNEL_T    channel = 0;
     UI32_T                      queue = 0;
 
-    osal_memset(ptr_rx_cb, 0x0, sizeof(HAL_LIGHTNING_PKT_RX_CB_T));
+    osal_memset(ptr_rx_cb, 0x0, sizeof(HAL_LT_DAWN_PKT_RX_CB_T));
 
     ptr_rx_cb->sched_mode = HAL_DFLT_CFG_PKT_RX_SCHED_MODE;
 
@@ -4304,7 +4335,7 @@ _hal_lightning_pkt_initPktRxCb(
     osal_createEvent("RX_SYNC", &ptr_rx_cb->sync_sema);
 
     /* Initialize Rx GPD-queue (of first SW-GPD) from handleRxDoneTask to rxTask */
-    for (queue = 0; ((queue < HAL_LIGHTNING_PKT_RX_QUEUE_NUM) && (CLX_E_OK == rc)); queue++)
+    for (queue = 0; ((queue < HAL_LT_DAWN_PKT_RX_QUEUE_NUM) && (CLX_E_OK == rc)); queue++)
     {
         ptr_rx_cb->sw_queue[queue].len    = HAL_DFLT_CFG_PKT_RX_QUEUE_LEN;
         ptr_rx_cb->sw_queue[queue].weight = HAL_DFLT_CFG_PKT_RX_QUEUE_WEIGHT;
@@ -4314,15 +4345,15 @@ _hal_lightning_pkt_initPktRxCb(
     }
 
     /* Init Rx PDMA */
-    for (channel = 0; ((channel < HAL_LIGHTNING_PKT_RX_CHANNEL_LAST) && (CLX_E_OK == rc)); channel++)
+    for (channel = 0; ((channel < HAL_LT_DAWN_PKT_RX_CHANNEL_LAST) && (CLX_E_OK == rc)); channel++)
     {
-        rc = _hal_lightning_pkt_initRxPdma(unit, channel);
+        rc = _hal_lt_dawn_pkt_initRxPdma(unit, channel);
     }
 
     return (rc);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_initL1Isr
+/* FUNCTION NAME: _hal_lt_dawn_pkt_initL1Isr
  * PURPOSE:
  *      To initialize the PDMA L1 ISR configuration.
  * INPUT:
@@ -4336,21 +4367,21 @@ _hal_lightning_pkt_initPktRxCb(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_initL1Isr(
+_hal_lt_dawn_pkt_initL1Isr(
     const UI32_T            unit)
 {
-    UI32_T                  idx = 0, vec = sizeof(_hal_lightning_pkt_intr_vec) / sizeof(HAL_LIGHTNING_PKT_INTR_VEC_T);
+    UI32_T                  idx = 0, vec = sizeof(_hal_lt_dawn_pkt_intr_vec) / sizeof(HAL_LT_DAWN_PKT_INTR_VEC_T);
 
     for (idx = 0; idx < vec; idx++)
     {
-        _hal_lightning_pkt_enableIntr(unit, _hal_lightning_pkt_intr_vec[idx].intr_reg);
-        _hal_lightning_pkt_unmaskIntr(unit, _hal_lightning_pkt_intr_vec[idx].intr_reg);
+        _hal_lt_dawn_pkt_enableIntr(unit, _hal_lt_dawn_pkt_intr_vec[idx].intr_reg);
+        _hal_lt_dawn_pkt_unmaskIntr(unit, _hal_lt_dawn_pkt_intr_vec[idx].intr_reg);
     }
 
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_initL2Isr
+/* FUNCTION NAME: _hal_lt_dawn_pkt_initL2Isr
  * PURPOSE:
  *      To initialize the PDMA L2 ISR configuration.
  * INPUT:
@@ -4364,151 +4395,121 @@ _hal_lightning_pkt_initL1Isr(
  *      None
  */
 static CLX_ERROR_NO_T
-_hal_lightning_pkt_initL2Isr(
+_hal_lt_dawn_pkt_initL2Isr(
     const UI32_T            unit)
 {
-    HAL_LIGHTNING_PKT_L2_ISR_T    isr_status = 0x0;
+    HAL_LT_DAWN_PKT_L2_ISR_T    isr_status = 0x0;
 
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_RCH0);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_RCH1);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_RCH2);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_RCH3);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_TCH0);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_TCH1);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_TCH2);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_TCH3);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_RX_QID_MAP_ERR);
-    HAL_LIGHTNING_PKT_SET_BITMAP(isr_status, HAL_LIGHTNING_PKT_L2_ISR_RX_FRAME_ERR);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_RCH0);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_RCH1);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_RCH2);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_RCH3);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_TCH0);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_TCH1);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_TCH2);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_TCH3);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_RX_QID_MAP_ERR);
+    HAL_LT_DAWN_PKT_SET_BITMAP(isr_status, HAL_LT_DAWN_PKT_L2_ISR_RX_FRAME_ERR);
 
     osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_ERR_INT_EN),
+        HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_ERR_INT_EN),
         &isr_status, sizeof(UI32_T));
 
     osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_ERR_INT_MASK_SET),
+        HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_ERR_INT_MASK_SET),
         &isr_status, sizeof(UI32_T));
 
     return (CLX_E_OK);
 
 }
 
-/* FUNCTION NAME: _hal_lightning_pkt_init_irq
- * PURPOSE:
- *      To initialize the control block of Drv.
- * INPUT:
- *      unit            -- The unit ID
- * OUTPUT:
- *      None
- * RETURN:
- *      CLX_E_OK        -- Successfully initialize the control block.
- * NOTES:
- *      None
- */
-static CLX_ERROR_NO_T
-_hal_lightning_pkt_init_irq(
-    const UI32_T                unit)
-{
-    CLX_ERROR_NO_T              rc = CLX_E_OK;
-    HAL_PKT_DRV_CB_T            *ptr_cb = HAL_LIGHTNING_PKT_GET_DRV_CB_PTR(unit);
-    UI32_T                      idx = 0, vec = sizeof(_hal_lightning_pkt_intr_vec) / sizeof(HAL_LIGHTNING_PKT_INTR_VEC_T);
-    UI32_T                      channel = 0;
-    UI32_T                      flush_intr = 0x0;
-    UI32_T                      clear_intr = 0xffffffff;
-    
-    /* [cold-boot] 1. stop DMA channel
-     *             2. disable/mask/clear the interrupt status.
-     */
-    osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_ERR_INT_EN),
-        &flush_intr, sizeof(UI32_T));
-
-    osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_ERR_INT_MASK_SET),
-        &clear_intr, sizeof(UI32_T));
-
-    osal_mdc_writePciReg(unit,
-        HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_ERR_INT_CLR),
-        &clear_intr, sizeof(UI32_T));
-
-    for (channel = 0; channel < HAL_LIGHTNING_PKT_TX_CHANNEL_LAST; channel++)
-    {
-        _hal_lightning_pkt_stopTxChannelReg(unit, channel);
-        _hal_lightning_pkt_maskAllTxL2IsrReg(unit, channel);
-        _hal_lightning_pkt_clearTxL2IsrStatusReg(unit, channel, clear_intr);
-    }
-
-    for (channel = 0; channel < HAL_LIGHTNING_PKT_RX_CHANNEL_LAST; channel++)
-    {
-        _hal_lightning_pkt_stopRxChannelReg(unit, channel);
-        _hal_lightning_pkt_maskAllRxL2IsrReg(unit, channel);
-        _hal_lightning_pkt_clearRxL2IsrStatusReg(unit, channel, clear_intr);
-    }
-
-    /* Register PKT interrupt functions */
-    osal_createIsrLock("ISR_LOCK", &ptr_cb->intr_lock);
-    osal_mdc_registerIsr(unit, _hal_lightning_pkt_dispatcher, (void *)((CLX_HUGE_T)unit));
-
-    for (idx = 0; idx < vec; idx++)
-    {
-        osal_createEvent("ISR_EVENT", &_hal_lightning_pkt_intr_vec[idx].intr_event);
-        ptr_cb->intr_bitmap |= (_hal_lightning_pkt_intr_vec[idx].intr_reg);
-    }
-
-    if (CLX_E_OK == rc)
-    {
-        rc = _hal_lightning_pkt_initL1Isr(unit);
-    }
-    if (CLX_E_OK == rc)
-    {
-        rc = _hal_lightning_pkt_initL2Isr(unit);
-    }
-
-    return (rc);
-}
-
 CLX_ERROR_NO_T
-_hal_lightning_pkt_resetIosCreditCfg(
+_hal_lt_dawn_pkt_resetIosCreditCfg(
     const UI32_T        unit)
 {
-#define HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG_RESET_OFFSET    (16)
+#define HAL_LT_DAWN_PKT_PDMA_CREDIT_CFG_RESET_OFFSET    (16)
 
     UI32_T              credit_cfg = 0x0;
     UI32_T              idx;
 
-    for (idx=0; idx<HAL_LIGHTNING_PKT_TX_CHANNEL_LAST; idx++)
+    for (idx=0; idx<HAL_LT_DAWN_PKT_TX_CHANNEL_LAST; idx++)
     {
-        osal_mdc_readPciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG),
+        osal_mdc_readPciReg(unit, HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_CREDIT_CFG),
                             &credit_cfg, sizeof(credit_cfg));
 
-        credit_cfg |= (0x1UL << HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG_RESET_OFFSET);
+        credit_cfg |= (0x1UL << HAL_LT_DAWN_PKT_PDMA_CREDIT_CFG_RESET_OFFSET);
 
-        osal_mdc_writePciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG),
+        osal_mdc_writePciReg(unit, HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_CREDIT_CFG),
                              &credit_cfg, sizeof(UI32_T));
 
-        credit_cfg &= ~(0x1UL << HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG_RESET_OFFSET);
+        credit_cfg &= ~(0x1UL << HAL_LT_DAWN_PKT_PDMA_CREDIT_CFG_RESET_OFFSET);
 
-        osal_mdc_writePciReg(unit, HAL_LIGHTNING_PKT_GET_MMIO(HAL_LIGHTNING_PKT_PDMA_CREDIT_CFG),
+        osal_mdc_writePciReg(unit, HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_CREDIT_CFG),
                              &credit_cfg, sizeof(UI32_T));
     }
 
     return (CLX_E_OK);
 }
 
-static CLX_ERROR_NO_T hal_lightning_init_drv(
+CLX_ERROR_NO_T hal_lt_dawn_init_irq(
     const UI32_T            unit)
 {
     CLX_ERROR_NO_T          rc = CLX_E_OK;
+    UI32_T                  channel = 0;
+    UI32_T                  flush_intr = 0x0;
+    UI32_T                  clear_intr = 0xffffffff;
     /* There's a case that PDMA Tx is on-going when doing chip reset,
      * where PDMA may hang and be not programmable since current Tx packet
      * stucks due to IOS credit too low.
      * Thus, we always reset IOS credit value before progrmming Tx PDMA.
      */
-    _hal_lightning_pkt_resetIosCreditCfg(unit);
+    _hal_lt_dawn_pkt_resetIosCreditCfg(unit);
 
-    rc = _hal_lightning_pkt_initPktTxCb(unit);
+    /* [cold-boot] 1. stop DMA channel
+     *             2. disable/mask/clear the interrupt status.
+     */
+    osal_mdc_writePciReg(unit,
+        HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_ERR_INT_EN),
+        &flush_intr, sizeof(UI32_T));
+
+    osal_mdc_writePciReg(unit,
+        HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_ERR_INT_MASK_SET),
+        &clear_intr, sizeof(UI32_T));
+
+    osal_mdc_writePciReg(unit,
+        HAL_LT_DAWN_PKT_GET_MMIO(HAL_LT_DAWN_PKT_PDMA_ERR_INT_CLR),
+        &clear_intr, sizeof(UI32_T));
+
+    for (channel = 0; channel < HAL_LT_DAWN_PKT_TX_CHANNEL_LAST; channel++)
+    {
+        _hal_lt_dawn_pkt_stopTxChannelReg(unit, channel);
+        _hal_lt_dawn_pkt_maskAllTxL2IsrReg(unit, channel);
+        _hal_lt_dawn_pkt_clearTxL2IsrStatusReg(unit, channel, clear_intr);
+    }
+
+    for (channel = 0; channel < HAL_LT_DAWN_PKT_RX_CHANNEL_LAST; channel++)
+    {
+        _hal_lt_dawn_pkt_stopRxChannelReg(unit, channel);
+        _hal_lt_dawn_pkt_maskAllRxL2IsrReg(unit, channel);
+        _hal_lt_dawn_pkt_clearRxL2IsrStatusReg(unit, channel, clear_intr);
+    }
+
+    rc = _hal_lt_dawn_pkt_initPktCb(unit);    
     if (CLX_E_OK == rc)
     {
-        rc = _hal_lightning_pkt_initPktRxCb(unit);
+        rc = _hal_lt_dawn_pkt_initPktTxCb(unit);
+    }
+    if (CLX_E_OK == rc)
+    {
+        rc = _hal_lt_dawn_pkt_initPktRxCb(unit);
+    }
+    if (CLX_E_OK == rc)
+    {
+        rc = _hal_lt_dawn_pkt_initL1Isr(unit);
+    }
+    if (CLX_E_OK == rc)
+    {
+        rc = _hal_lt_dawn_pkt_initL2Isr(unit);
     }
 
     return rc;
@@ -4516,18 +4517,18 @@ static CLX_ERROR_NO_T hal_lightning_init_drv(
 
 /* ----------------------------------------------------------------------------------- Init: I/O */
 CLX_ERROR_NO_T
-hal_lightning_pkt_getNetDev(
+hal_lt_dawn_pkt_getNetDev(
     const UI32_T                unit,
     const UI32_T                port,
     struct net_device           **pptr_net_dev)
 {
-    *pptr_net_dev = HAL_LIGHTNING_PKT_GET_PORT_NETDEV(port);
+    *pptr_net_dev = HAL_LT_DAWN_PKT_GET_PORT_NETDEV(port);
 
     return (CLX_E_OK);
 }
 
 CLX_ERROR_NO_T
-_hal_lightning_pkt_isProtocolPkt(
+_hal_lt_dawn_pkt_isProtocolPkt(
     const struct sk_buff *skb)
 {
     struct ethhdr        *ether        = eth_hdr(skb);
@@ -4542,17 +4543,17 @@ _hal_lightning_pkt_isProtocolPkt(
     u8 lacp_addr[6] = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x02 };
     u8 udld_addr[6] = { 0x01, 0x00, 0x0c, 0xcc, 0xcc, 0xcc };
 
-    DIAG_PRINT(HAL_DBG_TX, 
+    OSAL_PRINT(OSAL_DBG_TX, 
 		    "queue_mapping=%u skbaddr=%p vlan_tagged=%d vlan_proto=0x%04x vlan_tci=0x%04x protocol=0x%04x ip_summed=%d len=%u data_len=%u",
           skb->queue_mapping, skb,
           skb_vlan_tag_present(skb), ntohs(skb->vlan_proto), skb_vlan_tag_get(skb),
           ntohs(skb->protocol), skb->ip_summed, skb->len,
           skb->data_len);
-    DIAG_PRINT(HAL_DBG_TX, "Source: %x:%x:%x:%x:%x:%x\n", 
+    OSAL_PRINT(OSAL_DBG_TX, "Source: %x:%x:%x:%x:%x:%x\n", 
 		    ether->h_source[0], ether->h_source[1], ether->h_source[2], ether->h_source[3], ether->h_source[4], ether->h_source[5]);
-    DIAG_PRINT(HAL_DBG_TX, "Destination: %x:%x:%x:%x:%x:%x\n",
+    OSAL_PRINT(OSAL_DBG_TX, "Destination: %x:%x:%x:%x:%x:%x\n",
 		    ether->h_dest[0], ether->h_dest[1], ether->h_dest[2], ether->h_dest[3], ether->h_dest[4], ether->h_dest[5]);
-    DIAG_PRINT(HAL_DBG_TX, "pkt type: 0x%x\n",
+    OSAL_PRINT(OSAL_DBG_TX, "pkt type: 0x%x\n",
                    ether->h_proto);
 
     if (ip_header->protocol == IPPROTO_UDP) {
@@ -4564,10 +4565,10 @@ _hal_lightning_pkt_isProtocolPkt(
         src_port = (unsigned int)ntohs(tcp_header->source);
         dest_port = (unsigned int)ntohs(tcp_header->dest);
     }
-    DIAG_PRINT(HAL_DBG_TX, 
+    OSAL_PRINT(OSAL_DBG_TX, 
 		    "OUT packet info: src ip: %u, src port: %u; dest ip: %u, dest port: %u; proto: %u\n",
 		    src_ip, src_port, dest_ip, dest_port, ip_header->protocol);
-    DIAG_PRINT(HAL_DBG_TX, "IPv6 protocol: %d\n", ip6h->nexthdr);
+    OSAL_PRINT(OSAL_DBG_TX, "IPv6 protocol: %d\n", ip6h->nexthdr);
 
     //LLDP
     if (ntohs(ether->h_proto) == 0x88CC){
@@ -4684,12 +4685,12 @@ _hal_lightning_pkt_isProtocolPkt(
 
 
 CLX_ERROR_NO_T
-hal_lightning_pkt_prepareGpd(
+hal_lt_dawn_pkt_prepareGpd(
     const UI32_T                unit,
     const CLX_ADDR_T            phy_addr,
     const struct sk_buff        *ptr_skb,
     const UI32_T                port,
-    HAL_LIGHTNING_PKT_TX_SW_GPD_T     *ptr_sw_gpd)
+    HAL_LT_DAWN_PKT_TX_SW_GPD_T     *ptr_sw_gpd)
 {
     /* fill up tx_gpd */
     ptr_sw_gpd->tx_gpd.data_buf_addr_hi              = CLX_ADDR_64_HI(phy_addr);
@@ -4697,10 +4698,10 @@ hal_lightning_pkt_prepareGpd(
     ptr_sw_gpd->tx_gpd.data_buf_size                 = ptr_skb->len;
     ptr_sw_gpd->tx_gpd.chksum                        = 0x0;
     ptr_sw_gpd->tx_gpd.ipc                           = 0; /* Raw mode, sent to plane 0 */
-    ptr_sw_gpd->tx_gpd.prg                           = HAL_LIGHTNING_PKT_PRG_PROCESS_GPD;
-    ptr_sw_gpd->tx_gpd.hwo                           = HAL_LIGHTNING_PKT_HWO_HW_OWN;
-    ptr_sw_gpd->tx_gpd.ch                            = HAL_LIGHTNING_PKT_CH_LAST_GPD;
-    ptr_sw_gpd->tx_gpd.ioc                           = HAL_LIGHTNING_PKT_IOC_HAS_INTR;
+    ptr_sw_gpd->tx_gpd.prg                           = HAL_LT_DAWN_PKT_PRG_PROCESS_GPD;
+    ptr_sw_gpd->tx_gpd.hwo                           = HAL_LT_DAWN_PKT_HWO_HW_OWN;
+    ptr_sw_gpd->tx_gpd.ch                            = HAL_LT_DAWN_PKT_CH_LAST_GPD;
+    ptr_sw_gpd->tx_gpd.ioc                           = HAL_LT_DAWN_PKT_IOC_HAS_INTR;
     ptr_sw_gpd->tx_gpd.pkt_len                       = ptr_skb->len;
 
     /* fill up cpu header */
@@ -4713,10 +4714,10 @@ hal_lightning_pkt_prepareGpd(
     ptr_sw_gpd->tx_gpd.pph_l2.mrk_pcp_val            = 7;    /* Max pcp                    */
     ptr_sw_gpd->tx_gpd.pph_l2.mrk_pcp_dei_en         = 1;
 
-    if (!_hal_lightning_pkt_isProtocolPkt(ptr_skb)){
+    if (!_hal_lt_dawn_pkt_isProtocolPkt(ptr_skb)){
         ptr_sw_gpd->tx_gpd.itmh_eth.tc               = 0;
         ptr_sw_gpd->tx_gpd.pph_l2.mrk_pcp_val        = 0;
-	    DIAG_PRINT(HAL_DBG_TX, "Set TC and PCP to 0\n");
+	    OSAL_PRINT(OSAL_DBG_TX, "Set TC and PCP to 0\n");
     }
 
     /* destination index
@@ -4745,18 +4746,18 @@ hal_lightning_pkt_prepareGpd(
 
 /* ----------------------------------------------------------------------------------- Init: dev_ops */
 static void
-_hal_lightning_pkt_dev_tx_callback(
+_hal_lt_dawn_pkt_dev_tx_callback(
     const UI32_T                    unit,
-          HAL_LIGHTNING_PKT_TX_SW_GPD_T   *ptr_sw_gpd,
-          HAL_LIGHTNING_PKT_TX_SW_GPD_T   *ptr_sw_gpd_usr)
+          HAL_LT_DAWN_PKT_TX_SW_GPD_T   *ptr_sw_gpd,
+          HAL_LT_DAWN_PKT_TX_SW_GPD_T   *ptr_sw_gpd_usr)
 {
     UI32_T                          channel = ptr_sw_gpd->channel;
-    HAL_LIGHTNING_PKT_TX_CB_T             *ptr_tx_cb = HAL_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
+    HAL_LT_DAWN_PKT_TX_CB_T             *ptr_tx_cb = HAL_LT_DAWN_PKT_GET_TX_CB_PTR(unit);
 
-    while (0 != _hal_lightning_pkt_enQueue(&ptr_tx_cb->sw_queue, ptr_sw_gpd))
+    while (0 != _hal_lt_dawn_pkt_enQueue(&ptr_tx_cb->sw_queue, ptr_sw_gpd))
     {
         ptr_tx_cb->cnt.channel[channel].enque_retry++;
-        HAL_LIGHTNING_PKT_TX_ENQUE_RETRY_SLEEP();
+        HAL_LT_DAWN_PKT_TX_ENQUE_RETRY_SLEEP();
     }
     ptr_tx_cb->cnt.channel[channel].enque_ok++;
 
@@ -4765,7 +4766,7 @@ _hal_lightning_pkt_dev_tx_callback(
 }
 
 ssize_t
-_hal_lightning_pkt_dev_tx(
+_hal_lt_dawn_pkt_dev_tx(
     struct file             *file,
     const char __user       *buf,
     size_t                  count,
@@ -4775,18 +4776,18 @@ _hal_lightning_pkt_dev_tx(
     int                             idx = 0;
     unsigned int                    unit = 0;
     unsigned int                    channel = 0;
-    HAL_LIGHTNING_PKT_IOCTL_TX_COOKIE_T   tx_cookie;
-    HAL_LIGHTNING_PKT_IOCTL_TX_GPD_T      ioctl_gpd;
-    HAL_LIGHTNING_PKT_TX_SW_GPD_T         *ptr_sw_gpd_knl = NULL;
-    HAL_LIGHTNING_PKT_TX_SW_GPD_T         *ptr_first_sw_gpd_knl = NULL;
+    HAL_LT_DAWN_PKT_IOCTL_TX_COOKIE_T   tx_cookie;
+    HAL_LT_DAWN_PKT_IOCTL_TX_GPD_T      ioctl_gpd;
+    HAL_LT_DAWN_PKT_TX_SW_GPD_T         *ptr_sw_gpd_knl = NULL;
+    HAL_LT_DAWN_PKT_TX_SW_GPD_T         *ptr_first_sw_gpd_knl = NULL;
 
     /* copy the tx-cookie */
-    osal_io_copyFromUser(&tx_cookie, (void *)buf, sizeof(HAL_LIGHTNING_PKT_IOCTL_TX_COOKIE_T));
+    osal_io_copyFromUser(&tx_cookie, (void *)buf, sizeof(HAL_LT_DAWN_PKT_IOCTL_TX_COOKIE_T));
 
     unit    = tx_cookie.unit;
     channel = tx_cookie.channel;
 
-    ptr_sw_gpd_knl = osal_alloc(sizeof(HAL_LIGHTNING_PKT_TX_SW_GPD_T));
+    ptr_sw_gpd_knl = osal_alloc(sizeof(HAL_LT_DAWN_PKT_TX_SW_GPD_T));
     ptr_first_sw_gpd_knl = ptr_sw_gpd_knl;
 
     /* create SW GPD based on the content of each IOCTL GPD */
@@ -4794,8 +4795,8 @@ _hal_lightning_pkt_dev_tx(
     {
         osal_io_copyFromUser(&ioctl_gpd,
                              ((void *)((CLX_HUGE_T)tx_cookie.ioctl_gpd_addr))
-                                 +idx*sizeof(HAL_LIGHTNING_PKT_IOCTL_TX_GPD_T),
-                             sizeof(HAL_LIGHTNING_PKT_IOCTL_TX_GPD_T));
+                                 +idx*sizeof(HAL_LT_DAWN_PKT_IOCTL_TX_GPD_T),
+                             sizeof(HAL_LT_DAWN_PKT_IOCTL_TX_GPD_T));
 
         ptr_sw_gpd_knl->channel = ioctl_gpd.channel;
         ptr_sw_gpd_knl->gpd_num = ioctl_gpd.gpd_num;
@@ -4804,34 +4805,34 @@ _hal_lightning_pkt_dev_tx(
         /* directly copy user's HW GPD */
         osal_io_copyFromUser(&ptr_sw_gpd_knl->tx_gpd,
                              (void *)((CLX_HUGE_T)ioctl_gpd.hw_gpd_addr),
-                             sizeof(HAL_LIGHTNING_PKT_TX_GPD_T));
+                             sizeof(HAL_LT_DAWN_PKT_TX_GPD_T));
 
         /* replace the callback */
-        ptr_sw_gpd_knl->callback = (void *)_hal_lightning_pkt_dev_tx_callback;
+        ptr_sw_gpd_knl->callback = (void *)_hal_lt_dawn_pkt_dev_tx_callback;
 
         /* save the first SW GPD address from userspace since
          * we have replaced the original callback
          */
         ptr_sw_gpd_knl->ptr_cookie = (void *)ioctl_gpd.sw_gpd_addr;
 
-        if (HAL_LIGHTNING_PKT_CH_LAST_GPD == ptr_sw_gpd_knl->tx_gpd.ch)
+        if (HAL_LT_DAWN_PKT_CH_LAST_GPD == ptr_sw_gpd_knl->tx_gpd.ch)
         {
             ptr_sw_gpd_knl->ptr_next = NULL;
             break;
         }
         else
         {
-            ptr_sw_gpd_knl->ptr_next = (HAL_LIGHTNING_PKT_TX_SW_GPD_T *)osal_alloc(
-                                            sizeof(HAL_LIGHTNING_PKT_TX_SW_GPD_T));
+            ptr_sw_gpd_knl->ptr_next = (HAL_LT_DAWN_PKT_TX_SW_GPD_T *)osal_alloc(
+                                            sizeof(HAL_LT_DAWN_PKT_TX_SW_GPD_T));
             ptr_sw_gpd_knl = ptr_sw_gpd_knl->ptr_next;
             idx++;
         }
     }
 
-    ret = hal_lightning_pkt_sendGpd(unit, channel, ptr_first_sw_gpd_knl);
+    ret = hal_lt_dawn_pkt_sendGpd(unit, channel, ptr_first_sw_gpd_knl);
     if (CLX_E_OK != ret)
     {
-        _hal_lightning_pkt_freeTxGpdList(unit, ptr_first_sw_gpd_knl);
+        _hal_lt_dawn_pkt_freeTxGpdList(unit, ptr_first_sw_gpd_knl);
     }
 
     /* return 0 if success */
@@ -4839,53 +4840,52 @@ _hal_lightning_pkt_dev_tx(
 }
 
 CLX_ERROR_NO_T
-hal_lightning_register_netif_ioctl(void)
+hal_lt_dawn_register_netif_ioctl(void)
 {
     CLX_ERROR_NO_T      rc = CLX_E_OK;
 
     /* driver */
     _osal_mdc_registerIoctlCallback(OSAL_MDC_IOCTL_TYPE_NETIF_WAIT_RX_FREE,
-        _hal_lightning_pkt_schedRxDeQueue);
+        _hal_lt_dawn_pkt_schedRxDeQueue);
     _osal_mdc_registerIoctlCallback(OSAL_MDC_IOCTL_TYPE_NETIF_WAIT_TX_FREE,
-        _hal_lightning_pkt_strictTxDeQueue);
+        _hal_lt_dawn_pkt_strictTxDeQueue);
     
     /* counter */
     _osal_mdc_registerIoctlCallback(OSAL_MDC_IOCTL_TYPE_NETIF_GET_TX_CNT,
-        hal_lightning_pkt_getTxKnlCnt);
+        hal_lt_dawn_pkt_getTxKnlCnt);
     _osal_mdc_registerIoctlCallback(OSAL_MDC_IOCTL_TYPE_NETIF_GET_RX_CNT,
-        hal_lightning_pkt_getRxKnlCnt);
+        hal_lt_dawn_pkt_getRxKnlCnt);
     _osal_mdc_registerIoctlCallback(OSAL_MDC_IOCTL_TYPE_NETIF_CLEAR_TX_CNT,
-        hal_lightning_pkt_clearTxKnlCnt);
+        hal_lt_dawn_pkt_clearTxKnlCnt);
     _osal_mdc_registerIoctlCallback(OSAL_MDC_IOCTL_TYPE_NETIF_CLEAR_RX_CNT,
-        hal_lightning_pkt_clearRxKnlCnt);
+        hal_lt_dawn_pkt_clearRxKnlCnt);
 
 
     return rc;
 }
 
 
-void hal_lightning_register_drv_cb(
+void hal_lt_dawn_register_drv_cb(
     const UI32_T unit)
 {
-    HAL_PKT_DRV_CB_T            *ptr_cb = HAL_LIGHTNING_PKT_GET_DRV_CB_PTR(unit);
+    HAL_PKT_DRV_CB_T            *ptr_cb = HAL_LT_DAWN_PKT_GET_DRV_CB_PTR(unit);
 
-    osal_memset(_hal_lightning_pkt_tx_cb, 0x0,
-                CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM*sizeof(HAL_LIGHTNING_PKT_TX_CB_T));
-    osal_memset(_hal_lightning_pkt_rx_cb, 0x0,
-                CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM*sizeof(HAL_LIGHTNING_PKT_RX_CB_T));
+    osal_memset(_hal_lt_dawn_pkt_tx_cb, 0x0,
+                CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM*sizeof(HAL_LT_DAWN_PKT_TX_CB_T));
+    osal_memset(_hal_lt_dawn_pkt_rx_cb, 0x0,
+                CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM*sizeof(HAL_LT_DAWN_PKT_RX_CB_T));
 
-    ptr_cb->pkt_init_task = hal_lightning_pkt_initTask;
-    ptr_cb->pkt_deinit_task = hal_lightning_pkt_deinitTask;
-    ptr_cb->pkt_rx_stop = hal_lightning_pkt_rxStop;
-    ptr_cb->pkt_rx_start = _hal_lightning_pkt_rxStart;
-    ptr_cb->pkt_deinit_drv = hal_lightning_pkt_deinit_pkt_drv;
-    ptr_cb->pkt_init_drv = hal_lightning_init_drv;
-    ptr_cb->pkt_init_irq = _hal_lightning_pkt_init_irq;
+    ptr_cb->pkt_init_task = hal_lt_dawn_pkt_initTask;
+    ptr_cb->pkt_deinit_task = hal_lt_dawn_pkt_deinitTask;
+    ptr_cb->pkt_rx_stop = hal_lt_dawn_pkt_rxStop;
+    ptr_cb->pkt_rx_start = _hal_lt_dawn_pkt_rxStart;
+    ptr_cb->pkt_deinit_drv = hal_lt_dawn_pkt_deinit_pkt_drv;
+    ptr_cb->pkt_init_drv = hal_lt_dawn_init_irq;
 
-    ptr_cb->net_dev_tx = _hal_lightning_pkt_net_dev_tx;
-    ptr_cb->pkt_dev_tx = _hal_lightning_pkt_dev_tx;
-    ptr_cb->lock_all_rx_channel = hal_lightning_pkt_lockRxChannelAll;
-    ptr_cb->unlock_all_rx_channel = hal_lightning_pkt_unlockRxChannelAll;
+    ptr_cb->net_dev_tx = _hal_lt_dawn_pkt_net_dev_tx;
+    ptr_cb->pkt_dev_tx = _hal_lt_dawn_pkt_dev_tx;
+    ptr_cb->lock_all_rx_channel = hal_lt_dawn_pkt_lockRxChannelAll;
+    ptr_cb->unlock_all_rx_channel = hal_lt_dawn_pkt_unlockRxChannelAll;
 
-    hal_lightning_register_netif_ioctl();
+    hal_lt_dawn_register_netif_ioctl();
 }

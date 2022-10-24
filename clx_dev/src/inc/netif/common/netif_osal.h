@@ -67,7 +67,6 @@
 #include <linux/module.h>
 
 #include <clx_types.h>
-#include <clx_error.h>
 
 #define HAL_PKT_PDMA_ALIGN_ADDR(pdma_addr, align_sz)  (((pdma_addr / (align_sz + 1)) + 1) * align_sz)
 
@@ -189,6 +188,7 @@ osal_init(void);
 
 CLX_ERROR_NO_T
 osal_deinit(void);
+
 
 CLX_ERROR_NO_T
 osal_createThread (

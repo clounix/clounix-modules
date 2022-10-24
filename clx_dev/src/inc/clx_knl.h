@@ -1,9 +1,8 @@
 #ifndef CLX_KNL_H
 #define CLX_KNL_H
-#include <clx_error.h>
 #include <clx_types.h>
 #include <osal/osal_mdc.h>
-#include <hal/common/hal_dev.h>
+#include <hal/hal_dev.h>
 
 #ifdef __KERNEL__
 #include <linux/version.h>
@@ -98,7 +97,7 @@ typedef struct
 } OSAL_MDC_USER_MODE_DMA_NODE_T;
 #endif
 
-#define NETIF_KNL_DEVICE_IS_NB(__dev_id__)                (HAL_DEVICE_ID_EDK1100 == (__dev_id__ & 0xFF00))
+#define NETIF_KNL_DEVICE_IS_NAMCHABARWA(__dev_id__)                (HAL_DEVICE_ID_EDK1100 == (__dev_id__ & 0xFF00))
 #define NETIF_KNL_DEVICE_IS_LIGHTNING(__dev_id__)         (HAL_DEVICE_ID_CL8500 == (__dev_id__ & 0xFF00))
 #define NETIF_KNL_DEVICE_IS_DAWN(__dev_id__)              (HAL_DEVICE_ID_CL8300 == (__dev_id__ & 0xFF00))
 #endif
