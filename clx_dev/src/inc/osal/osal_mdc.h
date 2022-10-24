@@ -25,7 +25,7 @@
 #define OSAL_MDC_H
 
 /* INCLUDE FILE DECLARATIONS */
-#if !defined(CLX_LINUX_KERNEL_MODE)
+#ifndef __KERNEL__
 #include <cmlib/cmlib_list.h>
 #endif
 #include <clx_types.h>
@@ -47,20 +47,20 @@
 #define OSAL_MDC_DMA_NODE_CACHE_NUM         (4)
 
 /* This flag value will be specified when user inserts kernel module. */
-#define HAL_DBG_CRIT            (0x1UL << 0)
-#define HAL_DBG_ERR             (0x1UL << 1)
-#define HAL_DBG_WARN            (0x1UL << 2)
-#define HAL_DBG_INFO            (0x1UL << 3)
-#define HAL_DBG_DEBUG           (0x1UL << 4)
-#define HAL_DBG_TX              (0x1UL << 5)
-#define HAL_DBG_RX              (0x1UL << 6)
-#define HAL_DBG_INTF            (0x1UL << 7)
-#define HAL_DBG_PROFILE         (0x1UL << 8)
-#define HAL_DBG_COMMON          (0x1UL << 9)
-#define HAL_DBG_NETLINK         (0x1UL << 10)
+#define OSAL_DBG_CRIT            (0x1UL << 0)
+#define OSAL_DBG_ERR             (0x1UL << 1)
+#define OSAL_DBG_WARN            (0x1UL << 2)
+#define OSAL_DBG_INFO            (0x1UL << 3)
+#define OSAL_DBG_DEBUG           (0x1UL << 4)
+#define OSAL_DBG_TX              (0x1UL << 5)
+#define OSAL_DBG_RX              (0x1UL << 6)
+#define OSAL_DBG_INTF            (0x1UL << 7)
+#define OSAL_DBG_PROFILE         (0x1UL << 8)
+#define OSAL_DBG_COMMON          (0x1UL << 9)
+#define OSAL_DBG_NETLINK         (0x1UL << 10)
 
 #ifdef __KERNEL__
-#define DIAG_PRINT(__flag__, fmt, ...)      do                                \
+#define OSAL_PRINT(__flag__, fmt, ...)      do                                  \
 {                                                                               \
     if (0 != ((__flag__) & (verbosity)))                                        \
     {                                                                           \
@@ -68,14 +68,23 @@
     }                                                                           \
 }while (0)
 #else
-#define DIAG_PRINT(__flag__, fmt, ...)      do                                \
+#define OSAL_PRINT(__flag__, fmt, ...)      do                                  \
 {                                                                               \
     if (0 != ((__flag__) & (verbosity)))                                        \
     {                                                                           \
-        printf("%s:%d: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);  \
+        printf("%s:%d: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);           \
     }                                                                           \
 }while (0)
 #endif
+
+#define OSAL_CHECK_PTR(__ptr__) do                                              \
+    {                                                                           \
+        if (NULL == (__ptr__))                                                  \
+        {                                                                       \
+            OSAL_PRINT(OSAL_DBG_CRIT,"%s is null pointer\n", #__ptr__);         \
+            return (CLX_E_BAD_PARAMETER);                                       \
+        }                                                                       \
+    } while (0)
 
 
 /* Signal SDK */
@@ -85,7 +94,7 @@
  */
 
 /* linked list node */
-#if defined(CLX_LINUX_KERNEL_MODE)
+#ifdef __KERNEL__
 
 typedef struct OSAL_MDC_LIST_NODE_S
 {
@@ -130,7 +139,7 @@ typedef struct
     struct device       *ptr_dma_dev;       /* for allocate/free system memory */
 #endif
 
-#if defined(CLX_LINUX_KERNEL_MODE)
+#ifdef __KERNEL__
     OSAL_MDC_LIST_T     *ptr_dma_list;
 #else
     CMLIB_LIST_T        *ptr_dma_list;
@@ -242,13 +251,17 @@ typedef CLX_ERROR_NO_T
     const UI32_T        unit,
     void                *ptr_data);
 
+CLX_ERROR_NO_T
+_osal_mdc_registerIoctlCallback(
+    const OSAL_MDC_IOCTL_TYPE_T             type,
+    const OSAL_MDC_IOCTL_CALLBACK_FUNC_T    func);
 #endif /* End of CLX_LINUX_USER_MODE */
 
 typedef enum
 {
     CLX_DEVICE_DAWN = 0,
     CLX_DEVICE_LIGHTNING,
-    CLX_DEVICE_NB,
+    CLX_DEVICE_NAMCHABARWA,
     CLX_DEVICE_NONE,
 } CLX_DEVICE_E;
 
@@ -261,10 +274,6 @@ typedef enum
 
 /* EXPORTED SUBPROGRAM SPECIFICATIONS
  */
-CLX_ERROR_NO_T
-_osal_mdc_registerIoctlCallback(
-    const OSAL_MDC_IOCTL_TYPE_T             type,
-    const OSAL_MDC_IOCTL_CALLBACK_FUNC_T    func);
 
 CLX_ERROR_NO_T
 osal_mdc_readPciReg(

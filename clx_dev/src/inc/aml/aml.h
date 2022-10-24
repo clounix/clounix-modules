@@ -32,7 +32,6 @@
 /* INCLUDE FILE DECLARATIONS
  */
 #include <clx_types.h>
-#include <clx_error.h>
 
 
 /* NAMING CONSTANT DECLARATIONS

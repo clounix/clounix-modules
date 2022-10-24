@@ -19,31 +19,30 @@
  *      It provide customer performance test API.
  * NOTES:
  */
-#include <clx_error.h>
 #include <clx_types.h>
 
-#include <netif/netif_osal.h>
-#include <netif/netif_perf.h>
+#include <netif/common/netif_osal.h>
+#include <netif/common/netif_perf.h>
 
-#include <hal/common/hal_dev.h>
+#include <hal/hal_dev.h>
 
 #if defined (CLX_EN_DAWN)
-#include <netif/netif_dawn_pkt.h>
+#include <netif/light/dawn/netif_lt_dawn_pkt.h>
 #endif
 
 #if defined (CLX_EN_LIGHTNING)
-#include <netif/netif_lightning_pkt.h>
+#include <netif/light/lightning/netif_lt_lightning_pkt.h>
 #endif
 
 /* -------------------------------------------------------------- switch */
-#define PERF_TX_CHANNEL_NUM_MAX     (HAL_LIGHTNING_PKT_TX_CHANNEL_LAST)
-#define PERF_RX_CHANNEL_NUM_MAX     (HAL_LIGHTNING_PKT_RX_CHANNEL_LAST)
+#define PERF_TX_CHANNEL_NUM_MAX     (HAL_LT_LIGHTNING_PKT_TX_CHANNEL_LAST)
+#define PERF_RX_CHANNEL_NUM_MAX     (HAL_LT_LIGHTNING_PKT_RX_CHANNEL_LAST)
 
 #define NETIF_KNL_DEVICE_IS_LIGHTNING(__dev_id__)         (HAL_DEVICE_ID_CL8500 == (__dev_id__ & 0xFF00))
 #define NETIF_KNL_DEVICE_IS_DAWN(__dev_id__)      (HAL_DEVICE_ID_CL8300 == (__dev_id__ & 0xFF00))
 
-static UI32_T perf_tx_channel_num = HAL_LIGHTNING_PKT_TX_CHANNEL_LAST; 
-static UI32_T perf_rx_channel_num = HAL_LIGHTNING_PKT_RX_CHANNEL_LAST; 
+static UI32_T perf_tx_channel_num = HAL_LT_LIGHTNING_PKT_TX_CHANNEL_LAST; 
+static UI32_T perf_rx_channel_num = HAL_LT_LIGHTNING_PKT_RX_CHANNEL_LAST; 
 
 extern struct pci_dev   *_ptr_ext_pci_dev;
 static UI16_T dev_id = 0; 
@@ -161,11 +160,11 @@ hal_perf_pkt_getTxIntrCnt(
 
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id))
     {
-        ret = hal_dawn_pkt_getTxIntrCnt(unit,channel,ptr_intr_cnt);
+        ret = hal_lt_dawn_pkt_getTxIntrCnt(unit,channel,ptr_intr_cnt);
     }
     else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id))
     {
-        ret = hal_lightning_pkt_getTxIntrCnt(unit,channel,ptr_intr_cnt);
+        ret = hal_lt_lightning_pkt_getTxIntrCnt(unit,channel,ptr_intr_cnt);
     }
     else
     {
@@ -184,11 +183,11 @@ hal_perf_pkt_getNetDev(
     
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id))
     {
-        ret = hal_dawn_pkt_getNetDev(unit,port,pptr_net_dev);
+        ret = hal_lt_dawn_pkt_getNetDev(unit,port,pptr_net_dev);
     }
     else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id))
     {
-        ret = hal_lightning_pkt_getNetDev(unit,port,pptr_net_dev);
+        ret = hal_lt_lightning_pkt_getNetDev(unit,port,pptr_net_dev);
     }
     else
     {
@@ -209,14 +208,14 @@ hal_perf_pkt_prepareGpd(
 
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id))
     {
-        ret = hal_dawn_pkt_prepareGpd(unit,phy_addr,len,port,(HAL_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd);
+        ret = hal_lt_dawn_pkt_prepareGpd(unit,phy_addr,len,port,(HAL_LT_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd);
     }
     else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id))
     {
         struct sk_buff *ptr_skb = NULL;
         ptr_skb = osal_skb_alloc(len);
         ptr_skb->len = len;
-        ret = hal_lightning_pkt_prepareGpd(unit,phy_addr,ptr_skb,port,(HAL_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd);
+        ret = hal_lt_lightning_pkt_prepareGpd(unit,phy_addr,ptr_skb,port,(HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd);
     }
     else
     {
@@ -234,11 +233,11 @@ hal_perf_pkt_sendGpd(
     CLX_ERROR_NO_T ret;
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id))
     {
-        ret = hal_dawn_pkt_sendGpd(unit,channel,(HAL_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd);
+        ret = hal_lt_dawn_pkt_sendGpd(unit,channel,(HAL_LT_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd);
     }
     else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id))
     {
-        ret = hal_lightning_pkt_sendGpd(unit,channel,(HAL_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd);
+        ret = hal_lt_lightning_pkt_sendGpd(unit,channel,(HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd);
     }
     else
     {
@@ -257,11 +256,11 @@ hal_perf_pkt_getRxIntrCnt(
     
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id))
     {
-        ret = hal_dawn_pkt_getRxIntrCnt(unit,channel,ptr_intr_cnt);
+        ret = hal_lt_dawn_pkt_getRxIntrCnt(unit,channel,ptr_intr_cnt);
     }
     else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id))
     {
-        ret = hal_lightning_pkt_getRxIntrCnt(unit,channel,ptr_intr_cnt);
+        ret = hal_lt_lightning_pkt_getRxIntrCnt(unit,channel,ptr_intr_cnt);
     }
     else
     {
@@ -440,38 +439,38 @@ _perf_txTask(
 
                 if (NETIF_KNL_DEVICE_IS_DAWN(dev_id))
                 {
-                    ptr_sw_gpd = (HAL_DAWN_PKT_TX_SW_GPD_T*)osal_alloc(sizeof(HAL_DAWN_PKT_TX_SW_GPD_T));
+                    ptr_sw_gpd = (HAL_LT_DAWN_PKT_TX_SW_GPD_T*)osal_alloc(sizeof(HAL_LT_DAWN_PKT_TX_SW_GPD_T));
                     if (NULL == ptr_sw_gpd)
                     {
                         osal_printf("***Error***, alloc sw-gpd fail.\n");
                         break;
                     }
-                    osal_memset(ptr_sw_gpd, 0x0, sizeof(HAL_DAWN_PKT_TX_SW_GPD_T));
+                    osal_memset(ptr_sw_gpd, 0x0, sizeof(HAL_LT_DAWN_PKT_TX_SW_GPD_T));
 
                     /* trans skb to gpd */
-                    ((HAL_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->callback   = (void *)_perf_txCallback;
-                    ((HAL_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->ptr_cookie = (void *)ptr_virt_addr;
-                    ((HAL_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->gpd_num    = 1;
-                    ((HAL_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->ptr_next   = NULL;
-                    ((HAL_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->channel    = channel;
+                    ((HAL_LT_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->callback   = (void *)_perf_txCallback;
+                    ((HAL_LT_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->ptr_cookie = (void *)ptr_virt_addr;
+                    ((HAL_LT_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->gpd_num    = 1;
+                    ((HAL_LT_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->ptr_next   = NULL;
+                    ((HAL_LT_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->channel    = channel;
 
                 }
                 else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id))
                 {
-                    ptr_sw_gpd = (void*)osal_alloc(sizeof(HAL_LIGHTNING_PKT_TX_SW_GPD_T));
+                    ptr_sw_gpd = (void*)osal_alloc(sizeof(HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T));
                     if (NULL == ptr_sw_gpd)
                     {
                         osal_printf("***Error***, alloc sw-gpd fail.\n");
                         break;
                     }
-                    osal_memset(ptr_sw_gpd, 0x0, sizeof(HAL_LIGHTNING_PKT_TX_SW_GPD_T));
+                    osal_memset(ptr_sw_gpd, 0x0, sizeof(HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T));
                     
                     /* trans skb to gpd */
-                    ((HAL_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->callback   = (void *)_perf_txCallback;
-                    ((HAL_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->ptr_cookie = (void *)ptr_virt_addr;
-                    ((HAL_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->gpd_num    = 1;
-                    ((HAL_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->ptr_next   = NULL;
-                    ((HAL_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->channel    = channel;
+                    ((HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->callback   = (void *)_perf_txCallback;
+                    ((HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->ptr_cookie = (void *)ptr_virt_addr;
+                    ((HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->gpd_num    = 1;
+                    ((HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->ptr_next   = NULL;
+                    ((HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->channel    = channel;
                 }
 
                 /* prepare gpd */
@@ -724,13 +723,13 @@ perf_test(
     pci_read_config_word(_ptr_ext_pci_dev, PCI_DEVICE_ID, &dev_id);
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id))
     {
-        perf_tx_channel_num = HAL_DAWN_PKT_TX_CHANNEL_LAST; 
-        perf_rx_channel_num = HAL_DAWN_PKT_RX_CHANNEL_LAST; 
+        perf_tx_channel_num = HAL_LT_DAWN_PKT_TX_CHANNEL_LAST; 
+        perf_rx_channel_num = HAL_LT_DAWN_PKT_RX_CHANNEL_LAST; 
     }
     else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id))
     {
-        perf_tx_channel_num = HAL_LIGHTNING_PKT_TX_CHANNEL_LAST; 
-        perf_rx_channel_num = HAL_LIGHTNING_PKT_RX_CHANNEL_LAST; 
+        perf_tx_channel_num = HAL_LT_LIGHTNING_PKT_TX_CHANNEL_LAST; 
+        perf_rx_channel_num = HAL_LT_LIGHTNING_PKT_RX_CHANNEL_LAST; 
     }
     else
     {

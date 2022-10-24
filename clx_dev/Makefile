@@ -58,13 +58,13 @@ DEV_MODULE_NAME            := clx_dev
 
 ################################################################################
 DEV_OBJS_TOTAL             := ./src/clx_dev/clx_dev.o
-DEV_OBJS_TOTAL             += ./src/net_if/netif_nb_pkt.o
-DEV_OBJS_TOTAL             += ./src/net_if/netif_lightning_pkt.o
-DEV_OBJS_TOTAL             += ./src/net_if/netif_dawn_pkt.o
-DEV_OBJS_TOTAL             += ./src/net_if/netif_common.o
-DEV_OBJS_TOTAL             += ./src/net_if/netif_nl.o
-DEV_OBJS_TOTAL             += ./src/net_if/netif_osal.o
-DEV_OBJS_TOTAL             += ./src/net_if/netif_perf.o
+DEV_OBJS_TOTAL             += ./src/clx_netif/netif_knl.o
+DEV_OBJS_TOTAL             += ./src/clx_netif/mountain/namchabarwa/netif_mt_namchabarwa_pkt.o
+# DEV_OBJS_TOTAL             += ./src/clx_netif/netif_lt_lightning_pkt.o
+# DEV_OBJS_TOTAL             += ./src/clx_netif/netif_lt_dawn_pkt.o
+DEV_OBJS_TOTAL             += ./src/clx_netif/common/netif_nl.o
+DEV_OBJS_TOTAL             += ./src/clx_netif/common/netif_osal.o
+# DEV_OBJS_TOTAL             += ./src/clx_netif/common/netif_perf.o
 
 
 obj-m                      := $(DEV_MODULE_NAME).o

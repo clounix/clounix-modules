@@ -1,64 +1,29 @@
-#include <linux/version.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/kthread.h>
-#include <linux/semaphore.h>
-#include <linux/spinlock.h>
-#include <linux/spinlock_types.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/miscdevice.h>
-#include <linux/wait.h>
-#include <linux/cdev.h>
-#include <linux/fs.h>
-#include <linux/pci.h>
-#include <linux/module.h>
-#include <linux/if.h>
-#include <uapi/linux/ethtool.h>
-#include <linux/ethtool.h>
-#include <linux/if_ether.h>
-#include <linux/if_vlan.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
 
 /* netif */
-#include <netif/netif_osal.h>
-#include <netif/netif_perf.h>
-#include <netif/netif_nl.h>
+#include <netif/common/netif_osal.h>
+#include <netif/common/netif_perf.h>
+#include <netif/common/netif_nl.h>
 
-#include <netif/netif_common.h>
-#include <netif/netif_lightning_pkt.h>
-#include <netif/netif_dawn_pkt.h>
-#include <netif/netif_nb_pkt.h>
+#include <netif/netif_knl.h>
+// #include <netif/light/lightning/netif_lt_lightning_pkt.h>
+// #include <netif/light/dawn/netif_lt_dawn_pkt.h>
+#include <netif/mountain/namchabarwa/netif_mt_namchabarwa_pkt.h>
 
-/* clx_sdk */
 #include <osal/osal_mdc.h>
-#include <hal/common/hal_dflt.h>
 
 
-static HAL_PKT_NETIF_PROFILE_T              *_ptr_hal_pkt_profile_entry[HAL_PKT_NET_PROFILE_NUM_MAX] = {0};
-HAL_PKT_NETIF_PORT_DB_T                     _hal_pkt_port_db[HAL_PKT_MAX_PORT_NUM];
-HAL_PKT_DRV_CB_T                            _hal_pkt_drv_cb[CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM];
+
+static HAL_PKT_NETIF_PROFILE_T                          *_ptr_hal_pkt_profile_entry[HAL_PKT_NET_PROFILE_NUM_MAX] = {0};
+HAL_PKT_NETIF_PORT_DB_T                                 _hal_pkt_port_db[CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM][HAL_PKT_MAX_PORT_NUM];
+HAL_PKT_DRV_CB_T                                        _hal_pkt_drv_cb[CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM];
 
 /*---------------------------------------------------------------------------*/
-#define HAL_PKT_GET_DRV_CB_PTR(unit)                (&_hal_pkt_drv_cb[unit])
-#define HAL_PKT_GET_PORT_DB(port)                   (&_hal_pkt_port_db[port])
-#define HAL_PKT_GET_PORT_PROFILE_LIST(port)         (_hal_pkt_port_db[port].ptr_profile_list)
-#define HAL_PKT_GET_PORT_NETDEV(port)               _hal_pkt_port_db[port].ptr_net_dev
+#define HAL_PKT_GET_DRV_CB_PTR(unit)                    (&_hal_pkt_drv_cb[unit])
+#define HAL_PKT_GET_PORT_DB(unit,port)                  (&_hal_pkt_port_db[unit][port])
+#define HAL_PKT_GET_PORT_PROFILE_LIST(unit,port)        (_hal_pkt_port_db[unit][port].ptr_profile_list)
+#define HAL_PKT_GET_PORT_NETDEV(unit,port)              _hal_pkt_port_db[unit][port].ptr_net_dev
 
 
-struct net_device_priv
-{
-    struct net_device               *ptr_net_dev;
-    struct net_device_stats         stats;
-    UI32_T                          unit;
-    UI32_T                          id;
-    UI32_T                          port;
-    UI16_T                          vlan;
-    UI32_T                          speed;
-};
 
 
 /*  Init: net_dev_ops */
@@ -265,16 +230,16 @@ _hal_pkt_createIntf(
 
     /* Lock all Rx tasks to avoid any access to the intf during packet processing */
     /* Only Rx tasks are locked since Tx action is performed under a spinlock protection */
-    ptr_cb->lock_all_rx_channel(unit);
+    ptr_cb->lock_all_rx_channel(unit,NULL);
 
-     DIAG_PRINT( HAL_DBG_INTF, "u=%u, create intf name=%s, phy port=%d\n",
+     OSAL_PRINT( OSAL_DBG_INTF, "u=%u, create intf name=%s, phy port=%d\n",
                     unit, net_intf.name, net_intf.port);
 
     /* To check if the interface with the same name exists in kernel */
     ptr_net_dev = dev_get_by_name(&init_net, net_intf.name);
     if (NULL != ptr_net_dev)
     {
-         DIAG_PRINT(( HAL_DBG_ERR |  HAL_DBG_INTF),
+         OSAL_PRINT(( OSAL_DBG_ERR |  OSAL_DBG_INTF),
                         "u=%u, create intf failed, exist same name=%s\n",
                         unit, net_intf.name);
 
@@ -287,12 +252,12 @@ _hal_pkt_createIntf(
         unregister_netdev(ptr_net_dev);
         free_netdev(ptr_net_dev);
 #endif
-        ptr_cb->unlock_all_rx_channel(unit);
+        ptr_cb->unlock_all_rx_channel(unit,NULL);
         return (CLX_E_ENTRY_EXISTS);
     }
 
     /* Bind the net dev and intf meta data to internel port-based array */
-    ptr_port_db = HAL_PKT_GET_PORT_DB(net_intf.port);
+    ptr_port_db = HAL_PKT_GET_PORT_DB(unit,net_intf.port);
     if (ptr_port_db->ptr_net_dev == NULL)
     {
 
@@ -326,7 +291,7 @@ _hal_pkt_createIntf(
     }
     else
     {
-         DIAG_PRINT(( HAL_DBG_INTF |  HAL_DBG_ERR),
+         OSAL_PRINT(( OSAL_DBG_INTF |  OSAL_DBG_ERR),
                         "u=%u, create intf failed, exist on phy port=%d\n",
                         unit, net_intf.port);
         /* The user needs to delete the existing intf binding to the same port */
@@ -334,7 +299,7 @@ _hal_pkt_createIntf(
     }
 
     ptr_cookie->rc = rc; 
-    ptr_cb->unlock_all_rx_channel(unit);
+    ptr_cb->unlock_all_rx_channel(unit,NULL);
 
     return (CLX_E_OK);
 }
@@ -353,17 +318,17 @@ _hal_pkt_destroyIntf(
 
     /* Lock all Rx tasks to avoid any access to the intf during packet processing */
     /* Only Rx tasks are locked since Tx action is performed under a spinlock protection */
-    ptr_cb->lock_all_rx_channel(unit);
+    ptr_cb->lock_all_rx_channel(unit,NULL);
 
     /* Unregister net devices by id, although the "id" is now relavent to "port" we still perform a search */
     for (port = 0; port < HAL_PKT_MAX_PORT_NUM; port++)
     {
-        ptr_port_db = HAL_PKT_GET_PORT_DB(port);
+        ptr_port_db = HAL_PKT_GET_PORT_DB(unit,port);
         if (NULL != ptr_port_db->ptr_net_dev)       /* valid intf */
         {
             if (ptr_port_db->meta.id == net_intf.id)
             {
-                 DIAG_PRINT( HAL_DBG_INTF,
+                 OSAL_PRINT( OSAL_DBG_INTF,
                                 "u=%u, find intf %s (id=%d) on phy port=%d, destroy done\n",
                                 unit,
                                 ptr_port_db->meta.name,
@@ -389,7 +354,7 @@ _hal_pkt_destroyIntf(
 
     ptr_cookie->rc = rc;
 
-    ptr_cb->unlock_all_rx_channel(unit);
+    ptr_cb->unlock_all_rx_channel(unit,NULL);
 
     return (CLX_E_OK);
 }
@@ -404,15 +369,15 @@ _hal_pkt_traverseProfList(
 
     ptr_curr_node = ptr_prof_list;
 
-     DIAG_PRINT( HAL_DBG_INTF, "intf id=%d, prof list=", intf_id);
+     OSAL_PRINT( OSAL_DBG_INTF, "intf id=%d, prof list=", intf_id);
     while(NULL != ptr_curr_node)
     {
-         DIAG_PRINT( HAL_DBG_INTF, "%s (%d) => ",
+         OSAL_PRINT( OSAL_DBG_INTF, "%s (%d) => ",
                         ptr_curr_node->ptr_profile->name,
                         ptr_curr_node->ptr_profile->priority);
         ptr_curr_node = ptr_curr_node->ptr_next_node;
     }
-     DIAG_PRINT( HAL_DBG_INTF, "null\n");
+     OSAL_PRINT( OSAL_DBG_INTF, "null\n");
     return (CLX_E_OK);
 }
 
@@ -429,12 +394,12 @@ _hal_pkt_getIntf(
 
     for (port = 0; port < HAL_PKT_MAX_PORT_NUM; port++)
     {
-        ptr_port_db = HAL_PKT_GET_PORT_DB(port);
+        ptr_port_db = HAL_PKT_GET_PORT_DB(unit,port);
         if (NULL != ptr_port_db->ptr_net_dev)       /* valid intf */
         {
             if (ptr_port_db->meta.id == net_intf.id)
             {
-                 DIAG_PRINT( HAL_DBG_INTF, "u=%u, find intf id=%d\n", unit, net_intf.id);
+                 OSAL_PRINT( OSAL_DBG_INTF, "u=%u, find intf id=%d\n", unit, net_intf.id);
                 _hal_pkt_traverseProfList(net_intf.id, ptr_port_db->ptr_profile_list);
                 ptr_cookie->net_intf = ptr_port_db->meta;
                 rc = CLX_E_OK;
@@ -463,7 +428,7 @@ _hal_pkt_addProfToList(
     /* Create the 1st node in the interface profile list */
     if (NULL == *pptr_profile_list)
     {
-        DIAG_PRINT(HAL_DBG_PROFILE,
+        OSAL_PRINT(OSAL_DBG_PROFILE,
                         "prof list empty\n");
         *pptr_profile_list = ptr_new_prof_node;
         ptr_new_prof_node->ptr_next_node = NULL;
@@ -477,7 +442,7 @@ _hal_pkt_addProfToList(
         {
             if (ptr_curr_node->ptr_profile->priority <= ptr_new_profile->priority)
             {
-                DIAG_PRINT(HAL_DBG_PROFILE,
+                OSAL_PRINT(OSAL_DBG_PROFILE,
                                 "find prof id=%d (%s) higher priority=%d, search next\n",
                                 ptr_curr_node->ptr_profile->id,
                                 ptr_curr_node->ptr_profile->name,
@@ -490,7 +455,7 @@ _hal_pkt_addProfToList(
             {
                 /* Insert intermediate node */
                 ptr_new_prof_node->ptr_next_node = ptr_curr_node;
-                DIAG_PRINT(HAL_DBG_PROFILE,
+                OSAL_PRINT(OSAL_DBG_PROFILE,
                                 "insert prof id=%d (%s) before prof id=%d (%s) (priority=%d >= %d)\n",
                                 ptr_new_prof_node->ptr_profile->id,
                                 ptr_new_prof_node->ptr_profile->name,
@@ -503,7 +468,7 @@ _hal_pkt_addProfToList(
                 {
                     /* There is no previous node: change the root */
                     *pptr_profile_list = ptr_new_prof_node;
-                    DIAG_PRINT(HAL_DBG_PROFILE,
+                    OSAL_PRINT(OSAL_DBG_PROFILE,
                                     "insert prof id=%d (%s) to head (priority=%d)\n",
                                     ptr_new_prof_node->ptr_profile->id,
                                     ptr_new_prof_node->ptr_profile->name,
@@ -512,7 +477,7 @@ _hal_pkt_addProfToList(
                 else
                 {
                     ptr_prev_node->ptr_next_node = ptr_new_prof_node;
-                    DIAG_PRINT(HAL_DBG_PROFILE,
+                    OSAL_PRINT(OSAL_DBG_PROFILE,
                                     "insert prof id=%d (%s) after prof id=%d (%s) (priority=%d <= %d)\n",
                                     ptr_new_prof_node->ptr_profile->id,
                                     ptr_new_prof_node->ptr_profile->name,
@@ -529,7 +494,7 @@ _hal_pkt_addProfToList(
         /* Insert node to the tail of list */
         ptr_prev_node->ptr_next_node = ptr_new_prof_node;
         ptr_new_prof_node->ptr_next_node = NULL;
-        DIAG_PRINT(HAL_DBG_PROFILE,
+        OSAL_PRINT(OSAL_DBG_PROFILE,
                         "insert prof id=%d (%s) to tail, after prof id=%d (%s) (priority=%d <= %d)\n",
                         ptr_new_prof_node->ptr_profile->id,
                         ptr_new_prof_node->ptr_profile->name,
@@ -544,6 +509,7 @@ _hal_pkt_addProfToList(
 
 static CLX_ERROR_NO_T
 _hal_pkt_addProfToAllIntf(
+    const UI32_T                        unit,
     HAL_PKT_NETIF_PROFILE_T         *ptr_new_profile)
 {
     UI32_T                              port;
@@ -551,7 +517,7 @@ _hal_pkt_addProfToAllIntf(
 
     for (port = 0; port < HAL_PKT_MAX_PORT_NUM; port++)
     {
-        ptr_port_db = HAL_PKT_GET_PORT_DB(port);
+        ptr_port_db = HAL_PKT_GET_PORT_DB(unit,port);
         /* Shall we check if the interface is ever created on the port?? */
         /* if (NULL != ptr_port_db->ptr_net_dev) */
         if (1)
@@ -583,14 +549,14 @@ _hal_pkt_delProfFromListById(
 
             if (NULL != ptr_temp_node->ptr_next_node)
             {
-                DIAG_PRINT(HAL_DBG_PROFILE,
+                OSAL_PRINT(OSAL_DBG_PROFILE,
                                 "choose prof id=%d (%s) as new head\n",
                                 ptr_temp_node->ptr_next_node->ptr_profile->id,
                                 ptr_temp_node->ptr_next_node->ptr_profile->name);
             }
             else
             {
-                DIAG_PRINT(HAL_DBG_PROFILE,
+                OSAL_PRINT(OSAL_DBG_PROFILE,
                                 "prof list is empty\n");
             }
 
@@ -611,7 +577,7 @@ _hal_pkt_delProfFromListById(
                 }
                 else
                 {
-                    DIAG_PRINT(HAL_DBG_PROFILE,
+                    OSAL_PRINT(OSAL_DBG_PROFILE,
                                     "find prof id=%d, free done\n", id);
 
                     ptr_profile = ptr_curr_node->ptr_profile;
@@ -625,7 +591,7 @@ _hal_pkt_delProfFromListById(
 
     if (NULL == ptr_profile)
     {
-        DIAG_PRINT((HAL_DBG_PROFILE | HAL_DBG_ERR),
+        OSAL_PRINT((OSAL_DBG_PROFILE | OSAL_DBG_ERR),
                         "find prof failed, id=%d\n", id);
     }
 
@@ -635,6 +601,7 @@ _hal_pkt_delProfFromListById(
 
 static CLX_ERROR_NO_T
 _hal_pkt_delProfFromAllIntfById(
+    const UI32_T                        unit,
     const UI32_T                        id)
 {
     UI32_T                              port;
@@ -642,7 +609,7 @@ _hal_pkt_delProfFromAllIntfById(
 
     for (port = 0; port < HAL_PKT_MAX_PORT_NUM; port++)
     {
-        ptr_port_db = HAL_PKT_GET_PORT_DB(port);
+        ptr_port_db = HAL_PKT_GET_PORT_DB(unit,port);
         /* Shall we check if the interface is ever created on the port?? */
         /* if (NULL != ptr_port_db->ptr_net_dev) */
         if (1)
@@ -663,7 +630,7 @@ _hal_pkt_allocProfEntry(
     {
         if (NULL == _ptr_hal_pkt_profile_entry[idx])
         {
-            DIAG_PRINT(HAL_DBG_PROFILE,
+            OSAL_PRINT(OSAL_DBG_PROFILE,
                             "alloc prof entry failed, id=%d\n", idx);
             _ptr_hal_pkt_profile_entry[idx] = ptr_profile;
             ptr_profile->id = idx;
@@ -698,10 +665,10 @@ _hal_pkt_destroyAllIntf(
     /* Unregister net devices by id, although the "id" is now relavent to "port" we still perform a search */
     for (port = 0; port < HAL_PKT_MAX_PORT_NUM; port++)
     {
-        ptr_port_db = HAL_PKT_GET_PORT_DB(port);
+        ptr_port_db = HAL_PKT_GET_PORT_DB(unit,port);
         if (NULL != ptr_port_db->ptr_net_dev)       /* valid intf */
         {
-            DIAG_PRINT(HAL_DBG_INTF,
+            OSAL_PRINT(OSAL_DBG_INTF,
                             "u=%u, find intf %s (id=%d) on phy port=%d, destroy done\n",
                             unit,
                             ptr_port_db->meta.name,
@@ -735,13 +702,13 @@ _hal_pkt_delProfListOnAllIntf(
     /* Unregister net devices by id, although the "id" is now relavent to "port" we still perform a search */
     for (port = 0; port < HAL_PKT_MAX_PORT_NUM; port++)
     {
-        ptr_port_db = HAL_PKT_GET_PORT_DB(port);
+        ptr_port_db = HAL_PKT_GET_PORT_DB(unit,port);
         if (NULL != ptr_port_db->ptr_profile_list)       /* valid intf */
         {
             ptr_curr_node = ptr_port_db->ptr_profile_list;
             while (NULL != ptr_curr_node)
             {
-                DIAG_PRINT(HAL_DBG_PROFILE,
+                OSAL_PRINT(OSAL_DBG_PROFILE,
                                 "u=%u, del prof id=%d on phy port=%d\n",
                                 unit, ptr_curr_node->ptr_profile->id, port);
 
@@ -769,7 +736,7 @@ _hal_pkt_destroyAllProfile(
         ptr_profile = _hal_pkt_freeProfEntry(prof_id);
         if (NULL != ptr_profile)
         {
-            DIAG_PRINT(HAL_DBG_PROFILE,
+            OSAL_PRINT(OSAL_DBG_PROFILE,
                             "u=%u, destroy prof id=%d, name=%s, priority=%d, flag=0x%x\n",
                             unit,
                             ptr_profile->id,
@@ -813,12 +780,12 @@ _hal_pkt_createProfile(
 
     /* Lock all Rx tasks to avoid profiles being refered during packet processing */
     /* Need to lock all Rx tasks since packets from all Rx channels do profile lookup */
-    ptr_cb->lock_all_rx_channel(unit);
+    ptr_cb->lock_all_rx_channel(unit,NULL);
 
     ptr_profile = osal_alloc(sizeof(HAL_PKT_NETIF_PROFILE_T));
     *ptr_profile = ptr_cookie->net_profile;
 
-     DIAG_PRINT( HAL_DBG_PROFILE,
+     OSAL_PRINT( OSAL_DBG_PROFILE,
                     "u=%u, create prof name=%s, priority=%d, flag=0x%x\n",
                     unit,
                     ptr_profile->name,
@@ -832,16 +799,16 @@ _hal_pkt_createProfile(
         /* Insert the profile to the corresponding (port) interface */
         if ((ptr_profile->flags & HAL_PKT_NETIF_PROFILE_FLAGS_PORT) != 0)
         {
-             DIAG_PRINT( HAL_DBG_PROFILE,
+             OSAL_PRINT( OSAL_DBG_PROFILE,
                             "u=%u, bind prof to phy port=%d\n", unit, ptr_profile->port);
-            ptr_port_db = HAL_PKT_GET_PORT_DB(ptr_profile->port);
+            ptr_port_db = HAL_PKT_GET_PORT_DB(unit,ptr_profile->port);
             _hal_pkt_addProfToList(ptr_profile, &ptr_port_db->ptr_profile_list);
         }
         else
         {
-             DIAG_PRINT( HAL_DBG_PROFILE,
+             OSAL_PRINT( OSAL_DBG_PROFILE,
                             "u=%u, bind prof to all intf\n", unit);
-            _hal_pkt_addProfToAllIntf(ptr_profile);
+            _hal_pkt_addProfToAllIntf(unit,ptr_profile);
         }
 
         /* Copy the ptr_profile->id to user space */
@@ -849,14 +816,14 @@ _hal_pkt_createProfile(
     }
     else
     {
-         DIAG_PRINT(( HAL_DBG_PROFILE |  HAL_DBG_ERR),
+         OSAL_PRINT(( OSAL_DBG_PROFILE |  OSAL_DBG_ERR),
                         "u=%u, alloc prof entry failed, tbl full\n", unit);
         osal_free(ptr_profile);
     }
 
     ptr_cookie->rc = rc;
 
-    ptr_cb->unlock_all_rx_channel(unit);
+    ptr_cb->unlock_all_rx_channel(unit,NULL);
 
     return (CLX_E_OK);
 }
@@ -874,15 +841,15 @@ _hal_pkt_destroyProfile(
 
     /* Lock all Rx tasks to avoid profiles being refered during packet processing */
     /* Need to lock all Rx tasks since packets from all Rx channels do profile lookup */
-    ptr_cb->lock_all_rx_channel(unit);
+    ptr_cb->lock_all_rx_channel(unit,NULL);
 
     /* Remove the profile from corresponding interface (port) */
-    _hal_pkt_delProfFromAllIntfById(profile.id);
+    _hal_pkt_delProfFromAllIntfById(unit,profile.id);
 
     ptr_profile = _hal_pkt_freeProfEntry(profile.id);
     if (NULL != ptr_profile)
     {
-         DIAG_PRINT( HAL_DBG_PROFILE,
+         OSAL_PRINT( OSAL_DBG_PROFILE,
                         "u=%u, destroy prof id=%d, name=%s, priority=%d, flag=0x%x\n",
                         unit,
                         ptr_profile->id,
@@ -894,7 +861,7 @@ _hal_pkt_destroyProfile(
 
     ptr_cookie->rc = rc;
 
-    ptr_cb->unlock_all_rx_channel(unit);
+    ptr_cb->unlock_all_rx_channel(unit,NULL);
 
     return (CLX_E_OK);
 }
@@ -939,7 +906,7 @@ _hal_pkt_getIntfCnt(
 
     for (port = 0; port < HAL_PKT_MAX_PORT_NUM; port++)
     {
-        ptr_port_db = HAL_PKT_GET_PORT_DB(port);
+        ptr_port_db = HAL_PKT_GET_PORT_DB(unit,port);
         if (NULL != ptr_port_db->ptr_net_dev)       /* valid intf */
         {
             if (ptr_port_db->meta.id == net_intf.id)
@@ -976,7 +943,7 @@ _hal_pkt_clearIntfCnt(
 
     for (port = 0; port < HAL_PKT_MAX_PORT_NUM; port++)
     {
-        ptr_port_db = HAL_PKT_GET_PORT_DB(port);
+        ptr_port_db = HAL_PKT_GET_PORT_DB(unit,port);
         if (NULL != ptr_port_db->ptr_net_dev)       /* valid intf */
         {
             if (ptr_port_db->meta.id == net_intf.id)
@@ -998,89 +965,7 @@ _hal_pkt_clearIntfCnt(
     return (CLX_E_OK);
 }
 
-/* FUNCTION NAME: hal_pkt_getTxKnlCnt
- * PURPOSE:
- *      To get the PDMA TX counters of the target channel.
- * INPUT:
- *      unit            -- The unit ID
- *      ptr_cookie      -- Pointer of the TX cookie
- * OUTPUT:
- *      None
- * RETURN:
- *      CLX_E_OK        -- Successfully get the counters.
- * NOTES:
- *      None
- */
-CLX_ERROR_NO_T
-hal_pkt_getTxKnlCnt(
-    const UI32_T                        unit,
-    void                                *ptr_data)
-{
-    return (CLX_E_OK);
-}
 
-/* FUNCTION NAME: hal_pkt_getRxKnlCnt
- * PURPOSE:
- *      To get the PDMA RX counters of the target channel.
- * INPUT:
- *      unit            -- The unit ID
- *      ptr_cookie      -- Pointer of the RX cookie
- * OUTPUT:
- *      None
- * RETURN:
- *      CLX_E_OK        -- Successfully get the counters.
- * NOTES:
- *      None
- */
-CLX_ERROR_NO_T
-hal_pkt_getRxKnlCnt(
-    const UI32_T                        unit,
-    void                                *ptr_data)
-{
-    return (CLX_E_OK);
-}
-
-/* FUNCTION NAME: hal_pkt_clearTxKnlCnt
- * PURPOSE:
- *      To clear the PDMA TX counters of the target channel.
- * INPUT:
- *      unit            -- The unit ID
- *      ptr_cookie      -- Pointer of the TX cookie
- * OUTPUT:
- *      None
- * RETURN:
- *      CLX_E_OK        -- Successfully clear the counters.
- * NOTES:
- *      None
- */
-CLX_ERROR_NO_T
-hal_pkt_clearTxKnlCnt(
-    const UI32_T                    unit,
-    void                            *ptr_data)
-{
-    return (CLX_E_OK);
-}
-
-/* FUNCTION NAME: hal_pkt_clearRxKnlCnt
- * PURPOSE:
- *      To clear the PDMA RX counters of the target channel.
- * INPUT:
- *      unit            -- The unit ID
- *      ptr_cookie      -- Pointer of the RX cookie
- * OUTPUT:
- *      None
- * RETURN:
- *      CLX_E_OK        -- Successfully clear the counters.
- * NOTES:
- *      None
- */
-CLX_ERROR_NO_T
-hal_pkt_clearRxKnlCnt(
-    const UI32_T                    unit,
-    void                            *ptr_data)
-{
-    return (CLX_E_OK);
-}
 
 /* FUNCTION NAME: hal_pkt_setPortAttr
  * PURPOSE:
@@ -1113,7 +998,7 @@ hal_pkt_setPortAttr(
     status = ptr_cookie->status;
     speed = ptr_cookie->speed;
 
-    ptr_net_dev = HAL_PKT_GET_PORT_NETDEV(port);
+    ptr_net_dev = HAL_PKT_GET_PORT_NETDEV(unit,port);
     if ((NULL != ptr_net_dev) && (port<HAL_PKT_MAX_PORT_NUM))
     {
         if (HAL_PKT_PORT_STATUS_UP == status)
@@ -1187,10 +1072,10 @@ hal_pkt_getPortAttr(
 
     port = ptr_cookie->port;
 
-    ptr_net_dev = HAL_PKT_GET_PORT_NETDEV(port);
+    ptr_net_dev = HAL_PKT_GET_PORT_NETDEV(unit,port);
     if ((NULL == ptr_net_dev) || (port >= HAL_PKT_MAX_PORT_NUM))
     {
-         DIAG_PRINT( HAL_DBG_ERR,
+         OSAL_PRINT( OSAL_DBG_ERR,
             "%s(%d): Failed to get netdev, port %d\n",
                 __FUNCTION__, __LINE__, port);
         return -1;
@@ -1225,7 +1110,7 @@ hal_pkt_getPortAttr(
             speed = CLX_PORT_SPEED_400G;
             break;
         default:
-             DIAG_PRINT( HAL_DBG_ERR,
+             OSAL_PRINT( OSAL_DBG_ERR,
                                "%s(%d): Unknown speed %d, port %d\n",
                                __FUNCTION__, __LINE__, ptr_priv->speed, port);
             speed = CLX_PORT_SPEED_400G;
@@ -1255,11 +1140,11 @@ _hal_pkt_setIntfProperty(
     param0 = ptr_cookie->param0;
     param1 = ptr_cookie->param1;
 
-    ptr_cb->lock_all_rx_channel(unit);
+    ptr_cb->lock_all_rx_channel(unit,ptr_data);
 
     rc = netif_nl_setIntfProperty(unit, intf_id, property, param0, param1);
 
-    ptr_cb->unlock_all_rx_channel(unit);
+    ptr_cb->unlock_all_rx_channel(unit,ptr_data);
 
     ptr_cookie->rc = rc;
 
@@ -1303,11 +1188,11 @@ _hal_pkt_createNetlink(
 
     memcpy(&netlink, &ptr_cookie->netlink, sizeof(NETIF_NL_NETLINK_T));
 
-    ptr_cb->lock_all_rx_channel(unit);
+    ptr_cb->lock_all_rx_channel(unit,ptr_data);
 
     rc = netif_nl_createNetlink(unit, &netlink, &netlink_id);
 
-    ptr_cb->unlock_all_rx_channel(unit);
+    ptr_cb->unlock_all_rx_channel(unit,ptr_data);
 
     ptr_cookie->netlink.id = netlink_id;
     ptr_cookie->rc = rc;
@@ -1326,11 +1211,11 @@ _hal_pkt_destroyNetlink(
 
     netlink_id = ptr_cookie->netlink.id;
 
-    ptr_cb->lock_all_rx_channel(unit);
+    ptr_cb->lock_all_rx_channel(unit,ptr_data);
 
     rc = netif_nl_destroyNetlink(unit, netlink_id);
 
-    ptr_cb->unlock_all_rx_channel(unit);
+    ptr_cb->unlock_all_rx_channel(unit,ptr_data);
 
     ptr_cookie->rc = rc;
 
@@ -1374,7 +1259,7 @@ hal_pkt_resumeAllIntf(
     /* Unregister net devices by id */
     for (port = 0; port < HAL_PKT_MAX_PORT_NUM; port++)
     {
-        ptr_net_dev = HAL_PKT_GET_PORT_NETDEV(port);
+        ptr_net_dev = HAL_PKT_GET_PORT_NETDEV(unit,port);
         if (NULL != ptr_net_dev)
         {
             if (netif_queue_stopped(ptr_net_dev))
@@ -1397,7 +1282,7 @@ hal_pkt_suspendAllIntf(
     /* Unregister net devices by id */
     for (port = 0; port < HAL_PKT_MAX_PORT_NUM; port++)
     {
-        ptr_net_dev = HAL_PKT_GET_PORT_NETDEV(port);
+        ptr_net_dev = HAL_PKT_GET_PORT_NETDEV(unit,port);
         if (NULL != ptr_net_dev)
         {
             netif_stop_queue(ptr_net_dev);
@@ -1417,7 +1302,7 @@ hal_pkt_stopAllIntf(
     /* Unregister net devices by id */
     for (port = 0; port < HAL_PKT_MAX_PORT_NUM; port++)
     {
-        ptr_net_dev = HAL_PKT_GET_PORT_NETDEV(port);
+        ptr_net_dev = HAL_PKT_GET_PORT_NETDEV(unit,port);
         if (NULL != ptr_net_dev)
         {
             netif_tx_disable(ptr_net_dev);
@@ -1452,19 +1337,19 @@ hal_pkt_initPktDrv(
 
     if(ptr_cb->init_stage != HAL_PKT_INIT_START)
     {
-        DIAG_PRINT(HAL_DBG_ERR,
+        OSAL_PRINT(OSAL_DBG_ERR,
                         "u=%u, pkt drv init failed. init_stage=%d\n", unit, ptr_cb->init_stage);
         return rc;
     }
-    rc = ptr_cb->pkt_init_drv(unit);
+    rc = ptr_cb->pkt_init_drv(unit,ptr_data);
 
     if(rc == CLX_E_OK)
     {  
         ptr_cb->init_stage = HAL_PKT_INIT_DRV;
-        DIAG_PRINT(HAL_DBG_COMMON,
+        OSAL_PRINT(OSAL_DBG_COMMON,
                         "u=%u, pkt drv init done, next_stage=%d\n", unit, ptr_cb->init_stage);
 
-        rc = ptr_cb->pkt_init_irq(unit);
+        rc = ptr_cb->pkt_init_irq(unit,ptr_data);
     }
     return (rc);
 }
@@ -1492,17 +1377,17 @@ hal_pkt_initTask(
 
     if(ptr_cb->init_stage != HAL_PKT_INIT_DRV)
     {
-        DIAG_PRINT(HAL_DBG_ERR,
+        OSAL_PRINT(OSAL_DBG_ERR,
                         "u=%u, pkt task init failed. init_stage=%d\n", unit, ptr_cb->init_stage);
         return rc;
     }
 
-    rc = ptr_cb->pkt_init_task(unit);
+    rc = ptr_cb->pkt_init_task(unit,ptr_data);
 
     if(rc == CLX_E_OK)
     {
         ptr_cb->init_stage = HAL_PKT_INIT_TASK;
-        DIAG_PRINT(HAL_DBG_COMMON,
+        OSAL_PRINT(OSAL_DBG_COMMON,
                         "u=%u, pkt task init done, next_stage=%d\n", unit, ptr_cb->init_stage);
     }
 
@@ -1538,16 +1423,16 @@ hal_pkt_deinitPktDrv(
 
     if(ptr_cb->init_stage != HAL_PKT_INIT_DRV)
     {
-        DIAG_PRINT(HAL_DBG_ERR,
+        OSAL_PRINT(OSAL_DBG_ERR,
                         "u=%u, pkt drv deinit failed, init_stage=%d\n", unit, ptr_cb->init_stage);
         return rc;
     }
 
-    ptr_cb->pkt_deinit_drv(unit);
+    ptr_cb->pkt_deinit_drv(unit,ptr_data);
 
     ptr_cb->init_stage = HAL_PKT_INIT_START;
 
-    DIAG_PRINT(HAL_DBG_COMMON,
+    OSAL_PRINT(OSAL_DBG_COMMON,
                     "u=%u, pkt drv deinit done, init_stage=0x%x\n",
                     unit, ptr_cb->init_stage);
     return (rc);
@@ -1559,14 +1444,14 @@ CLX_ERROR_NO_T hal_pkt_rx_stop(
     HAL_PKT_DRV_CB_T    *ptr_cb    = HAL_PKT_GET_DRV_CB_PTR(unit);
     if(ptr_cb->init_stage != HAL_PKT_INIT_RX_START)
     {
-        DIAG_PRINT(HAL_DBG_ERR,
+        OSAL_PRINT(OSAL_DBG_ERR,
                     "u=%u, rx stop failed, not started. init_stage=%d\n", unit, ptr_cb->init_stage);
         return rc;
     }
-    rc = ptr_cb->pkt_rx_stop(unit);
+    rc = ptr_cb->pkt_rx_stop(unit,NULL);
 
     ptr_cb->init_stage = HAL_PKT_INIT_TASK;
-    DIAG_PRINT(HAL_DBG_RX,
+    OSAL_PRINT(OSAL_DBG_RX,
                 "u=%u, rx stop done, init_stage=0x%x\n", unit, ptr_cb->init_stage);
                 
     return rc;
@@ -1602,17 +1487,17 @@ hal_pkt_deinitTask(
     
     if(ptr_cb->init_stage != HAL_PKT_INIT_TASK)
     {
-        DIAG_PRINT(HAL_DBG_ERR,
+        OSAL_PRINT(OSAL_DBG_ERR,
                         "u=%u, pkt task deinit failed, init_stage=%d\n", unit, ptr_cb->init_stage);
         return CLX_E_OK;
     }
     
-    ptr_cb->pkt_deinit_task(unit);
+    ptr_cb->pkt_deinit_task(unit,ptr_data);
 
     /* Set the flag to record init state */
     ptr_cb->init_stage = HAL_PKT_INIT_DRV;
 
-    DIAG_PRINT(HAL_DBG_RX,
+    OSAL_PRINT(OSAL_DBG_RX,
                     "u=%u, pkt task deinit done, init_stage=0x%x\n",
                     unit, ptr_cb->init_stage);
 
@@ -1623,14 +1508,10 @@ hal_pkt_setRxKnlConfig(
     const UI32_T                    unit,
     void                            *ptr_data)
 {
-    HAL_PKT_IOCTL_RX_COOKIE_T       *ptr_cookie = (HAL_PKT_IOCTL_RX_COOKIE_T*)ptr_data;
+    HAL_PKT_IOCTL_RX_CFG_COOKIE_T       *ptr_cookie = (HAL_PKT_IOCTL_RX_CFG_COOKIE_T*)ptr_data;
     CLX_ERROR_NO_T                  rc = CLX_E_OK;
     HAL_PKT_DRV_CB_T                *ptr_cb = HAL_PKT_GET_DRV_CB_PTR(unit);
     HAL_PKT_IOCTL_RX_TYPE_T         rx_type = ptr_cookie->rx_type;
-
-     DIAG_PRINT(HAL_DBG_DEBUG,
-        "rx_type:%x.ptr_cookie->buf_len:%x,unit:%x,channel:%x,ioctl_gpd_addr:%llx\n",
-        rx_type,ptr_cookie->buf_len,ptr_cookie->unit,ptr_cookie->channel,ptr_cookie->ioctl_gpd_addr);
         
     if (HAL_PKT_IOCTL_RX_TYPE_DEINIT == rx_type)
     {
@@ -1641,17 +1522,17 @@ hal_pkt_setRxKnlConfig(
         /* To prevent buffer size from being on-the-fly changed */
         if(ptr_cb->init_stage != HAL_PKT_INIT_TASK)
         {
-            DIAG_PRINT(HAL_DBG_ERR,
+            OSAL_PRINT(OSAL_DBG_ERR,
                         "u=%u, rx start failed. init_stage=%d\n", unit, ptr_cb->init_stage);
             return rc;
         }
 
         ptr_cb->buf_len = ptr_cookie->buf_len;
-        rc = ptr_cb->pkt_rx_start(unit);
+        rc = ptr_cb->pkt_rx_start(unit,ptr_cookie);
 
 
         ptr_cb->init_stage = HAL_PKT_INIT_RX_START;
-        DIAG_PRINT(HAL_DBG_RX,
+        OSAL_PRINT(OSAL_DBG_RX,
                     "u=%u, rx start done, init_stage=%d\n", unit, ptr_cb->init_stage);
     }
 
@@ -1676,7 +1557,7 @@ hal_pkt_getRxKnlConfig(
     const UI32_T                    unit,
     void                            *ptr_data)
 {
-    HAL_PKT_IOCTL_RX_COOKIE_T       *ptr_cookie = ptr_data;
+    HAL_PKT_IOCTL_RX_CFG_COOKIE_T   *ptr_cookie = ptr_data;
     HAL_PKT_DRV_CB_T                *ptr_cb = HAL_PKT_GET_DRV_CB_PTR(unit);
 
     ptr_cookie->buf_len = ptr_cb->buf_len;
@@ -1719,15 +1600,6 @@ hal_register_netif_common_ioctl(void)
         hal_pkt_initTask);
     _osal_mdc_registerIoctlCallback(OSAL_MDC_IOCTL_TYPE_NETIF_INIT_DRV,
         hal_pkt_initPktDrv);
-    // /* counter */
-    // _osal_mdc_registerIoctlCallback(OSAL_MDC_IOCTL_TYPE_NETIF_GET_TX_CNT,
-    //     hal_pkt_getTxKnlCnt);
-    // _osal_mdc_registerIoctlCallback(OSAL_MDC_IOCTL_TYPE_NETIF_GET_RX_CNT,
-    //     hal_pkt_getRxKnlCnt);
-    // _osal_mdc_registerIoctlCallback(OSAL_MDC_IOCTL_TYPE_NETIF_CLEAR_TX_CNT,
-    //     hal_pkt_clearTxKnlCnt);
-    // _osal_mdc_registerIoctlCallback(OSAL_MDC_IOCTL_TYPE_NETIF_CLEAR_RX_CNT,
-    //     hal_pkt_clearRxKnlCnt);
 
     _osal_mdc_registerIoctlCallback(OSAL_MDC_IOCTL_TYPE_NETIF_SET_PORT_ATTR,
         hal_pkt_setPortAttr);
@@ -1757,9 +1629,9 @@ hal_netif_pkt_init(
     
     if(ptr_cb->init_stage != HAL_PKT_INIT_START)
     {
-        DIAG_PRINT(HAL_DBG_ERR,
+        OSAL_PRINT(OSAL_DBG_ERR,
                         "u=%u, netif current init_stage=%d\n", unit, ptr_cb->init_stage);
-        DIAG_PRINT( HAL_DBG_ERR,
+        OSAL_PRINT( OSAL_DBG_ERR,
            "BUG!!! u=%u, looks the users may kill SDK app without a de-init flow\n", unit);
         return CLX_E_OK;
     }
@@ -1775,17 +1647,17 @@ hal_netif_pkt_init(
     osal_memset(_hal_pkt_drv_cb, 0x0,
             CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM * sizeof(HAL_PKT_DRV_CB_T));
 
-    if(CLX_DEVICE_LIGHTNING == clx_get_device_type(unit))
+    // if(CLX_DEVICE_LIGHTNING == clx_get_device_type(unit))
+    // {
+    //     hal_lt_lightning_register_drv_cb(unit);
+    // }
+    // else if(CLX_DEVICE_DAWN == clx_get_device_type(unit))
+    // {
+    //     hal_lt_dawn_register_drv_cb(unit);
+    // }
+    // else if(CLX_DEVICE_NB == clx_get_device_type(unit))
     {
-        hal_lightning_register_drv_cb(unit);
-    }
-    else if(CLX_DEVICE_DAWN == clx_get_device_type(unit))
-    {
-        hal_dawn_register_drv_cb(unit);
-    }
-    else if(CLX_DEVICE_NB == clx_get_device_type(unit))
-    {
-        hal_nb_register_drv_cb(unit);
+        hal_mt_namchabarwa_register_drv_cb(unit);
     }
 
     netif_nl_init();
