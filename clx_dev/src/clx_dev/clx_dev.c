@@ -495,6 +495,7 @@ _osal_mdc_probePciCallback(
     _ptr_osal_mdc_dev->access.write_callback = osal_mdc_writePciReg;
 #endif
 
+    printk(KERN_ERR"device_id:%x\n",device_id);
     if(NETIF_KNL_DEVICE_IS_LIGHTNING(device_id) || NETIF_KNL_DEVICE_IS_DAWN(device_id)) 
     {
         if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32))) 
@@ -510,6 +511,11 @@ _osal_mdc_probePciCallback(
             OSAL_PRINT(OSAL_DBG_ERR,"dma_set_mask_and_coherent failed");
         }
         _osal_mdc_cb.register_bar[_osal_mdc_cb.dev_num] = OSAL_MDC_PCI_BAR2_OFFSET;
+    }
+    else
+    {
+        OSAL_PRINT(OSAL_DBG_ERR,"wrong device id:%x\n", device_id);
+        return rc;
     }
     
     rc = _osal_mdc_getPciMmioInfo(_osal_mdc_cb.dev_num,pdev,&_osal_mdc_cb.dev[_osal_mdc_cb.dev_num].ptr_mmio_virt_addr);
@@ -541,6 +547,7 @@ _osal_mdc_probePciCallback(
     }
 #endif
     _osal_mdc_cb.dev_num++;
+    _ptr_osal_mdc_dev++;
 
     return (0);
 }
@@ -561,7 +568,7 @@ static struct pci_device_id _osal_mdc_id_table[] =
 {
     {PCI_DEVICE(HAL_CLX_VENDOR_ID, PCI_ANY_ID)},
     {PCI_DEVICE(HAL_CL_VENDOR_ID, PCI_ANY_ID)},
-    {PCI_DEVICE(HAL_CLX_EDK_VENDOR_ID, HAL_DEVICE_ID_EDK1111)},
+    {PCI_DEVICE(HAL_CLX_EDK_VENDOR_ID, PCI_ANY_ID)},
 };
 
 static struct pci_driver    _osal_mdc_pci_driver =
@@ -1492,12 +1499,16 @@ _osal_mdc_initInterrupt(void)
     return (CLX_E_OK);
 }
 
+#define CLX_DEV_NAMCHABARWA_MSI_NUM     21
 static inline CLX_ERROR_NO_T
 _osal_mdc_notifyUserProcess(
-    const UI32_T        unit)
+    const UI32_T        unit,
+    const int           irq)
 {
     unsigned long       flags = 0;
-    struct siginfo info;
+    struct siginfo      info;
+    OSAL_MDC_DEV_T      *ptr_dev = &_osal_mdc_cb.dev[unit];
+    int                 msi_nr = 0;
 
     /* mask chip interrupt */
     osal_mdc_writePciReg(unit, _osal_mdc_isr_mask_addr,
@@ -1508,11 +1519,21 @@ _osal_mdc_notifyUserProcess(
     _osal_mdc_isr_dev_bitmap |= (1U << unit);
     spin_unlock_irqrestore(&_osal_mdc_isr_dev_bitmap_lock, flags);
 
-    //Sending info to SDK
+#ifdef OSAL_MDC_EN_MSI
+    /* calculate which msi interrupt */
+    msi_nr = irq - ptr_dev->irq;
+    if (msi_nr < 0 || msi_nr > CLX_DEV_NAMCHABARWA_MSI_NUM)
+    {
+        OSAL_PRINT(OSAL_DBG_ERR,"irq:%d out of msi vector range\n",irq);
+        return CLX_E_ENTRY_NOT_FOUND;
+    }
+#endif
+    /* Sending info to SDK */
     memset(&info, 0, sizeof(struct siginfo));
-    info.si_signo = SIG_CLX_INTR;
+    info.si_signo = SIG_CLX_INTR + msi_nr;
     info.si_code = SI_QUEUE;
-    info.si_int = _osal_mdc_isr_dev_bitmap;
+    info.si_int = _osal_mdc_isr_dev_bitmap;     /* unit */
+    info.si_ptr = (void *)((CLX_HUGE_T)msi_nr); /* cookie */
 
     if (_osal_mdc_cb.intr_task == NULL) 
     {
@@ -1522,10 +1543,10 @@ _osal_mdc_notifyUserProcess(
     OSAL_PRINT(OSAL_DBG_DEBUG,"Sending signal to pid:%d\n",_osal_mdc_cb.intr_task->pid);
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,20,0)
-    if(send_sig_info(SIG_CLX_INTR, (struct kernel_siginfo *)&info, _osal_mdc_cb.intr_task) < 0) 
+    if(send_sig_info(info.si_signo, (struct kernel_siginfo *)&info, _osal_mdc_cb.intr_task) < 0) 
     {
 #else
-    if(send_sig_info(SIG_CLX_INTR, &info, _osal_mdc_cb.intr_task) < 0) 
+    if(send_sig_info(info.si_signo, &info, _osal_mdc_cb.intr_task) < 0) 
     {
 #endif
         OSAL_PRINT(OSAL_DBG_ERR,"Unable to send signal\n");
@@ -1545,6 +1566,7 @@ _osal_mdc_systemIntrCallback(
     int                 linux_rc = IRQ_HANDLED;
     OSAL_MDC_DEV_T      *ptr_dev = (OSAL_MDC_DEV_T *)ptr_cookie;
 
+    OSAL_PRINT(OSAL_DBG_DEBUG, "handler irq:%d\n", irq);
     /* Invoke kernel callback, the callback function exist only in below cases:
      * 1. SDK built in kernel mode
      * 2. SDK built in user mode, NetIF kernel module is enabled
@@ -1561,7 +1583,7 @@ _osal_mdc_systemIntrCallback(
 
 #if defined(CLX_LINUX_USER_MODE)
     /* Notify user process */
-    rc = _osal_mdc_notifyUserProcess(ptr_dev->unit);
+    rc = _osal_mdc_notifyUserProcess(ptr_dev->unit, irq);
     if (CLX_E_OK != rc)
     {
         OSAL_PRINT(OSAL_DBG_ERR, "notify intr to usr failed, rc=%d\n", rc);
@@ -1586,6 +1608,14 @@ osal_mdc_registerIsr(
     return (CLX_E_OK);
 }
 
+
+typedef struct
+{
+    UI32_T                          unit;
+    UI32_T                          msi_nr;
+} CLX_DEV_IRQ_COOKIE_T;
+static CLX_DEV_IRQ_COOKIE_T                msi_cookie[CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM];
+
 CLX_ERROR_NO_T
 osal_mdc_connectIsr(
     const UI32_T        unit,
@@ -1595,6 +1625,8 @@ osal_mdc_connectIsr(
     OSAL_MDC_DEV_T      *ptr_dev = &_osal_mdc_cb.dev[unit];
     int                 linux_rc = 0;
     CLX_ERROR_NO_T      rc = CLX_E_OK;
+    int                 msi_num = 0;
+    int                 i = 0;
 
 #if defined(CLX_LINUX_USER_MODE)
     if (NULL != ptr_cookie)
@@ -1602,12 +1634,14 @@ osal_mdc_connectIsr(
         _osal_mdc_isr_mask_addr = ptr_cookie->mask_addr;
         _osal_mdc_isr_mask_val  = ptr_cookie->mask_val;
     }
+    OSAL_PRINT(OSAL_DBG_ERR, "_osal_mdc_isr_mask_addr:0x%x\n",_osal_mdc_isr_mask_addr);
+    OSAL_PRINT(OSAL_DBG_ERR, "_osal_mdc_isr_mask_val:0x%x\n",_osal_mdc_isr_mask_val);
 #endif
 
     if (NULL != ptr_dev->isr_callback)
     {
         OSAL_PRINT(OSAL_DBG_ERR, "double req isr err\n");
-        rc = CLX_E_OTHERS;
+        return CLX_E_OTHERS;
     }
 
 #if defined(CLX_LINUX_KERNEL_MODE)
@@ -1620,21 +1654,46 @@ osal_mdc_connectIsr(
     /* If "no_msi" flag is set, it means the device doesn't support MSI.  */
     if (1 != ptr_dev->ptr_pci_dev->no_msi)
     {
-        linux_rc = pci_enable_msi(ptr_dev->ptr_pci_dev);
-        if (0 != linux_rc)
+        msi_num = pci_msi_vec_count(ptr_dev->ptr_pci_dev);
+        OSAL_PRINT(OSAL_DBG_DEBUG, "msi num:%d\n",msi_num);
+        msi_num = pci_alloc_irq_vectors(ptr_dev->ptr_pci_dev, 1, msi_num, PCI_IRQ_MSI);
+        OSAL_PRINT(OSAL_DBG_DEBUG, "alloc msi num:%d\n",msi_num);
+        if (msi_num <= 0)
         {
-            OSAL_PRINT(OSAL_DBG_ERR, "pci_enable_msi() failed, rc=%d\n", linux_rc);
-            rc = CLX_E_OTHERS;
-            return rc;
+            OSAL_PRINT(OSAL_DBG_ERR, "pci_alloc_irq_vectors failed.\n");
+            return CLX_E_OTHERS;
         }
-        else
+        ptr_dev->irq = ptr_dev->ptr_pci_dev->irq;
+    }
+
+    if(CLX_DEVICE_NAMCHABARWA == clx_get_device_type(unit))
+    {
+        for(i = 0; i < CLX_DEV_NAMCHABARWA_MSI_NUM; i ++) 
         {
-            /* The system gives a new irq number if MSI is enabled sucessfully. */
-            ptr_dev->irq = ptr_dev->ptr_pci_dev->irq;
+            msi_cookie[unit].unit = unit;
+            
+            linux_rc = request_irq(pci_irq_vector(ptr_dev->ptr_pci_dev,i), _osal_mdc_systemIntrCallback,
+                                    0, OSAL_MDC_DRIVER_NAME, (void *)&msi_cookie[unit]);
+            if (0 != linux_rc)
+            {
+                OSAL_PRINT(OSAL_DBG_ERR, "request_irq() failed, rc=%d\n", linux_rc);
+                rc = CLX_E_OTHERS;
+            }
+            OSAL_PRINT(OSAL_DBG_DEBUG, "request irq num:%d\n", pci_irq_vector(ptr_dev->ptr_pci_dev,i));
         }
     }
-#endif
+    else
+    {
+        linux_rc = request_irq(ptr_dev->irq, _osal_mdc_systemIntrCallback,
+                                0, OSAL_MDC_DRIVER_NAME, (void *)ptr_dev);
 
+        if (0 != linux_rc)
+        {
+            OSAL_PRINT(OSAL_DBG_ERR, "request_irq() failed, rc=%d\n", linux_rc);
+            return CLX_E_OTHERS;
+        }
+    }
+#else
     linux_rc = request_irq(ptr_dev->irq, _osal_mdc_systemIntrCallback,
                             0, OSAL_MDC_DRIVER_NAME, (void *)ptr_dev);
 
@@ -1643,6 +1702,7 @@ osal_mdc_connectIsr(
         OSAL_PRINT(OSAL_DBG_ERR, "request_irq() failed, rc=%d\n", linux_rc);
         rc = CLX_E_OTHERS;
     }
+#endif
 
     return (rc);
 }
@@ -1653,11 +1713,12 @@ osal_mdc_disconnectIsr(
 {
     OSAL_MDC_DEV_T      *ptr_dev = &_osal_mdc_cb.dev[unit];
 
-    free_irq(ptr_dev->irq, (void *)ptr_dev);
-
 #if defined(OSAL_MDC_EN_MSI)
+    pci_free_irq_vectors(ptr_dev->ptr_pci_dev);
     /* Must free the irq before disabling MSI */
     pci_disable_msi(ptr_dev->ptr_pci_dev);
+#else
+    free_irq(ptr_dev->irq, (void *)ptr_dev);
 #endif
 
 #if defined(CLX_LINUX_KERNEL_MODE)
@@ -1681,6 +1742,8 @@ osal_mdc_initDevice(
 {
     OSAL_MDC_CB_T       *ptr_cb = &_osal_mdc_cb;
     CLX_ERROR_NO_T      rc = CLX_E_OK;
+
+    _ptr_osal_mdc_dev = ptr_dev_list;
 
     memset(ptr_cb, 0x0, sizeof(OSAL_MDC_CB_T));
 
@@ -1762,7 +1825,7 @@ _osal_mdc_open(
     struct inode    *ptr_inode,
     struct file     *ptr_file)
 {
-    hal_netif_pkt_init(0);
+    // hal_netif_pkt_init(0);
     return (0);
 }
 
@@ -1945,6 +2008,7 @@ _osal_mdc_ioctl_allocSysDmaMemCallback(
     ptr_node_data->size          = ptr_ioctl_data->size;
     list_add(&(ptr_node_data->list), &_osal_mdc_sysDmaList[_osal_mdc_sysCurDmaListIdx]);
     ptr_ioctl_data->phy_addr     = virt_to_phys(virt_addr);
+    OSAL_PRINT(OSAL_DBG_DEBUG,"phy_addr:0x%llx,phy_size:0x%x\n",ptr_node_data->phy_addr,ptr_node_data->size);
 
     return (CLX_E_OK);
 }
@@ -1961,6 +2025,7 @@ _osal_mdc_ioctl_freeSysDmaMemCallback(
     OSAL_MDC_USER_MODE_DMA_NODE_T   *ptr_next_node_data = NULL;
 
 
+    OSAL_PRINT(OSAL_DBG_DEBUG,"free:phy_addr:0x%llx,phy_size:0x%llx\n",ptr_ioctl_data->phy_addr,ptr_ioctl_data->size);
     list_for_each_entry_safe(ptr_curr_node_data, ptr_next_node_data,
                              &_osal_mdc_sysDmaList[_osal_mdc_sysCurDmaListIdx], list)
     {
@@ -1968,12 +2033,16 @@ _osal_mdc_ioctl_freeSysDmaMemCallback(
         {
             list_del(&(ptr_curr_node_data->list));
             kfree(ptr_curr_node_data);
+            
+            dma_free_coherent(ptr_dma_info->ptr_dma_dev, ptr_ioctl_data->size,
+                    phys_to_virt(ptr_ioctl_data->phy_addr), ptr_ioctl_data->phy_addr);
             break;
         }
+        else
+        {
+            OSAL_PRINT(OSAL_DBG_DEBUG,"NOT FOUND in DMA_NODE!!! free:phy_addr:0x%llx,phy_size:0x%llx\n",ptr_ioctl_data->phy_addr,ptr_ioctl_data->size);
+        }
     }
-
-    dma_free_coherent(ptr_dma_info->ptr_dma_dev, ptr_ioctl_data->size,
-                      phys_to_virt(ptr_ioctl_data->phy_addr), ptr_ioctl_data->phy_addr);
 
     return (CLX_E_OK);
 }
@@ -2065,12 +2134,15 @@ _osal_mdc_ioctl_initDeviceCallback(
     }
     else
     {
+#if defined (CLX_COSIM)
+#else
         /* Delay free the old list until the chip is reset.
          * When we kill the process, the chip continues to write to the DMA memory.
          * If we free the old DMA memory before stopping the chip, there could be memory corruption.
          */
         _osal_mdc_sysCurDmaListIdx = ((_osal_mdc_sysCurDmaListIdx + 1) & 0x1);
         _osal_mdc_clearSysDmaList(_osal_mdc_sysCurDmaListIdx);
+#endif
     }
 #endif
 
@@ -2121,6 +2193,7 @@ _osal_mdc_ioctl_connectIsrCallback(
 {
     CLX_ERROR_NO_T  rc = CLX_E_OK;
 
+    _osal_mdc_cb.intr_task = get_current();
     if (0 == (_osal_mdc_isr_init_bitmap & (1U << unit)))
     {
         rc = osal_mdc_connectIsr(unit, NULL, ptr_data);
@@ -2138,11 +2211,12 @@ _osal_mdc_ioctl_disconnectIsrCallback(
     void            *ptr_data)
 {
     /* To make the user-space polling task return from read.  */
-    _osal_mdc_notifyUserProcess(unit);
+    _osal_mdc_notifyUserProcess(unit, 0);
 
     osal_mdc_disconnectIsr(unit);
     _osal_mdc_isr_init_bitmap &= ~(1U << unit);
 
+    _osal_mdc_cb.intr_task = NULL;
     return (CLX_E_OK);
 }
 
