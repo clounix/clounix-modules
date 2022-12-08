@@ -88,7 +88,7 @@
 
 
 /* Signal SDK */
-#define SIG_CLX_INTR 44
+#define SIG_CLX_INTR 43
 
 /* NAMING CONSTANT DECLARATIONS
  */
