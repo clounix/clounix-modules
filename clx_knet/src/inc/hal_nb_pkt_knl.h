@@ -27,184 +27,59 @@
 #include <clx_error.h>
 #include <netif_knl.h>
 
-
-
+#define COSIM_GET_BIT(flags, bit)             ((((flags) & (bit)) > 0)? 1 : 0)
+#define COSIM_SET_BIT(bitmap, mask_bitmap) (bitmap = ((bitmap) | (mask_bitmap)))
+#define COSIM_CLEAR_BIT(bitmap, mask_bitmap) (bitmap = ((bitmap) & (~(mask_bitmap))))
 
 /*PDMA reg definition*/
-#define HAL_NB_PDMA_BASE_ADDR                       (0x0)
-#define HAL_NB_PDMA_GET_MMIO(__offset__)            (HAL_NB_PDMA_BASE_ADDR + (__offset__))
+#define HAL_NB_PDMA_BASE_ADDR                               (0x51c1400)
+#define HAL_NB_PDMA_GET_MMIO(__offset__)                    (HAL_NB_PDMA_BASE_ADDR + (__offset__))
 
-#define HAL_NB_PDMA_INFO_REG                        (0x0)
-#define HAL_NB_PDMA_SINGLE_PENDING_REG              (0x4)
-#define HAL_NB_PDMA_RESET_REG                       (0x8)
-#define HAL_NB_PMDA_FSM_STATE_REG                   (0xC)
-#if defined(CLX_EN_LITTLE_ENDIAN)
-typedef union
-{
-    UI32_T reg;
-    struct  {
-        UI32_T   wdata_fsm_state             :4;
-        UI32_T   resp_fsm_state              :3;
-        UI32_T   fetch_fsm_state             :3;
-        UI32_T                               :23;
-    } field;
-} HAL_NB_PDMA_FSM_STATE_T;
-#elif defined(CLX_EN_BIG_ENDIAN)
-typedef union
-{
-    UI32_T reg;
-    struct  {
-        UI32_T                               :23;
-        UI32_T   fetch_fsm_state             :3;
-        UI32_T   resp_fsm_state              :3;
-        UI32_T   wdata_fsm_state             :4;
-    } field;
-} HAL_NB_PDMA_FSM_STATE_T;
-#else
-#error "Host PDMA endian is not defined\n"
-#endif
-
-#define HAL_NB_PDMA_AXI0_RD_MAX_OUTSTD_SIZE_REG     (0x10)
-#define HAL_NB_PDMA_AXI0_WR_MAX_OUTSTD_SIZE_REG     (0x14)
-#define HAL_NB_PDMA_AXI1_RD_MAX_OUTSTD_SIZE_REG     (0x18)
-#define HAL_NB_PDMA_AXI1_WR_MAX_OUTSTD_SIZE_REG     (0x1C)
-
-/*PDMA channel reg definition*/
-#define HAL_NB_PDMA_CH0_RING_BASE_REG          (0x20)
-#define HAL_NB_PDMA_CH0_RING_SIZE_REG          (0xA0)
-#define HAL_NB_PDMA_CH0_WORK_IDX_REG           (0xE0)
-#define HAL_NB_PDMA_CH0_POP_IDX_REG            (0x120)
-#define HAL_NB_PDMA_CH0_DESC_BURST_EN_REG      (0x160)
-#define HAL_NB_PDMA_CH0_WRR_WEIGHT_REG         (0x1A0)
-#define HAL_NB_PDMA_CH0_BYTE_ENDIAN_REG        (0x1E0)
-#define HAL_NB_PDMA_CH0_ENABLE_REG             (0x220)
-#define HAL_NB_PDMA_CH0_MODE_REG               (0x260)
-#define HAL_NB_PDMA_CH0_DESC_ARLOCK_REG        (0x2A0)
-#define HAL_NB_PDMA_CH0_DESC_ARCACHE_REG       (0x2E0)
-#define HAL_NB_PDMA_CH0_DESC_ARPROT_REG        (0x320)
-#define HAL_NB_PDMA_CH0_DESC_ARQOS_REG         (0x360)
-#define HAL_NB_PDMA_CH0_DESC_ARREGION_REG      (0x3A0)
-#define HAL_NB_PDMA_CH0_DESC_AWLOCK_REG        (0x3E0)
-#define HAL_NB_PDMA_CH0_DESC_AWCACHE_REG       (0x420)
-#define HAL_NB_PDMA_CH0_DESC_AWPROT_REG        (0x460)
-#define HAL_NB_PDMA_CH0_DESC_AWQOS_REG         (0x4A0)
-#define HAL_NB_PDMA_CH0_DESC_AWREGION_REG      (0x4E0)
-#define HAL_NB_PDMA_CH0_MST0_ARLOCK_REG        (0x520)
-#define HAL_NB_PDMA_CH0_MST0_ARCACHE_REG       (0x560)
-#define HAL_NB_PDMA_CH0_MST0_ARPROT_REG        (0x5A0)
-#define HAL_NB_PDMA_CH0_MST0_ARQOS_REG         (0x5E0)
-#define HAL_NB_PDMA_CH0_MST0_ARREGION_REG      (0x620)
-#define HAL_NB_PDMA_CH0_MST0_AWLOCK_REG        (0x660)
-#define HAL_NB_PDMA_CH0_MST0_AWCACHE_REG       (0x6A0)
-#define HAL_NB_PDMA_CH0_MST0_AWPROT_REG        (0x6E0)
-#define HAL_NB_PDMA_CH0_MST0_AWQOS_REG         (0x720)
-#define HAL_NB_PDMA_CH0_MST0_AWREGION_REG      (0x760)
-#define HAL_NB_PDMA_CH0_MST1_ARLOCK_REG        (0x7A0)
-#define HAL_NB_PDMA_CH0_MST1_ARCACHE_REG       (0x7E0)
-#define HAL_NB_PDMA_CH0_MST1_ARPROT_REG        (0x820)
-#define HAL_NB_PDMA_CH0_MST1_ARQOS_REG         (0x860)
-#define HAL_NB_PDMA_CH0_MST1_ARREGION_REG      (0x8A0)
-#define HAL_NB_PDMA_CH0_MST1_AWLOCK_REG        (0x8E0)
-#define HAL_NB_PDMA_CH0_MST1_AWCACHE_REG       (0x920)
-#define HAL_NB_PDMA_CH0_MST1_AWPROT_REG        (0x960)
-#define HAL_NB_PDMA_CH0_MST1_AWQOS_REG         (0x9A0)
-#define HAL_NB_PDMA_CH0_MST1_AWREGION_REG      (0x9E0)
-#define HAL_NB_PDMA_CH0_INT_MSG_REG            (0xA20)
-#define HAL_NB_PDMA_CH0_MSG_PER_DESC_REG       (0xA60)
-#define HAL_NB_PDMA_CH0_INT_DONE_ADDR_REG      (0xAA0)
-#define HAL_NB_PDMA_CH0_INT_ERROR_ADDR_REG     (0xB20)
-#define HAL_NB_PDMA_CH0_INT_MSG_DATA_REG       (0xBA0)
-#define HAL_NB_PDMA_CH0_ERROR_STATUS_REG       (0xBE0)
-#define HAL_NB_PDMA_CH0_FETCH_NEEDED_REG       (0xC20)
-#define HAL_NB_PDMA_CH0_CHANNEL_RDY_REG        (0xC60)
-#define HAL_NB_PDMA_CH0_PENDING_READS_REG      (0xCA0)
-#define HAL_NB_PDMA_CH0_PENDING_ACK_REG        (0xCE0)
-#define HAL_NB_PDMA_CH0_DESC_VALID_REG         (0xD20)
-#define HAL_NB_PDMA_CH0_RXFIFO_CTL_VALID_REG   (0xD60)
-#define HAL_NB_PDMA_CH0_RXFIFO_EOP_REG         (0xDA0)
-#define HAL_NB_PDMA_CH0_DESC_SADDR_REG         (0xDE0)
-#define HAL_NB_PDMA_CH0_DESC_DADDR_REG         (0xE60)
-#define HAL_NB_PDMA_CH0_DESC_SIZE_REG          (0xEE0)
-#define HAL_NB_PDMA_CH0_DESC_INT_REG           (0xF20)
-#define HAL_NB_PDMA_CH0_DESC_SOP_REG           (0xF60)
-#define HAL_NB_PDMA_CH0_DESC_EOP_REG           (0xFA0)
-#define HAL_NB_PDMA_CH0_DESC_ERR_REG           (0xFE0)
-#define HAL_NB_PDMA_CH0_DESC_FIFOSZ_REG        (0x1020)
-#define HAL_NB_PDMA_CH0_DESC_OFFSET_REG        (0x1060)
-#define HAL_NB_PDMA_CH0_DESC_SINC_REG          (0x10A0)
-#define HAL_NB_PDMA_CH0_DESC_DINC_REG          (0x10E0)
-#define HAL_NB_PDMA_CH0_DESC_XFER_SIZE_REG     (0x1120)
-
-#define HAL_NB_GET_PDMA_CH_RING_BASE_REG(__channel__)       (HAL_NB_PDMA_CH0_RING_BASE_REG + (0x8 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_RING_SIZE_REG(__channel__)       (HAL_NB_PDMA_CH0_RING_SIZE_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_WORK_IDX_REG(__channel__)   (HAL_NB_PDMA_CH0_WORK_IDX_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_POP_IDX_REG(__channel__)    (HAL_NB_PDMA_CH0_POP_IDX_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_BURST_EN_REG(__channel__)   (HAL_NB_PDMA_CH0_DESC_BURST_EN_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_WRR_WEIGHT_REG(__channel__)      (HAL_NB_PDMA_CH0_WRR_WEIGHT_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_BYTE_ENDIAN_REG(__channel__)     (HAL_NB_PDMA_CH0_BYTE_ENDIAN_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_ENABLE_REG(__channel__)          (HAL_NB_PDMA_CH0_ENABLE_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MODE_REG(__channel__)            (HAL_NB_PDMA_CH0_MODE_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_ARLOCK_REG(__channel__)     (HAL_NB_PDMA_CH0_DESC_ARLOCK_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_ARCACHE_REG(__channel__)    (HAL_NB_PDMA_CH0_DESC_ARCACHE_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_ARPROT_REG(__channel__)     (HAL_NB_PDMA_CH0_DESC_ARPROT_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_ARQOS_REG(__channel__)      (HAL_NB_PDMA_CH0_DESC_ARQOS_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_ARREGION_REG(__channel__)   (HAL_NB_PDMA_CH0_DESC_ARREGION_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_AWLOCK_REG(__channel__)     (HAL_NB_PDMA_CH0_DESC_AWLOCK_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_AWCACHE_REG(__channel__)    (HAL_NB_PDMA_CH0_DESC_AWCACHE_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_AWPROT_REG(__channel__)     (HAL_NB_PDMA_CH0_DESC_AWPROT_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_AWQOS_REG(__channel__)      (HAL_NB_PDMA_CH0_DESC_AWQOS_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_AWREGION_REG(__channel__)   (HAL_NB_PDMA_CH0_DESC_AWREGION_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST0_ARLOCK_REG(__channel__)     (HAL_NB_PDMA_CH0_MST0_ARLOCK_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST0_ARCACHE_REG(__channel__)    (HAL_NB_PDMA_CH0_MST0_ARCACHE_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST0_ARPROT_REG(__channel__)     (HAL_NB_PDMA_CH0_MST0_ARPROT_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST0_ARQOS_REG(__channel__)      (HAL_NB_PDMA_CH0_MST0_ARQOS_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST0_ARREGION_REG(__channel__)   (HAL_NB_PDMA_CH0_MST0_ARREGION_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST0_AWLOCK_REG(__channel__)     (HAL_NB_PDMA_CH0_MST0_AWLOCK_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST0_AWCACHE_REG(__channel__)    (HAL_NB_PDMA_CH0_MST0_AWCACHE_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST0_AWPROT_REG(__channel__)     (HAL_NB_PDMA_CH0_MST0_AWPROT_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST0_AWQOS_REG(__channel__)      (HAL_NB_PDMA_CH0_MST0_AWQOS_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST0_AWREGION_REG(__channel__)   (HAL_NB_PDMA_CH0_MST0_AWREGION_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST1_ARLOCK_REG(__channel__)     (HAL_NB_PDMA_CH0_MST1_ARLOCK_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST1_ARCACHE_REG(__channel__)    (HAL_NB_PDMA_CH0_MST1_ARCACHE_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST1_ARPROT_REG(__channel__)     (HAL_NB_PDMA_CH0_MST1_ARPROT_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST1_ARQOS_REG(__channel__)      (HAL_NB_PDMA_CH0_MST1_ARQOS_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST1_ARREGION_REG(__channel__)   (HAL_NB_PDMA_CH0_MST1_ARREGION_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST1_AWLOCK_REG(__channel__)     (HAL_NB_PDMA_CH0_MST1_AWLOCK_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST1_AWCACHE_REG(__channel__)    (HAL_NB_PDMA_CH0_MST1_AWCACHE_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST1_AWPROT_REG(__channel__)     (HAL_NB_PDMA_CH0_MST1_AWPROT_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST1_AWQOS_REG(__channel__)      (HAL_NB_PDMA_CH0_MST1_AWQOS_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MST1_AWREGION_REG(__channel__)   (HAL_NB_PDMA_CH0_MST1_AWREGION_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_INT_MSG_REG(__channel__)         (HAL_NB_PDMA_CH0_INT_MSG_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_MSG_PER_DESC_REG(__channel__)    (HAL_NB_PDMA_CH0_MSG_PER_DESC_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_INT_DONE_ADDR_REG(__channel__)   (HAL_NB_PDMA_CH0_INT_DONE_ADDR_REG + (0x8 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_INT_ERROR_ADDR_REG(__channel__)  (HAL_NB_PDMA_CH0_INT_ERROR_ADDR_REG + (0x8 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_INT_MSG_DATA_REG(__channel__)    (HAL_NB_PDMA_CH0_INT_MSG_DATA_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_ERROR_STATUS_REG(__channel__)    (HAL_NB_PDMA_CH0_ERROR_STATUS_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_FETCH_NEEDED_REG(__channel__)    (HAL_NB_PDMA_CH0_FETCH_NEEDED_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_CHANNEL_RDY_REG(__channel__)     (HAL_NB_PDMA_CH0_CHANNEL_RDY_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_PENDING_READS_REG(__channel__)   (HAL_NB_PDMA_CH0_PENDING_READS_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_PENDING_ACK_REG(__channel__)     (HAL_NB_PDMA_CH0_PENDING_ACK_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_VALID_REG(__channel__)      (HAL_NB_PDMA_CH0_DESC_VALID_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_RXFIFO_CTL_VALID_REG(__channel__)    (HAL_NB_PDMA_CH0_RXFIFO_CTL_VALID_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_RXFIFO_EOP_REG(__channel__)      (HAL_NB_PDMA_CH0_RXFIFO_EOP_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_SADDR_REG(__channel__)      (HAL_NB_PDMA_CH0_DESC_SADDR_REG + (0x8 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_DADDR_REG(__channel__)      (HAL_NB_PDMA_CH0_DESC_DADDR_REG + (0x8 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_SIZE_REG(__channel__)       (HAL_NB_PDMA_CH0_DESC_SIZE_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_INT_REG(__channel__)        (HAL_NB_PDMA_CH0_DESC_INT_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_SOP_REG(__channel__)        (HAL_NB_PDMA_CH0_DESC_SOP_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_EOP_REG(__channel__)        (HAL_NB_PDMA_CH0_DESC_EOP_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_ERR_REG(__channel__)        (HAL_NB_PDMA_CH0_DESC_ERR_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_FIFIOSZ_REG(__channel__)    (HAL_NB_PDMA_CH0_DESC_FIFOSZ_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_OFFSET_REG(__channel__)     (HAL_NB_PDMA_CH0_DESC_OFFSET_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_SINC_REG(__channel__)       (HAL_NB_PDMA_CH0_DESC_SINC_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_DINC_REG(__channel__)       (HAL_NB_PDMA_CH0_DESC_DINC_REG + (0x4 * (__channel__)))
-#define HAL_NB_GET_PDMA_CH_DESC_XFER_SIZE_REG(__channel__)  (HAL_NB_PDMA_CH0_DESC_XFER_SIZE_REG + (0x4 * (__channel__)))
+#define HAL_NB_PDMA_CFG_CH_ENABLE                           (0x0)
+#define HAL_NB_PDMA_CFG_DESC_LOCATION                       (0x4)
+#define HAL_NB_PDMA_CFG_DESC_ENDIAN                         (0x8)
+#define HAL_NB_PDMA_CFG_DATA_ENDIAN                         (0xC)
+#define HAL_NB_PDMA_CFG_AXI_PROTOCOL_INFO                   (0x10)
+#define HAL_NB_PDMA_CFG_AXI0_OUTSTD_SIZE                    (0x14)
+#define HAL_NB_PDMA_CFG_AXI1_OUTSTD_SIZE                    (0x18)
+#define HAL_NB_PDMA_CFG_AXI2_OUTSTD_SIZE                    (0x1C)
+#define HAL_NB_PDMA_CFG_FIFIO_PATH_SEL                      (0x20)
+#define HAL_NB_PDMA_CFG_CRC_EN                              (0x24)
+#define HAL_NB_PDMA_CFG_P2H_RX_FIFO_ALM_FULL                (0x28)
+#define HAL_NB_PDMA_CFG_P2H_TX_FIFO_ALM_FULL                (0x2C)
+#define HAL_NB_PDMA_CFG_P2E_RX_FIFO_ALM_FULL                (0x30)
+#define HAL_NB_PDMA_CFG_P2E_TX_FIFO_ALM_FULL                (0x34)
+#define HAL_NB_PDMA_CFG_FIFO_DEBUG_EN                       (0x38)
+#define HAL_NB_PDMA_DHS_P2H_RX_FIFO0_DATA                   (0x3C)
+#define HAL_NB_PDMA_DHS_P2H_RX_FIFO1_DATA                   (0x44)
+#define HAL_NB_PDMA_DHS_P2H_RX_FIFO2_DATA                   (0x4C)
+#define HAL_NB_PDMA_DHS_P2H_RX_FIFO3_DATA                   (0x54)
+#define HAL_NB_PDMA_DHS_P2H_TX_FIFO0_DATA                   (0x5C)
+#define HAL_NB_PDMA_DHS_P2H_TX_FIFO1_DATA                   (0x64)
+#define HAL_NB_PDMA_DHS_P2H_TX_FIFO2_DATA                   (0x6C)
+#define HAL_NB_PDMA_DHS_P2H_TX_FIFO3_DATA                   (0x74)
+#define HAL_NB_PDMA_DHS_P2E_RX_FIFO_DATA                    (0x7C)
+#define HAL_NB_PDMA_DHS_P2E_TX_FIFO_DATA                    (0x84)
+#define HAL_NB_PDMA_IRQ_PCIE                                (0x8C)
+#define HAL_NB_PDMA_IRQ_PCIE_MSK                            (0x90)
+#define HAL_NB_PDMA_IRQ_PCIE_TST                            (0x94)
+#define HAL_NB_PDMA_STA_INFO                                (0x98)
+#define HAL_NB_PDMA_CFG_SINGLE_PENDING                      (0x9C)
+#define HAL_NB_PDMA_CFG_RESET                               (0xA0)
+#define HAL_NB_PDMA_CFG_FSM_STATE                           (0xA4)
+#define HAL_NB_PDMA_CFG_CH0_RING_BASE                       (0xA8)
+#define HAL_NB_PDMA_CFG_CH0_RING_SIZE                       (0x158)
+#define HAL_NB_PDMA_CFG_CH0_DESC_WORK_IDX                   (0x1b0)
+#define HAL_NB_PDMA_CFG_CH0_DESC_POP_IDX                    (0x208)
+#define HAL_NB_PDMA_CFG_CH0_MODE                            (0x260)
 
 
+#define HAL_NB_GET_PDMA_CH_RING_BASE_REG(__channel__)       (HAL_NB_PDMA_CFG_CH0_RING_BASE + (0x8 * (__channel__)))
+#define HAL_NB_GET_PDMA_CH_RING_SIZE_REG(__channel__)       (HAL_NB_PDMA_CFG_CH0_RING_SIZE + (0x4 * (__channel__)))
+#define HAL_NB_GET_PDMA_CH_DESC_WORK_IDX_REG(__channel__)   (HAL_NB_PDMA_CFG_CH0_DESC_WORK_IDX + (0x4 * (__channel__)))
+#define HAL_NB_GET_PDMA_CH_DESC_POP_IDX_REG(__channel__)    (HAL_NB_PDMA_CFG_CH0_DESC_POP_IDX + (0x4 * (__channel__)))
+#define HAL_NB_GET_PDMA_CH_MODE(__channel__)                (HAL_NB_PDMA_CFG_CH0_MODE + (0x4 * (__channel__)))
 
-
-/*PDMA mem reg definition*/
-#define HAL_NB_PDMA_MEM_CTRL_REG                   (0x1160)
 #if defined(CLX_EN_LITTLE_ENDIAN)
 typedef union
 {
@@ -396,15 +271,17 @@ typedef struct
     UI32_T  int_profile                 :3;
     UI32_T  int_mm_mode                 :1;
     UI32_T  ptp_info                    :32;
-    UI32_T                              :3;
+    UI32_T                              :2;
     UI32_T  mac_learn_en                :1;
     UI32_T                              :32;
-    UI32_T                              :24;
+    UI32_T                              :22;
     UI32_T  tapping_push_t              :1;
     UI32_T  tapping_push_o              :1;
     UI32_T  src_vlan                    :12;
     UI32_T  pvlan_port_type             :2;
     UI32_T  igr_vid_pop_num             :3;
+    UI32_T  ecn                         :2;
+    UI32_T  ecn_enable                  :1;
     UI32_T  mpls_ctl                    :4;
     UI32_T  tnl_bd                      :9;
     UI32_T  tnl_idx                     :13;
@@ -466,15 +343,17 @@ typedef struct
     UI32_T  tnl_idx                     :13;
     UI32_T  tnl_bd                      :9;
     UI32_T  mpls_ctl                    :4;
+    UI32_T  ecn_enable                  :1;
+    UI32_T  ecn                         :2;
     UI32_T  igr_vid_pop_num             :3;
     UI32_T  pvlan_port_type             :2;
     UI32_T  src_vlan                    :12;
     UI32_T  tapping_push_o              :1;
     UI32_T  tapping_push_t              :1;
-    UI32_T                              :24;
+    UI32_T                              :22;
     UI32_T                              :32;
     UI32_T  mac_learn_en                :1;
-    UI32_T                              :3;
+    UI32_T                              :2;
     UI32_T  ptp_info                    :32;
     UI32_T  int_mm_mode                 :1;
     UI32_T  int_profile                 :3;
