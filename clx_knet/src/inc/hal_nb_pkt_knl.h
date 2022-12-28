@@ -199,9 +199,9 @@ typedef struct
 
     /*status[127:112]*/
     UI64_T  interrupt           :  1;
-    UI64_T  sop                 :  1;
-    UI64_T  eop                 :  1;
     UI64_T  err                 :  1;
+    UI64_T  eop                 :  1;
+    UI64_T  sop                 :  1;
     UI64_T  sinc                :  1;
     UI64_T  dinc                :  1;
     UI64_T  xfer_size           :  5;
