@@ -559,9 +559,10 @@ _osal_mdc_removePciCallback(
     OSAL_MDC_DEV_T      *ptr_dev = (OSAL_MDC_DEV_T *)pci_get_drvdata(pdev);
 
     iounmap(ptr_dev->ptr_mmio_virt_addr);
+    _osal_mdc_cb.dev_num--;
+    printk("release, _osal_mdc_cb.register_bar[%d]:%d\n",_osal_mdc_cb.dev_num,_osal_mdc_cb.register_bar[_osal_mdc_cb.dev_num]);
     pci_release_region(pdev, _osal_mdc_cb.register_bar[_osal_mdc_cb.dev_num]);
     pci_disable_device(pdev);
-    _osal_mdc_cb.dev_num--;
 }
 
 static struct pci_device_id _osal_mdc_id_table[] =
@@ -569,6 +570,9 @@ static struct pci_device_id _osal_mdc_id_table[] =
     {PCI_DEVICE(HAL_CLX_VENDOR_ID, PCI_ANY_ID)},
     {PCI_DEVICE(HAL_CL_VENDOR_ID, PCI_ANY_ID)},
     {PCI_DEVICE(HAL_CLX_EDK_VENDOR_ID, PCI_ANY_ID)},
+    {PCI_DEVICE(HAL_CLX_EDK_VENDOR_ID_2, PCI_ANY_ID)},
+    {PCI_DEVICE(HAL_CLX_EDK_VENDOR_ID_3, PCI_ANY_ID)},
+    
 };
 
 static struct pci_driver    _osal_mdc_pci_driver =

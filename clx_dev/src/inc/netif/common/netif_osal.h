@@ -68,7 +68,11 @@
 
 #include <clx_types.h>
 
-#define HAL_PKT_PDMA_ALIGN_ADDR(pdma_addr, align_sz)  (((pdma_addr / (align_sz + 1)) + 1) * align_sz)
+#if defined(CLX_EN_HOST_64_BIT_BIG_ENDIAN) || defined(CLX_EN_HOST_64_BIT_LITTLE_ENDIAN)
+#define HAL_PKT_PDMA_ALIGN_ADDR(pdma_addr, align_sz) (((pdma_addr) + (align_sz)) & 0xFFFFFFFFFFFFFFF0)
+#else
+#define HAL_PKT_PDMA_ALIGN_ADDR(pdma_addr, align_sz) (((pdma_addr) + (align_sz)) & 0xFFFFFFF0)
+#endif
 
 /* ----------------------------------------------------------------------------------- macro value */
 /* Thread */

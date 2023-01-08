@@ -69,6 +69,31 @@ static CLX_THREAD_ID_T                                              err_task_id;
 #define HAL_MT_NAMCHABARWA_PKT_RX_ENQUE_RETRY_SLEEP()               osal_sleepThread(1000) /* us */
 #define HAL_MT_NAMCHABARWA_PKT_ALLOC_MEM_RETRY_SLEEP()              osal_sleepThread(1000) /* us */
 
+#define HAL_MT_NAMCHABARWA_PKT_RCH_EVENT(__unit__, __channel__)    (&_hal_mt_namchabarwa_pkt_intr_vec[(__channel__)].intr_event)
+#define HAL_MT_NAMCHABARWA_PKT_TCH_EVENT(__unit__, __channel__)    (&_hal_mt_namchabarwa_pkt_intr_vec[4 + (__channel__)].intr_event)
+
+typedef struct
+{
+    UI32_T                              intr_reg;
+    CLX_SEMAPHORE_ID_T                  intr_event;
+    UI32_T                              intr_cnt;
+
+} HAL_MT_NAMCHABARWA_PKT_INTR_VEC_T;
+
+
+static HAL_MT_NAMCHABARWA_PKT_INTR_VEC_T           _hal_mt_namchabarwa_pkt_intr_vec[] =
+{
+    { /* 0: RX_CH0 */   1UL << 0, 0x0, 0 },
+    { /* 1: RX_CH1   */ 1UL << 1, 0x0, 0 },
+    { /* 2: RX_CH2   */ 1UL << 2, 0x0, 0 },
+    { /* 3: RX_CH3   */ 1UL << 3, 0x0, 0 },
+    { /* 4: TX_CH0   */ 1UL << 4, 0x0, 0 },
+    { /* 5: TX_CH1   */ 1UL << 5, 0x0, 0 },
+    { /* 6: TX_CH2   */ 1UL << 6, 0x0, 0 },
+    { /* 7: TX_CH3   */ 1UL << 7, 0x0, 0 },
+};
+
+
 typedef enum
 {
     HAL_MT_NAMCHABARWA_PKT_DEST_NETDEV = 0,
@@ -142,15 +167,15 @@ _hal_mt_namchabarwa_pdma_get_rx_ch_work_idx(
     osal_mdc_readPciReg(unit, HAL_MT_NAMCHABARWA_PDMA_GET_MMIO(HAL_MT_NAMCHABARWA_GET_PDMA_CH_DESC_WORK_IDX_REG(channel)), &work_idx, sizeof(UI32_T));
     return work_idx;
 }
-// static UI32_T
-// _hal_mt_namchabarwa_pdma_get_rx_ch_pop_idx(
-//     const UI32_T                    unit,
-//     const HAL_MT_NAMCHABARWA_PDMA_RX_CHANNEL_T  channel)
-// {
-//     UI32_T                          pop_idx;
-//     osal_mdc_readPciReg(unit, HAL_MT_NAMCHABARWA_PDMA_GET_MMIO(HAL_MT_NAMCHABARWA_GET_PDMA_CH_DESC_WORK_IDX_REG(channel)), &pop_idx, sizeof(UI32_T));
-//     return pop_idx;
-// }
+static UI32_T
+_hal_mt_namchabarwa_pdma_get_rx_ch_pop_idx(
+    const UI32_T                    unit,
+    const HAL_MT_NAMCHABARWA_PDMA_RX_CHANNEL_T  channel)
+{
+    UI32_T                          pop_idx;
+    osal_mdc_readPciReg(unit, HAL_MT_NAMCHABARWA_PDMA_GET_MMIO(HAL_MT_NAMCHABARWA_GET_PDMA_CH_DESC_POP_IDX_REG(channel)), &pop_idx, sizeof(UI32_T));
+    return pop_idx;
+}
 
 static CLX_ERROR_NO_T
 _hal_mt_namchabarwa_pdma_set_tx_ch_work_idx(
@@ -176,7 +201,7 @@ _hal_mt_namchabarwa_pdma_get_tx_ch_pop_idx(
     const HAL_MT_NAMCHABARWA_PDMA_TX_CHANNEL_T  channel)
 {
     UI32_T                          pop_idx;
-    osal_mdc_readPciReg(unit, HAL_MT_NAMCHABARWA_PDMA_GET_MMIO(HAL_MT_NAMCHABARWA_GET_PDMA_CH_DESC_WORK_IDX_REG(channel+4)), &pop_idx, sizeof(UI32_T));
+    osal_mdc_readPciReg(unit, HAL_MT_NAMCHABARWA_PDMA_GET_MMIO(HAL_MT_NAMCHABARWA_GET_PDMA_CH_DESC_POP_IDX_REG(channel+4)), &pop_idx, sizeof(UI32_T));
     return pop_idx;
 }
 
@@ -193,7 +218,7 @@ _hal_mt_namchabarwa_pkt_alloc_rx_payload_buf(
 
     void                            *ring_buf = NULL;
 
-    ring_buf = osal_dma_alloc(ptr_cb->buf_len + sizeof(HAL_MT_NAMCHABARWA_PP_HDR_T));
+    ring_buf = osal_dma_alloc(ptr_cb->buf_len + sizeof(HAL_MT_NAMCHABARWA_PP_HDR_T) + 12);
     if(ring_buf == NULL)
     {
         OSAL_PRINT(OSAL_DBG_ERR,"No memory!");
@@ -201,9 +226,9 @@ _hal_mt_namchabarwa_pkt_alloc_rx_payload_buf(
     }
     phy_addr = osal_dma_convertVirtToPhy(ring_buf);
 
-        ptr_desc->s_addr_hi = CLX_ADDR_64_HI(phy_addr);
-        ptr_desc->s_addr_lo = CLX_ADDR_64_LOW(phy_addr);
-        ptr_desc->size      = ptr_cb->buf_len;
+    ptr_desc->s_addr_hi = CLX_ADDR_64_HI(phy_addr);
+    ptr_desc->s_addr_lo = CLX_ADDR_64_LOW(phy_addr);
+    ptr_desc->size      = ptr_cb->buf_len;
 
     return (CLX_E_OK);
 }
@@ -459,6 +484,8 @@ _hal_mt_namchabarwa_pkt_handleTxDoneTask(
     osal_initRunThread();
     do
     {
+        /* receive Tx-Done-ISR */
+        osal_waitEvent(HAL_MT_NAMCHABARWA_PKT_TCH_EVENT(unit, channel));
         if (CLX_E_OK != osal_isRunThread())
         {
             OSAL_PRINT(OSAL_DBG_TX,
@@ -544,7 +571,7 @@ _hal_mt_namchabarwa_pkt_handleTxDoneTask(
 }
 
 
-
+UI32_T test_len = 255;
 static void
 _hal_mt_namchabarwa_pkt_rxEnQueue(
     const UI32_T                    unit,
@@ -559,19 +586,27 @@ _hal_mt_namchabarwa_pkt_rxEnQueue(
     HAL_MT_NAMCHABARWA_PP_HDR_T                 *ptr_pph;
 
 #if defined(PERF_EN_TEST)
+    UI32_T len = 0, total_len = 0;
+    static CLX_THREAD_ID_T perf_task;
+    if(test_len==255)
+    {
+        test_len++;
+        osal_createThread("perf_test", 64*1024, 80, perf_test_thread,
+                        (void *)((CLX_HUGE_T)test_len), &perf_task);
+    }
     /* To verify kernel Rx performance */
     if (CLX_E_OK == perf_rxTest())
     {
         while (NULL != ptr_sw_gpd)
         {
-            len += ptr_sw_gpd->desc.size
+            len += ptr_sw_gpd->desc.size;
             total_len += len;
 
             /* next */
             ptr_sw_gpd = ptr_sw_gpd->ptr_next;
         }
-        perf_rxCallback(total_len - sizeof(HAL_MT_NAMCHABARWA_PP_HDR_T));
-        _hal_mt_namchabarwa_pkt_freeRxGpdList(unit, ptr_sw_first_gpd, TRUE);
+        perf_rxCallback(total_len - sizeof(HAL_MT_NAMCHABARWA_PP_HDR_T) - 12);
+        _hal_mt_namchabarwa_pkt_freeRxGpdList(unit, ptr_sw_first_gpd, FALSE);
         return ;
     }
 #endif
@@ -636,13 +671,19 @@ _hal_mt_namchabarwa_pkt_handleRxDoneTask(
     BOOL_T                          last = FALSE;
     HAL_MT_NAMCHABARWA_PKT_RX_SW_DESC_T         *ptr_sw_desc = NULL;
     HAL_MT_NAMCHABARWA_PKT_RX_SW_DESC_T         *ptr_sw_first_desc = NULL;
-    UI32_T                          work_idx = 0;
+    UI32_T                          work_idx = 0, pop_idx = 0;
     UI32_T                          loop_cnt = 0;
     unsigned long                   timeout  = 0;
 
+    pop_idx = _hal_mt_namchabarwa_pdma_get_rx_ch_pop_idx(unit,channel);
+    work_idx = (pop_idx + ptr_rx_pdma->ring_size - 1) % ptr_rx_pdma->ring_size;
+    _hal_mt_namchabarwa_pdma_set_rx_ch_work_idx(unit, channel, work_idx);
     osal_initRunThread();
     do
     {
+        /* receive Rx-Done-ISR */
+        osal_waitEvent(HAL_MT_NAMCHABARWA_PKT_RCH_EVENT(unit, channel));
+
         if (CLX_E_OK != osal_isRunThread())
         {
             OSAL_PRINT(OSAL_DBG_RX,
@@ -652,11 +693,10 @@ _hal_mt_namchabarwa_pkt_handleRxDoneTask(
         /* protect Rx PDMA */
         osal_takeSemaphore(&ptr_rx_pdma->sema, CLX_SEMAPHORE_WAIT_FOREVER);
 
-        loop_cnt = ptr_rx_pdma->ring_size;
-        work_idx = _hal_mt_namchabarwa_pdma_get_rx_ch_work_idx(unit,channel);
-        while (loop_cnt > 0)
+        // while (loop_cnt > 0)
+        for(loop_cnt = 0; loop_cnt < ptr_rx_pdma->ring_size; loop_cnt++)
         {
-            ptr_desc = HAL_MT_NAMCHABARWA_PKT_GET_RX_GPD_PTR(unit, channel, work_idx);
+            ptr_desc = HAL_MT_NAMCHABARWA_PKT_GET_RX_GPD_PTR(unit, channel, pop_idx);
             osal_dma_invalidateCache((void *)ptr_desc, sizeof(HAL_MT_NAMCHABARWA_PDMA_DESC_T));
 
             if(0 == ptr_desc->interrupt)
@@ -703,18 +743,18 @@ _hal_mt_namchabarwa_pkt_handleRxDoneTask(
                 }
             }
 
-            /* If hwo=SW and ch=0, enque SW-GPD and signal rxTask */
+            /* If eop==1, enque SW-GPD and signal rxTask */
             if (1 == ptr_desc->eop)
             {
                 last = TRUE;
             }
 
             /* If hwo=SW and ch=*, re-alloc-buf and resume */
-            while (CLX_E_OK != _hal_mt_namchabarwa_pkt_alloc_rx_payload_buf(unit, channel, work_idx))
-            {
-                ptr_rx_cb->cnt.no_memory++;
-                HAL_MT_NAMCHABARWA_PKT_ALLOC_MEM_RETRY_SLEEP();
-            }
+            // while (CLX_E_OK != _hal_mt_namchabarwa_pkt_alloc_rx_payload_buf(unit, channel, pop_idx))
+            // {
+            //     ptr_rx_cb->cnt.no_memory++;
+            //     HAL_MT_NAMCHABARWA_PKT_ALLOC_MEM_RETRY_SLEEP();
+            // }
             ptr_desc->interrupt = 0;
             ptr_desc->eop = 0;
             osal_dma_flushCache((void *)ptr_desc, sizeof(HAL_MT_NAMCHABARWA_PDMA_DESC_T));
@@ -732,11 +772,12 @@ _hal_mt_namchabarwa_pkt_handleRxDoneTask(
                 last = FALSE;
             }
 
-            work_idx ++;
-            work_idx %= ptr_rx_pdma->ring_size;
-            loop_cnt--;
+            pop_idx ++;
+            pop_idx %= ptr_rx_pdma->ring_size;
         }
+        work_idx = (pop_idx + ptr_rx_pdma->ring_size - 1) % ptr_rx_pdma->ring_size;
         _hal_mt_namchabarwa_pdma_set_rx_ch_work_idx(unit,channel,work_idx);
+        osal_giveSemaphore(&ptr_rx_pdma->sema);
 
         /* prevent this task from executing too long */
         if (!(time_before(jiffies, timeout)))
@@ -801,7 +842,7 @@ hal_mt_namchabarwa_pkt_initTask(
 
 static CLX_ERROR_NO_T
 hal_mt_namchabarwa_pkt_deinit_task(
-    const UI32_T            unit,
+    const UI32_T                unit,
     void                        *ptr_data)
 {
     HAL_MT_NAMCHABARWA_PKT_TX_CB_T     *ptr_tx_cb = HAL_MT_NAMCHABARWA_PKT_GET_TX_CB_PTR(unit);
@@ -821,7 +862,7 @@ hal_mt_namchabarwa_pkt_deinit_task(
     for (channel = 0; channel < HAL_MT_NAMCHABARWA_PDMA_RX_CHANNEL_LAST; channel++)
     {
         osal_stopThread(&ptr_rx_cb->isr_task_id[channel]);
-        // osal_triggerEvent(HAL_MT_NAMCHABARWA_PKT_RCH_EVENT(unit, channel));
+        osal_triggerEvent(HAL_MT_NAMCHABARWA_PKT_RCH_EVENT(unit, channel));
         osal_destroyThread(&ptr_rx_cb->isr_task_id[channel]);
     }
 
@@ -829,14 +870,14 @@ hal_mt_namchabarwa_pkt_deinit_task(
     for (channel = 0; channel < HAL_MT_NAMCHABARWA_PDMA_TX_CHANNEL_LAST; channel++)
     {
         osal_stopThread(&ptr_tx_cb->isr_task_id[channel]);
-        // osal_triggerEvent(HAL_MT_NAMCHABARWA_PKT_TCH_EVENT(unit, channel));
+        osal_triggerEvent(HAL_MT_NAMCHABARWA_PKT_TCH_EVENT(unit, channel));
         osal_destroyThread(&ptr_tx_cb->isr_task_id[channel]);
     }
 
     /* Destroy handleErrorTask */
     osal_stopThread(&err_task_id);
     // osal_triggerEvent(HAL_MT_NAMCHABARWA_PKT_ERR_EVENT(unit));
-    osal_destroyThread(&err_task_id);
+    // osal_destroyThread(&err_task_id);
 
     return (CLX_E_OK);
 }
@@ -1004,6 +1045,7 @@ _hal_mt_namchabarwa_pkt_set_rx_ring_base(
 {
     CLX_ERROR_NO_T                      rc = CLX_E_OK;
 
+    OSAL_PRINT(OSAL_DBG_RX|OSAL_DBG_DEBUG,"channel:%d, ring_base:0x%llx, ring_size:%d\n", channel, ring_base_phy, ring_size);
     rc = osal_mdc_writePciReg(unit,
             HAL_MT_NAMCHABARWA_PDMA_GET_MMIO(HAL_MT_NAMCHABARWA_GET_PDMA_CH_RING_BASE_REG(channel)),
             (void *)&ring_base_phy, sizeof(CLX_ADDR_T));
@@ -1038,7 +1080,7 @@ _hal_mt_namchabarwa_pkt_init_rx_pdma_ring(
         osal_dma_flushCache((void *)ptr_desc, sizeof(HAL_MT_NAMCHABARWA_PDMA_DESC_T));
     }
 
-    phy_addr = osal_dma_convertVirtToPhy(ptr_rx_pdma->ring_base);
+    phy_addr = osal_dma_convertVirtToPhy(ptr_rx_pdma->ring_base_align);
     rc = _hal_mt_namchabarwa_pkt_set_rx_ring_base(unit, channel, phy_addr, ptr_rx_pdma->ring_size);
 
     return (rc);
@@ -1186,7 +1228,7 @@ _hal_mt_namchabarwa_pkt_init_tx_pdma_ring(
         osal_dma_flushCache((void *)ptr_desc, sizeof(HAL_MT_NAMCHABARWA_PDMA_DESC_T));
     }
 
-    phy_addr = osal_dma_convertVirtToPhy(ptr_tx_pdma->ring_base);
+    phy_addr = osal_dma_convertVirtToPhy(ptr_tx_pdma->ring_base_align);
     rc = _hal_mt_namchabarwa_pkt_set_tx_ring_base(unit, channel, phy_addr, ptr_tx_pdma->ring_size);
 
     return (rc);
@@ -1290,12 +1332,12 @@ exit:
 
 static CLX_ERROR_NO_T
 _hal_mt_namchabarwa_pkt_init_tx_drv(
-    const UI32_T                unit,
-    HAL_PKT_IOCTL_DRV_COOKIE_T        *ptr_data)
+    const UI32_T                        unit,
+    HAL_PKT_IOCTL_DRV_COOKIE_T          *ptr_data)
 {
-    CLX_ERROR_NO_T              rc = CLX_E_OK;
-    HAL_MT_NAMCHABARWA_PKT_TX_CB_T          *ptr_tx_cb = HAL_MT_NAMCHABARWA_PKT_GET_TX_CB_PTR(unit);
-    UI32_T                      channel = 0;
+    CLX_ERROR_NO_T                      rc = CLX_E_OK;
+    HAL_MT_NAMCHABARWA_PKT_TX_CB_T      *ptr_tx_cb = HAL_MT_NAMCHABARWA_PKT_GET_TX_CB_PTR(unit);
+    UI32_T                              channel = 0;
 
     osal_memset(ptr_tx_cb, 0x0, sizeof(HAL_MT_NAMCHABARWA_PKT_TX_CB_T));
 
@@ -1311,6 +1353,8 @@ _hal_mt_namchabarwa_pkt_init_tx_drv(
         ptr_tx_cb->sw_queue.len    = ptr_data->tx_que.len;
         ptr_tx_cb->sw_queue.weight = ptr_data->tx_que.weight;
 
+        OSAL_PRINT(OSAL_DBG_DEBUG,"tx_que len:%d, tx_que weight:%d\n", ptr_data->tx_que.len, ptr_data->tx_que.weight);
+
         osal_createSemaphore("TX_QUE", CLX_SEMAPHORE_BINARY, &ptr_tx_cb->sw_queue.sema);
         osal_que_create(&ptr_tx_cb->sw_queue.que_id, ptr_tx_cb->sw_queue.len);
     }
@@ -1319,14 +1363,16 @@ _hal_mt_namchabarwa_pkt_init_tx_drv(
         /* Disable TX done ISR. */
         for (channel = 0; channel < HAL_MT_NAMCHABARWA_PDMA_TX_CHANNEL_LAST; channel++)
         {
-            // _hal_mt_namchabarwa_pkt_disableIntr(unit, HAL_MT_NAMCHABARWA_PKT_TCH_REG(unit, channel));
+            /*
+             * TODO
+             */
         }
     }
 
     /* Init Tx PDMA */
     for (channel = 0; ((channel < HAL_MT_NAMCHABARWA_PDMA_TX_CHANNEL_LAST) && (CLX_E_OK == rc)); channel++)
     {
-        rc = _hal_mt_namchabarwa_pkt_init_tx_pdma(unit, channel,ptr_data->ring_size);
+        rc = _hal_mt_namchabarwa_pkt_init_tx_pdma(unit, channel, ptr_data->ring_size);
     }
 
     return (rc);
@@ -1338,16 +1384,154 @@ static CLX_ERROR_NO_T hal_mt_namchabarwa_init_drv(
 {
     CLX_ERROR_NO_T          rc = CLX_E_OK;
     HAL_PKT_IOCTL_DRV_COOKIE_T    *ptr_cookie=(HAL_PKT_IOCTL_DRV_COOKIE_T*)ptr_data;
+    OSAL_PRINT(OSAL_DBG_DEBUG,"ring_size:%d\n", ptr_cookie->ring_size);
 
-    rc = _hal_mt_namchabarwa_pkt_init_tx_drv(unit,ptr_cookie);
+    rc = _hal_mt_namchabarwa_pkt_init_tx_drv(unit, ptr_cookie);
     if (CLX_E_OK != rc)
     {
         OSAL_PRINT(OSAL_DBG_ERR,"init tx drv failed");
         return rc;
     }
-    rc = _hal_mt_namchabarwa_pkt_init_rx_drv(unit,ptr_cookie);
+    rc = _hal_mt_namchabarwa_pkt_init_rx_drv(unit, ptr_cookie);
 
     return rc;
+}
+
+CLX_ERROR_NO_T
+hal_mt_namchabarwa_pkt_getRxIntrCnt(
+    const UI32_T            unit,
+    const UI32_T            channel,
+    UI32_T                  *ptr_intr_cnt)
+{
+    return (CLX_E_OK);
+}
+
+
+static CLX_ERROR_NO_T
+_hal_mt_namchabarwa_pkt_dispatcher(
+    void                        *ptr_cookie)
+{
+    UI32_T                      unit = (UI32_T)((CLX_HUGE_T)ptr_cookie);
+    HAL_PKT_DRV_CB_T            *ptr_cb = HAL_MT_NAMCHABARWA_PKT_GET_DRV_CB_PTR(unit);
+    CLX_IRQ_FLAGS_T             irq_flag = 0;
+
+    UI32_T                      idx = 0, vec = sizeof(_hal_mt_namchabarwa_pkt_intr_vec) / sizeof(HAL_MT_NAMCHABARWA_PKT_INTR_VEC_T);
+    UI32_T                      intr_mask = ptr_cb->intr_bitmap;
+    UI32_T                      top_intr_mask = 0;
+    UI32_T                      intr_status = 0;
+
+    /* MASK, READ and CLEAR PKT IRQs */
+    osal_takeIsrLock(&ptr_cb->intr_lock, &irq_flag);
+    osal_mdc_readPciReg (unit, HAL_MT_NAMCHABARWA_PDMA_GET_MMIO(HAL_MT_NAMCHABARWA_PDMA_IRQ_PCIE),     &intr_status, sizeof(UI32_T));
+    intr_status = intr_status & intr_mask;
+    osal_mdc_writePciReg(unit, HAL_MT_NAMCHABARWA_PDMA_GET_MMIO(HAL_MT_NAMCHABARWA_PDMA_IRQ_PCIE),      &intr_status, sizeof(UI32_T));
+    osal_giveIsrLock(&ptr_cb->intr_lock, &irq_flag);
+
+    /* Module thread handle the interrupt */
+    if (0x0 != intr_status)
+    {
+        OSAL_PRINT(OSAL_DBG_INTR, "pdma intr status:0x%x",intr_status);
+        for (idx = 0; idx < vec; idx++)
+        {
+            if (_hal_mt_namchabarwa_pkt_intr_vec[idx].intr_reg & intr_status)
+            {
+                osal_triggerEvent(&_hal_mt_namchabarwa_pkt_intr_vec[idx].intr_event);
+                _hal_mt_namchabarwa_pkt_intr_vec[idx].intr_cnt++;
+            }
+        }
+
+        /* unmask top */
+        osal_mdc_writePciReg(unit, HAL_MT_NAMCHABARWA_PCX_INTR_TOP,      &top_intr_mask, sizeof(UI32_T));
+    }
+
+
+    return (CLX_E_OK);
+}
+/* FUNCTION NAME: _hal_mt_namchabarwa_pkt_init_irq
+ * PURPOSE:
+ *      To initialize the control block of Drv.
+ * INPUT:
+ *      unit            -- The unit ID
+ * OUTPUT:
+ *      None
+ * RETURN:
+ *      CLX_E_OK        -- Successfully initialize the control block.
+ * NOTES:
+ *      None
+ */
+static CLX_ERROR_NO_T
+_hal_mt_namchabarwa_pkt_init_irq(
+    const UI32_T                unit,
+    void                        *ptr_data)
+{
+    CLX_ERROR_NO_T              rc = CLX_E_OK;
+    HAL_PKT_DRV_CB_T            *ptr_cb = HAL_MT_NAMCHABARWA_PKT_GET_DRV_CB_PTR(unit);
+    UI32_T                      idx = 0, vec = sizeof(_hal_mt_namchabarwa_pkt_intr_vec) / sizeof(HAL_MT_NAMCHABARWA_PKT_INTR_VEC_T);
+    UI32_T                      channel = 0;
+    UI32_T                      mask_intr = 0;
+    
+    for (idx = 0; idx < vec; idx++)
+    {
+        osal_createEvent("ISR_EVENT", &_hal_mt_namchabarwa_pkt_intr_vec[idx].intr_event);
+        ptr_cb->intr_bitmap |= (_hal_mt_namchabarwa_pkt_intr_vec[idx].intr_reg);
+    }
+
+    /* mask pkt dma channels intr */
+    osal_mdc_readPciReg(unit,
+        HAL_MT_NAMCHABARWA_PDMA_GET_MMIO(HAL_MT_NAMCHABARWA_PDMA_IRQ_PCIE_MSK),
+        &mask_intr, sizeof(UI32_T));
+    HAL_NETIF_SET_BIT(mask_intr, ptr_cb->intr_bitmap);
+    osal_mdc_writePciReg(unit,
+        HAL_MT_NAMCHABARWA_PDMA_GET_MMIO(HAL_MT_NAMCHABARWA_PDMA_IRQ_PCIE_MSK),
+        &mask_intr, sizeof(UI32_T));
+
+    /* clear pkt dma channels intr*/
+    osal_mdc_writePciReg(unit,
+        HAL_MT_NAMCHABARWA_PDMA_GET_MMIO(HAL_MT_NAMCHABARWA_PDMA_IRQ_PCIE),
+        &ptr_cb->intr_bitmap, sizeof(UI32_T));
+
+    for (channel = 0; channel < HAL_MT_NAMCHABARWA_PDMA_TX_CHANNEL_LAST; channel++)
+    {
+        _hal_mt_namchabarwa_disable_pdma_tx_channel(unit, channel);
+    }
+
+    for (channel = 0; channel < HAL_MT_NAMCHABARWA_PDMA_RX_CHANNEL_LAST; channel++)
+    {
+        _hal_mt_namchabarwa_disable_pdma_rx_channel(unit, channel);
+    }
+
+    /* Register PKT interrupt functions */
+    osal_createIsrLock("ISR_LOCK", &ptr_cb->intr_lock);
+    osal_mdc_registerIsr(unit, _hal_mt_namchabarwa_pkt_dispatcher, (void *)((CLX_HUGE_T)unit));
+
+    HAL_NETIF_SET_BIT(mask_intr, ptr_cb->intr_bitmap);
+    /*unmask pkt dma channels intr*/
+    osal_mdc_writePciReg(unit,
+        HAL_MT_NAMCHABARWA_PDMA_GET_MMIO(HAL_MT_NAMCHABARWA_PDMA_IRQ_PCIE_MSK),
+        &mask_intr, sizeof(UI32_T));
+
+    return (rc);
+}
+
+static CLX_ERROR_NO_T
+_hal_mt_namchabarwa_pkt_deinit_irq(
+    const UI32_T                unit,
+    void                        *ptr_data)
+{
+    HAL_PKT_DRV_CB_T            *ptr_cb = HAL_MT_NAMCHABARWA_PKT_GET_DRV_CB_PTR(unit);
+    UI32_T                      idx = 0, vec = sizeof(_hal_mt_namchabarwa_pkt_intr_vec) / sizeof(HAL_MT_NAMCHABARWA_PKT_INTR_VEC_T);
+
+    for (idx = 0; idx < vec; idx++)
+    {
+        osal_destroyEvent(&_hal_mt_namchabarwa_pkt_intr_vec[idx].intr_event);
+        ptr_cb->intr_bitmap &= ~(_hal_mt_namchabarwa_pkt_intr_vec[idx].intr_reg);
+    }
+
+    /* Unregister PKT interrupt functions */
+    osal_mdc_registerIsr(unit, NULL, NULL);
+    osal_destroyIsrLock(&ptr_cb->intr_lock);
+
+    return (CLX_E_OK);
 }
 
 static CLX_ERROR_NO_T
@@ -2093,8 +2277,8 @@ void hal_mt_namchabarwa_register_drv_cb(
     ptr_cb->pkt_rx_start = _hal_mt_namchabarwa_pkt_rx_start;
     ptr_cb->pkt_deinit_drv = hal_mt_namchabarwa_pkt_deinit_pkt_drv;
     ptr_cb->pkt_init_drv = hal_mt_namchabarwa_init_drv;
-    ptr_cb->pkt_init_irq = NULL;
-    ptr_cb->pkt_deinit_irq = NULL;
+    ptr_cb->pkt_init_irq = _hal_mt_namchabarwa_pkt_init_irq;
+    ptr_cb->pkt_deinit_irq = _hal_mt_namchabarwa_pkt_deinit_irq;
 
     ptr_cb->net_dev_tx = _hal_mt_namchabarwa_pkt_net_dev_tx;
     ptr_cb->pkt_dev_tx = _hal_mt_namchabarwa_pkt_dev_tx;

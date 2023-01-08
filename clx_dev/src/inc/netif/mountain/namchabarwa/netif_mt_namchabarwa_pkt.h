@@ -4,7 +4,7 @@
 #include <hal/hal_netif.h>
 
 /*PDMA reg definition*/
-#define HAL_MT_NAMCHABARWA_PDMA_BASE_ADDR                               (0xE0040000)
+#define HAL_MT_NAMCHABARWA_PDMA_BASE_ADDR                               (0x51C1400)
 #define HAL_MT_NAMCHABARWA_PDMA_GET_MMIO(__offset__)                    (HAL_MT_NAMCHABARWA_PDMA_BASE_ADDR + (__offset__))
 
 #define HAL_MT_NAMCHABARWA_PDMA_CFG_CH_ENABLE                           (0x0)
@@ -40,10 +40,10 @@
 #define HAL_MT_NAMCHABARWA_PDMA_CFG_RESET                               (0xA0)
 #define HAL_MT_NAMCHABARWA_PDMA_CFG_FSM_STATE                           (0xA4)
 #define HAL_MT_NAMCHABARWA_PDMA_CFG_CH0_RING_BASE                       (0xA8)
-#define HAL_MT_NAMCHABARWA_PDMA_CFG_CH0_RING_SIZE                       (0x148)
-#define HAL_MT_NAMCHABARWA_PDMA_CFG_CH0_DESC_WORK_IDX                   (0x198)
-#define HAL_MT_NAMCHABARWA_PDMA_CFG_CH0_DESC_POP_IDX                    (0x1E8)
-#define HAL_MT_NAMCHABARWA_PDMA_CFG_CH0_MODE                            (0x238)
+#define HAL_MT_NAMCHABARWA_PDMA_CFG_CH0_RING_SIZE                       (0x158)
+#define HAL_MT_NAMCHABARWA_PDMA_CFG_CH0_DESC_WORK_IDX                   (0x1B0)
+#define HAL_MT_NAMCHABARWA_PDMA_CFG_CH0_DESC_POP_IDX                    (0x208)
+#define HAL_MT_NAMCHABARWA_PDMA_CFG_CH0_MODE                            (0x260)
 
 
 #define HAL_MT_NAMCHABARWA_GET_PDMA_CH_RING_BASE_REG(__channel__)       (HAL_MT_NAMCHABARWA_PDMA_CFG_CH0_RING_BASE + (0x8 * (__channel__)))
@@ -52,6 +52,7 @@
 #define HAL_MT_NAMCHABARWA_GET_PDMA_CH_DESC_POP_IDX_REG(__channel__)    (HAL_MT_NAMCHABARWA_PDMA_CFG_CH0_DESC_POP_IDX + (0x4 * (__channel__)))
 #define HAL_MT_NAMCHABARWA_GET_PDMA_CH_MODE(__channel__)                (HAL_MT_NAMCHABARWA_PDMA_CFG_CH0_MODE + (0x4 * (__channel__)))
 
+#define HAL_MT_NAMCHABARWA_PCX_INTR_TOP                                 (0x51c00bc)
 
 typedef enum {
     MT_NAMCHABARWA_PCX_DMA_HOSTMEM_TO_HOSTMEM       = 0,
@@ -336,13 +337,13 @@ typedef struct
     UI32_T                          free_desc_num;
 
     UI32_T                          ring_size;
-    HAL_MT_NAMCHABARWA_PDMA_DESC_T              *ring_base;
-    HAL_MT_NAMCHABARWA_PDMA_DESC_T              *ring_base_align;
+    HAL_MT_NAMCHABARWA_PDMA_DESC_T  *ring_base;
+    HAL_MT_NAMCHABARWA_PDMA_DESC_T  *ring_base_align;
     BOOL_T                          err_flag;
 
     /* ASYNC */
-    HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_T              **pptr_sw_gpd_ring;
-    HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_T              **pptr_sw_gpd_bulk; /* temporary store packets to be enque */
+    HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_T  **pptr_sw_gpd_ring;
+    HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_T  **pptr_sw_gpd_bulk; /* temporary store packets to be enque */
 
     /* SYNC_INTR */
     CLX_SEMAPHORE_ID_T              sync_intr_sema;
@@ -391,13 +392,13 @@ typedef struct
 
 typedef struct
 {
-    HAL_PKT_TX_WAIT_T                     wait_mode;
-    HAL_MT_NAMCHABARWA_PKT_TX_PDMA_T                  pdma[HAL_MT_NAMCHABARWA_PDMA_TX_CHANNEL_LAST];
-    HAL_MT_NAMCHABARWA_PKT_TX_CNT_T                   cnt;
+    HAL_PKT_TX_WAIT_T                   wait_mode;
+    HAL_MT_NAMCHABARWA_PKT_TX_PDMA_T    pdma[HAL_MT_NAMCHABARWA_PDMA_TX_CHANNEL_LAST];
+    HAL_MT_NAMCHABARWA_PKT_TX_CNT_T     cnt;
 
     /* handleTxDoneTask */
-    CLX_THREAD_ID_T                       isr_task_id[HAL_MT_NAMCHABARWA_PDMA_TX_CHANNEL_LAST];
-    HAL_MT_NAMCHABARWA_PKT_ISR_COOKIE_T               isr_task_cookie[HAL_MT_NAMCHABARWA_PDMA_TX_CHANNEL_LAST];
+    CLX_THREAD_ID_T                     isr_task_id[HAL_MT_NAMCHABARWA_PDMA_TX_CHANNEL_LAST];
+    HAL_MT_NAMCHABARWA_PKT_ISR_COOKIE_T isr_task_cookie[HAL_MT_NAMCHABARWA_PDMA_TX_CHANNEL_LAST];
 
     /* txTask */
     HAL_PKT_SW_QUEUE_T                    sw_queue;
@@ -501,4 +502,10 @@ typedef struct
 
 void hal_mt_namchabarwa_register_drv_cb(
     const UI32_T unit);
+
+CLX_ERROR_NO_T
+hal_mt_namchabarwa_pkt_getRxIntrCnt(
+    const UI32_T            unit,
+    const UI32_T            channel,
+    UI32_T                  *ptr_intr_cnt);
 #endif /* end of __CLX_MT_NAMCHABARWA_H__ */

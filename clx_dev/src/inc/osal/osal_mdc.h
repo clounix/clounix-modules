@@ -58,6 +58,7 @@
 #define OSAL_DBG_PROFILE         (0x1UL << 8)
 #define OSAL_DBG_COMMON          (0x1UL << 9)
 #define OSAL_DBG_NETLINK         (0x1UL << 10)
+#define OSAL_DBG_INTR            (0x1UL << 11)
 
 #ifdef __KERNEL__
 #define OSAL_PRINT(__flag__, fmt, ...)      do                                  \
