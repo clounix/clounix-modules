@@ -99,6 +99,8 @@
 
 //EDK
 #define HAL_CLX_EDK_VENDOR_ID       (0x1556)
+#define HAL_CLX_EDK_VENDOR_ID_2       (0x1f83)
+#define HAL_CLX_EDK_VENDOR_ID_3       (0x831f)
 #define HAL_DEVICE_ID_EDK1100       (0x1100)
 #define HAL_DEVICE_ID_EDK1111       (0x1111)
 

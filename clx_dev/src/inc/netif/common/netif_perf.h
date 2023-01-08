@@ -23,7 +23,7 @@
 #ifndef NETIF_PERF_H
 #define NETIF_PERF_H
 
-/* #define PERF_EN_TEST */
+#define PERF_EN_TEST
 
 /* FUNCTION NAME: perf_rxCallback
  * PURPOSE:
@@ -72,11 +72,8 @@ perf_rxTest(
  * NOTES:
  *      None
  */
-CLX_ERROR_NO_T
-perf_test(
-    UI32_T                      len,
-    UI32_T                      tx_channel,
-    UI32_T                      rx_channel,
-    BOOL_T                      test_skb);
+void
+perf_test_thread(
+    void                    *ptr_argv);
 
 #endif /* end of NETIF_PERF_H */

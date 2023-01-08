@@ -25,6 +25,7 @@
 #include <netif/common/netif_perf.h>
 
 #include <hal/hal_dev.h>
+#include <netif/netif_knl.h>
 
 #if defined (CLX_EN_DAWN)
 #include <netif/light/dawn/netif_lt_dawn_pkt.h>
@@ -34,15 +35,20 @@
 #include <netif/light/lightning/netif_lt_lightning_pkt.h>
 #endif
 
-/* -------------------------------------------------------------- switch */
-#define PERF_TX_CHANNEL_NUM_MAX     (HAL_LT_LIGHTNING_PKT_TX_CHANNEL_LAST)
-#define PERF_RX_CHANNEL_NUM_MAX     (HAL_LT_LIGHTNING_PKT_RX_CHANNEL_LAST)
+#if defined (CLX_EN_NAMCHABARWA)
+#include <netif/mountain/namchabarwa/netif_mt_namchabarwa_pkt.h>
+#endif
 
+/* -------------------------------------------------------------- switch */
+#define PERF_TX_CHANNEL_NUM_MAX     (HAL_MT_NAMCHABARWA_PDMA_TX_CHANNEL_LAST)
+#define PERF_RX_CHANNEL_NUM_MAX     (HAL_MT_NAMCHABARWA_PDMA_RX_CHANNEL_LAST)
+
+#define NETIF_KNL_DEVICE_IS_NAMCHABARWA(__dev_id__)                (HAL_DEVICE_ID_EDK1100 == (__dev_id__ & 0xFF00))
 #define NETIF_KNL_DEVICE_IS_LIGHTNING(__dev_id__)         (HAL_DEVICE_ID_CL8500 == (__dev_id__ & 0xFF00))
 #define NETIF_KNL_DEVICE_IS_DAWN(__dev_id__)      (HAL_DEVICE_ID_CL8300 == (__dev_id__ & 0xFF00))
 
-static UI32_T perf_tx_channel_num = HAL_LT_LIGHTNING_PKT_TX_CHANNEL_LAST; 
-static UI32_T perf_rx_channel_num = HAL_LT_LIGHTNING_PKT_RX_CHANNEL_LAST; 
+static UI32_T perf_tx_channel_num = HAL_MT_NAMCHABARWA_PDMA_TX_CHANNEL_LAST; 
+static UI32_T perf_rx_channel_num = HAL_MT_NAMCHABARWA_PDMA_RX_CHANNEL_LAST; 
 
 extern struct pci_dev   *_ptr_ext_pci_dev;
 static UI16_T dev_id = 0; 
@@ -51,8 +57,8 @@ static UI16_T dev_id = 0;
 #define PERF_TX_PERF_NUM            (1000000) /* max: 4294967 */
 #define PERF_TX_PERF_MESG           (50000)
 #define PERF_TX_PERF_FAIL           (10000)
-#define PERF_RX_PERF_NUM            (1000000) /* max: 4294967 */
-#define PERF_RX_PERF_MESG           (50000)
+#define PERF_RX_PERF_NUM            (10000) /* max: 4294967 */
+#define PERF_RX_PERF_MESG           (500)
 #define PERF_RX_PERF_FAIL           (10000)
 
 /* -------------------------------------------------------------- callbacks for chip dependency */
@@ -160,11 +166,19 @@ hal_perf_pkt_getTxIntrCnt(
 
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id))
     {
+#if defined (CLX_EN_DAWN)
         ret = hal_lt_dawn_pkt_getTxIntrCnt(unit,channel,ptr_intr_cnt);
+#endif
     }
     else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id))
     {
+#if defined (CLX_EN_LIGHTNING)
         ret = hal_lt_lightning_pkt_getTxIntrCnt(unit,channel,ptr_intr_cnt);
+#endif
+    }
+    else if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(dev_id))
+    {
+        // ret = hal_mt_namchabarwa_pkt_getTxIntrCnt(unit,channel,ptr_intr_cnt);
     }
     else
     {
@@ -183,11 +197,19 @@ hal_perf_pkt_getNetDev(
     
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id))
     {
+#if defined (CLX_EN_DAWN)
         ret = hal_lt_dawn_pkt_getNetDev(unit,port,pptr_net_dev);
+#endif
     }
     else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id))
     {
+#if defined (CLX_EN_LIGHTNING)
         ret = hal_lt_lightning_pkt_getNetDev(unit,port,pptr_net_dev);
+#endif
+    }
+    else if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(dev_id))
+    {
+        // ret = hal_mt_namchabarwa_pkt_getNetDev(unit,port,pptr_net_dev);
     }
     else
     {
@@ -208,14 +230,22 @@ hal_perf_pkt_prepareGpd(
 
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id))
     {
+#if defined (CLX_EN_DAWN)
         ret = hal_lt_dawn_pkt_prepareGpd(unit,phy_addr,len,port,(HAL_LT_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd);
+#endif
     }
     else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id))
     {
+#if defined (CLX_EN_LIGHTNING)
         struct sk_buff *ptr_skb = NULL;
         ptr_skb = osal_skb_alloc(len);
         ptr_skb->len = len;
         ret = hal_lt_lightning_pkt_prepareGpd(unit,phy_addr,ptr_skb,port,(HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd);
+#endif
+    }
+    else if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(dev_id))
+    {
+
     }
     else
     {
@@ -233,11 +263,19 @@ hal_perf_pkt_sendGpd(
     CLX_ERROR_NO_T ret;
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id))
     {
+#if defined (CLX_EN_DAWN)
         ret = hal_lt_dawn_pkt_sendGpd(unit,channel,(HAL_LT_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd);
+#endif
     }
     else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id))
     {
+#if defined (CLX_EN_LIGHTNING)
         ret = hal_lt_lightning_pkt_sendGpd(unit,channel,(HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd);
+#endif
+    }
+    else if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(dev_id))
+    {
+
     }
     else
     {
@@ -256,11 +294,19 @@ hal_perf_pkt_getRxIntrCnt(
     
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id))
     {
+#if defined (CLX_EN_DAWN)
         ret = hal_lt_dawn_pkt_getRxIntrCnt(unit,channel,ptr_intr_cnt);
+#endif
     }
     else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id))
     {
+#if defined (CLX_EN_LIGHTNING)
         ret = hal_lt_lightning_pkt_getRxIntrCnt(unit,channel,ptr_intr_cnt);
+#endif
+    }
+    else if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(dev_id))
+    {
+        ret = hal_mt_namchabarwa_pkt_getRxIntrCnt(unit,channel,ptr_intr_cnt);
     }
     else
     {
@@ -329,8 +375,8 @@ _perf_showPerf(
     osal_printf("packet number           : %d\n", num);
     osal_printf("time duration    (ns)   : %lld\n", duration);
     osal_printf("------------------------------------\n");
-    osal_printf("avg. packet rate (pps)  : %d\n", (num*1000 ) / (duration / 1000000));
-    osal_printf("avg. throughput  (Mbps) : %d\n", ((num/1000 ) * len * 8) / (duration / 1000000));
+    osal_printf("avg. packet rate (pps)  : %d\n", (5188*num*1000 ) / (duration / 1000000));
+    osal_printf("avg. throughput  (Mbps) : %d\n", ((5188*num/1000 ) * len * 8) / (duration / 1000000));
     osal_printf("interrupt number        : %d\n", intr);
 
     if (PERF_DIR_TX == dir)
@@ -439,6 +485,7 @@ _perf_txTask(
 
                 if (NETIF_KNL_DEVICE_IS_DAWN(dev_id))
                 {
+#if defined (CLX_EN_DAWN)
                     ptr_sw_gpd = (HAL_LT_DAWN_PKT_TX_SW_GPD_T*)osal_alloc(sizeof(HAL_LT_DAWN_PKT_TX_SW_GPD_T));
                     if (NULL == ptr_sw_gpd)
                     {
@@ -453,10 +500,11 @@ _perf_txTask(
                     ((HAL_LT_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->gpd_num    = 1;
                     ((HAL_LT_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->ptr_next   = NULL;
                     ((HAL_LT_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->channel    = channel;
-
+#endif
                 }
                 else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id))
                 {
+#if defined (CLX_EN_LIGHTNING)
                     ptr_sw_gpd = (void*)osal_alloc(sizeof(HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T));
                     if (NULL == ptr_sw_gpd)
                     {
@@ -471,6 +519,11 @@ _perf_txTask(
                     ((HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->gpd_num    = 1;
                     ((HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->ptr_next   = NULL;
                     ((HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd)->channel    = channel;
+#endif
+                }
+                else if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(dev_id))
+                {
+
                 }
 
                 /* prepare gpd */
@@ -624,7 +677,7 @@ CLX_ERROR_NO_T
 perf_rxCallback(
     const UI32_T                len)
 {
-    //printk("1111  %d\n",len);
+    // printk("1111  %d\n",len);
     /* check length */
     if (len == _perf_rx_perf_cb.target_len)
     {
@@ -723,13 +776,22 @@ perf_test(
     pci_read_config_word(_ptr_ext_pci_dev, PCI_DEVICE_ID, &dev_id);
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id))
     {
+#if defined (CLX_EN_DAWN)
         perf_tx_channel_num = HAL_LT_DAWN_PKT_TX_CHANNEL_LAST; 
         perf_rx_channel_num = HAL_LT_DAWN_PKT_RX_CHANNEL_LAST; 
+#endif
     }
     else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id))
     {
+#if defined (CLX_EN_LIGHTNING)
         perf_tx_channel_num = HAL_LT_LIGHTNING_PKT_TX_CHANNEL_LAST; 
         perf_rx_channel_num = HAL_LT_LIGHTNING_PKT_RX_CHANNEL_LAST; 
+#endif
+    }
+    else if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(dev_id))
+    {
+        perf_tx_channel_num = HAL_MT_NAMCHABARWA_PDMA_TX_CHANNEL_LAST; 
+        perf_rx_channel_num = HAL_MT_NAMCHABARWA_PDMA_RX_CHANNEL_LAST; 
     }
     else
     {
@@ -823,3 +885,11 @@ perf_test(
     return (rc);
 }
 
+
+void
+perf_test_thread(
+    void                    *ptr_argv)
+{
+    UI32_T len = (UI32_T)((CLX_HUGE_T)ptr_argv);
+    perf_test(len, 0, 1, FALSE);
+}

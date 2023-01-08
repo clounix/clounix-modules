@@ -24,8 +24,9 @@ CP                  := cp
 MV                  := mv
 TEST_PATH           := test -d
 
-#KVERSION            ?= $(shell uname -r)
-KVERSION            ?= 4.19.0-12-2-amd64
+KVERSION            ?= $(shell uname -r)
+#KVERSION            ?= 5.10.0-6-amd64
+#KVERSION            ?= 4.19.0-12-2-amd64
 OS_PATH             := /lib/modules/$(KVERSION)/build
 SRC_PATH            := $(KERNEL_MODULE)/src
 INC_PATH            := $(SRC_PATH)/inc
@@ -38,8 +39,9 @@ EXTRA_CFLAGS += -I$(INC_PATH)
 EXTRA_CFLAGS += -I$(INC_PATH)/netif
 EXTRA_CFLAGS += -DCLX_EN_NETIF
 EXTRA_CFLAGS += -DNETIF_EN_NETLINK
-EXTRA_CFLAGS += -DCLX_EN_DAWN
-EXTRA_CFLAGS += -DCLX_EN_LIGHTNING
+# EXTRA_CFLAGS += -DCLX_EN_DAWN
+# EXTRA_CFLAGS += -DCLX_EN_LIGHTNING
+EXTRA_CFLAGS += -DCLX_EN_NAMCHABARWA
 EXTRA_CFLAGS += -DCLX_EN_DEBUG
 EXTRA_CFLAGS += -DCLX_LINUX_USER_MODE
 EXTRA_CFLAGS += -DCLX_EN_LITTLE_ENDIAN
@@ -64,7 +66,7 @@ DEV_OBJS_TOTAL             += ./src/clx_netif/mountain/namchabarwa/netif_mt_namc
 # DEV_OBJS_TOTAL             += ./src/clx_netif/netif_lt_dawn_pkt.o
 DEV_OBJS_TOTAL             += ./src/clx_netif/common/netif_nl.o
 DEV_OBJS_TOTAL             += ./src/clx_netif/common/netif_osal.o
-# DEV_OBJS_TOTAL             += ./src/clx_netif/common/netif_perf.o
+DEV_OBJS_TOTAL             += ./src/clx_netif/common/netif_perf.o
 
 
 obj-m                      := $(DEV_MODULE_NAME).o
