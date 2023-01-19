@@ -97,7 +97,10 @@ typedef struct
 } OSAL_MDC_USER_MODE_DMA_NODE_T;
 #endif
 
-#define NETIF_KNL_DEVICE_IS_NAMCHABARWA(__dev_id__)                (HAL_DEVICE_ID_EDK1100 == (__dev_id__ & 0xFF00))
+#define NETIF_KNL_DEVICE_IS_NAMCHABARWA(__dev_id__)          \
+        ((HAL_DEVICE_ID_EDK8600 == (__dev_id__ & 0xFF00)) || \
+         (HAL_DEVICE_ID_EDK1100 == (__dev_id__ & 0xFF00)))
+
 #define NETIF_KNL_DEVICE_IS_LIGHTNING(__dev_id__)         (HAL_DEVICE_ID_CL8500 == (__dev_id__ & 0xFF00))
 #define NETIF_KNL_DEVICE_IS_DAWN(__dev_id__)              (HAL_DEVICE_ID_CL8300 == (__dev_id__ & 0xFF00))
 #endif
