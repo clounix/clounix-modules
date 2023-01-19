@@ -1808,6 +1808,7 @@ CLX_DEVICE_E clx_get_device_type(
     switch (_osal_mdc_ioctl_dev[unit].id.device & 0xFF00)
     {
         case HAL_DEVICE_ID_EDK1100:
+        case HAL_DEVICE_ID_EDK8600:
             device = CLX_DEVICE_NAMCHABARWA;
             break;
         case HAL_DEVICE_ID_CL8500:

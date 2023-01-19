@@ -24,7 +24,7 @@
 #include <netif/common/netif_osal.h>
 #include <netif/common/netif_perf.h>
 
-#include <hal/hal_dev.h>
+#include <clx_knl.h>
 #include <netif/netif_knl.h>
 
 #if defined (CLX_EN_DAWN)
@@ -42,10 +42,6 @@
 /* -------------------------------------------------------------- switch */
 #define PERF_TX_CHANNEL_NUM_MAX     (HAL_MT_NAMCHABARWA_PDMA_TX_CHANNEL_LAST)
 #define PERF_RX_CHANNEL_NUM_MAX     (HAL_MT_NAMCHABARWA_PDMA_RX_CHANNEL_LAST)
-
-#define NETIF_KNL_DEVICE_IS_NAMCHABARWA(__dev_id__)                (HAL_DEVICE_ID_EDK1100 == (__dev_id__ & 0xFF00))
-#define NETIF_KNL_DEVICE_IS_LIGHTNING(__dev_id__)         (HAL_DEVICE_ID_CL8500 == (__dev_id__ & 0xFF00))
-#define NETIF_KNL_DEVICE_IS_DAWN(__dev_id__)      (HAL_DEVICE_ID_CL8300 == (__dev_id__ & 0xFF00))
 
 static UI32_T perf_tx_channel_num = HAL_MT_NAMCHABARWA_PDMA_TX_CHANNEL_LAST; 
 static UI32_T perf_rx_channel_num = HAL_MT_NAMCHABARWA_PDMA_RX_CHANNEL_LAST; 
