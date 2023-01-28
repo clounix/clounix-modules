@@ -11,7 +11,9 @@
 
 #include <osal/osal_mdc.h>
 
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+#include <linux/ethtool.h>
+#endif
 
 static HAL_PKT_NETIF_PROFILE_T                          *_ptr_hal_pkt_profile_entry[HAL_PKT_NET_PROFILE_NUM_MAX] = {0};
 HAL_PKT_NETIF_PORT_DB_T                                 _hal_pkt_port_db[CLX_CFG_MAXIMUM_CHIPS_PER_SYSTEM][HAL_PKT_MAX_PORT_NUM];
@@ -1015,10 +1017,10 @@ hal_pkt_setPortAttr(
         switch(speed)
         {
             case CLX_PORT_SPEED_1G:
-                ptr_priv->speed = SPEED_1000;
+                ptr_priv->speed = 1000;
                 break;
             case CLX_PORT_SPEED_10G:
-                ptr_priv->speed = SPEED_10000;
+                ptr_priv->speed = 10000;
                 break;
             case CLX_PORT_SPEED_25G:
                 ptr_priv->speed = 25000;
