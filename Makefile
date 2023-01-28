@@ -24,7 +24,7 @@ all:
 	make -C $(OS_PATH) src=$(shell pwd)/ M=$(BUILD_OUTPUT_DIR)/ modules EXTRA_CFLAGS="$(EXTRA_CFLAGS)"
 
 clean:
-	make -C $(OS_PATH) M=$(BUILD_OUTPUT_DIR) clean
+	#make -C $(OS_PATH) M=$(BUILD_OUTPUT_DIR) clean
 	rm -rf $(BUILD_OUTPUT_DIR)
 
 .PHONY: all clean
