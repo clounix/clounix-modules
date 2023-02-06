@@ -35,18 +35,25 @@
 #define HAL_NB_PDMA_BASE_ADDR                               (0x51c1400)
 #define HAL_NB_PDMA_GET_MMIO(__offset__)                    (HAL_NB_PDMA_BASE_ADDR + (__offset__))
 
-#define HAL_NB_PDMA_CFG_CH_ENABLE                           (0x0)
-#define HAL_NB_PDMA_CFG_DESC_LOCATION                       (0x4)
-#define HAL_NB_PDMA_CFG_DESC_ENDIAN                         (0x8)
-#define HAL_NB_PDMA_CFG_DATA_ENDIAN                         (0xC)
-#define HAL_NB_PDMA_CFG_FIFIO_PATH_SEL                      (0x40)
-#define HAL_NB_PDMA_CFG_CRC_EN                              (0x44)
-#define HAL_NB_PDMA_CFG_FIFO_DEBUG_EN                       (0x60)
-#define HAL_NB_PDMA_CFG_CH0_RING_BASE                       (0xC4)
-#define HAL_NB_PDMA_CFG_CH0_RING_SIZE                       (0x164)
-#define HAL_NB_PDMA_CFG_CH0_DESC_WORK_IDX                   (0x1b4)
-#define HAL_NB_PDMA_CFG_CH0_DESC_POP_IDX                    (0x204)
-#define HAL_NB_PDMA_CFG_CH0_MODE                            (0x254)
+#define HAL_NB_PDMA_CFG_CH_ENABLE                           (0x4)
+#define HAL_NB_PDMA_CFG_DESC_LOCATION                       (0x8)
+#define HAL_NB_PDMA_CFG_DESC_ENDIAN                         (0xC)
+#define HAL_NB_PDMA_CFG_DATA_ENDIAN                         (0x10)
+#define HAL_NB_PDMA_CFG_FIFIO_PATH_SEL                      (0x44)
+#define HAL_NB_PDMA_CFG_CRC_EN                              (0x48)
+#define HAL_NB_PDMA_CFG_P2H_RX_FIFO_ALM_FULL                (0x4C)
+#define HAL_NB_PDMA_CFG_P2H_TX_FIFO_ALM_FULL                (0x50)
+#define HAL_NB_PDMA_CFG_P2E_RX_FIFO_ALM_FULL                (0x54)
+#define HAL_NB_PDMA_CFG_P2E_TX_FIFO_ALM_FULL                (0x58)
+#define HAL_NB_PDMA_CFG_FIFO_DEBUG_EN                       (0x64)
+#define HAL_NB_PDMA_CFG_CH0_RING_BASE                       (0xC8)
+#define HAL_NB_PDMA_CFG_CH0_RING_SIZE                       (0x168)
+#define HAL_NB_PDMA_CFG_CH0_DESC_WORK_IDX                   (0x1B8)
+#define HAL_NB_PDMA_CFG_CH0_DESC_POP_IDX                    (0x208)
+#define HAL_NB_PDMA_CFG_CH0_MODE                            (0x258)
+#define HAL_NB_PDMA_CFG_GLOBAL_RESET                        (0x358)
+#define HAL_NB_PDMA_CFG_GLOBAL_RESET                        (0x35C)
+#define HAL_NB_PDMA_CFG_GLOBAL_RESTART                      (0x360)
 
 
 #define HAL_NB_GET_PDMA_CH_RING_BASE_REG(__channel__)       (HAL_NB_PDMA_CFG_CH0_RING_BASE + (0x8 * (__channel__)))
@@ -54,78 +61,6 @@
 #define HAL_NB_GET_PDMA_CH_DESC_WORK_IDX_REG(__channel__)   (HAL_NB_PDMA_CFG_CH0_DESC_WORK_IDX + (0x4 * (__channel__)))
 #define HAL_NB_GET_PDMA_CH_DESC_POP_IDX_REG(__channel__)    (HAL_NB_PDMA_CFG_CH0_DESC_POP_IDX + (0x4 * (__channel__)))
 #define HAL_NB_GET_PDMA_CH_MODE(__channel__)                (HAL_NB_PDMA_CFG_CH0_MODE + (0x4 * (__channel__)))
-
-#if defined(CLX_EN_LITTLE_ENDIAN)
-typedef union
-{
-    UI32_T reg;
-    struct  {
-        UI32_T   ecc_capture_double_only     :1;
-        UI32_T   ecc_correct_en              :1;
-        UI32_T   ecc_detect_en               :1;
-        UI32_T   ecc_hw_gen_en               :1;
-        UI32_T                               :28;
-    } field;
-} PDMA_MEM_CTRL_T;
-#elif defined(CLX_EN_BIG_ENDIAN)
-typedef union
-{
-    UI32_T reg;
-    struct  {
-        UI32_T                               :28;
-        UI32_T   ecc_capture_double_only     :1;
-        UI32_T   ecc_correct_en              :1;
-        UI32_T   ecc_detect_en               :1;
-        UI32_T   ecc_hw_gen_en               :1;
-    } field;
-} PDMA_MEM_CTRL_T;
-#else
-#error "Host PDMA endian is not defined\n"
-#endif
-
-#define HAL_NB_PDMA_MEM_ECC_ERR_CAPTURE_EN_REG      (0x1164)
-typedef union
-{
-    UI32_T reg;
-    struct  {
-        UI32_T   mem_ecc_err_capture_en      :8;
-        UI32_T                               :24;
-    } field;
-} PDMA_MEM_ECC_CAPTURE_CTRL_T;
-
-#define HAL_NB_IRQ_PDMA_MEM_ECC_REG                 (0x1168)
-#define HAL_NB_IRQ_PDMA_MEM_ECC_MSK_REG             (0x116C)
-#define HAL_NB_IRQ_PDMA_MEM_ECC_TST_REG             (0x1170)
-typedef union
-{
-    UI32_T reg;
-    struct  {
-        UI32_T   ecc_single_err_int          :1;
-        UI32_T   ecc_double_err_int          :1;
-        UI32_T                               :30;
-    } field;
-} PDMA_MEM_ECC_IRQ_T;
-
-#define HAL_NB_IRQ_PDMA_MEM_SERR_REG                (0x1174)
-#define HAL_NB_IRQ_PDMA_MEM_SERR_MSK_REG            (0x1178)
-#define HAL_NB_IRQ_PDMA_MEM_SERR_TST_REG            (0x117C)
-typedef union
-{
-    UI32_T reg;
-    struct  {
-        UI32_T   rx_fifo_mem_ecc_err_single_set      :4;
-        UI32_T   tx_fifo_mem_ecc_err_single_set      :4;
-        UI32_T                                       :24;
-    } field;
-} PDMA_MEM_SERR_IRQ_T;
-
-#define HAL_NB_IRQ_PDMA_MEM_DERR_REG                (0x1180)
-#define HAL_NB_IRQ_PDMA_MEM_DERR_MSK_REG            (0x1184)
-#define HAL_NB_IRQ_PDMA_MEM_DERR_TST_REG            (0x1188)
-#define HAL_NB_SYM_PDMA_MEM_ECC_ERR_INFO_REG        (0x118C)
-#define HAL_NB_CP_PAR_ERR_ADDR_REG                  (0x1194)
-#define HAL_NB_CP_PAR_ERR_INJ_REG                   (0x1198)
-
 
 
 /*enable pdma channel*/
