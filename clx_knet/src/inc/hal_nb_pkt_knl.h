@@ -52,8 +52,8 @@
 #define HAL_NB_PDMA_CFG_CH0_DESC_POP_IDX                    (0x208)
 #define HAL_NB_PDMA_CFG_CH0_MODE                            (0x258)
 #define HAL_NB_PDMA_CFG_GLOBAL_RESET                        (0x358)
-#define HAL_NB_PDMA_CFG_GLOBAL_RESET                        (0x35C)
-#define HAL_NB_PDMA_CFG_GLOBAL_RESTART                      (0x360)
+#define HAL_NB_PDMA_CFG_CHANNEL_RESET                       (0x35C)
+#define HAL_NB_PDMA_CFG_CHANNEL_RESTART                     (0x360)
 
 
 #define HAL_NB_GET_PDMA_CH_RING_BASE_REG(__channel__)       (HAL_NB_PDMA_CFG_CH0_RING_BASE + (0x8 * (__channel__)))
