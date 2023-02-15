@@ -2030,22 +2030,21 @@ _osal_mdc_ioctl_freeSysDmaMemCallback(
     OSAL_MDC_USER_MODE_DMA_NODE_T   *ptr_next_node_data = NULL;
 
 
-    OSAL_PRINT(OSAL_DBG_DEBUG,"free:phy_addr:0x%llx,phy_size:0x%llx\n",ptr_ioctl_data->phy_addr,ptr_ioctl_data->size);
     list_for_each_entry_safe(ptr_curr_node_data, ptr_next_node_data,
                              &_osal_mdc_sysDmaList[_osal_mdc_sysCurDmaListIdx], list)
     {
         if (ptr_curr_node_data->phy_addr == ptr_ioctl_data->phy_addr)
         {
+            dma_free_coherent(ptr_dma_info->ptr_dma_dev, ptr_curr_node_data->size,
+                    phys_to_virt(ptr_ioctl_data->phy_addr), ptr_ioctl_data->phy_addr);
+            OSAL_PRINT(OSAL_DBG_DEBUG,"free:phy_addr:0x%llx,phy_size:0x%llx\n",ptr_ioctl_data->phy_addr,ptr_curr_node_data->size);
             list_del(&(ptr_curr_node_data->list));
             kfree(ptr_curr_node_data);
-            
-            dma_free_coherent(ptr_dma_info->ptr_dma_dev, ptr_ioctl_data->size,
-                    phys_to_virt(ptr_ioctl_data->phy_addr), ptr_ioctl_data->phy_addr);
             break;
         }
         else
         {
-            OSAL_PRINT(OSAL_DBG_DEBUG,"NOT FOUND in DMA_NODE!!! free:phy_addr:0x%llx,phy_size:0x%llx\n",ptr_ioctl_data->phy_addr,ptr_ioctl_data->size);
+            OSAL_PRINT(OSAL_DBG_DEBUG,"NOT FOUND in DMA_NODE!!! free:phy_addr:0x%llx\n",ptr_ioctl_data->phy_addr);
         }
     }
 
