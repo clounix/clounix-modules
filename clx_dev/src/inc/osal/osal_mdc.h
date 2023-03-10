@@ -157,9 +157,11 @@ typedef struct
 {
 #if defined(CLX_EN_DMA_RESERVED)
     CLX_ADDR_T              rsrv_dma_phy_addr;  /* information of reserved memory */
+    CLX_ADDR_T              rsrv_bus_addr;           /* information of bus addr for dma */
     CLX_ADDR_T              rsrv_dma_size;
 #else
     CLX_ADDR_T              phy_addr;           /* information of system memory */
+    CLX_ADDR_T              bus_addr;           /* information of bus addr for dma */
     CLX_ADDR_T              size;
 #endif
 } OSAL_MDC_IOCTL_DMA_DATA_T;

@@ -91,6 +91,7 @@ typedef struct
 typedef struct
 {
     CLX_ADDR_T                  phy_addr;
+    CLX_ADDR_T                  bus_addr;
     UI32_T                      size;
     struct list_head            list;
 
