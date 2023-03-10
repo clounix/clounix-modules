@@ -1216,16 +1216,17 @@ _osal_mdc_allocSysDmaMem(
     OSAL_MDC_DMA_INFO_T     *ptr_dma_info,
     const UI32_T            size)
 {
-    dma_addr_t              phy_addr;
+    dma_addr_t              bus_addr;
     OSAL_MDC_DMA_NODE_T     *ptr_node_data;
     void                    *ptr_virt_addr = NULL;
     CLX_ERROR_NO_T          rc = CLX_E_OK;
 
-    ptr_virt_addr = dma_alloc_coherent(ptr_dma_info->ptr_dma_dev, size, &phy_addr, GFP_ATOMIC);
+    ptr_virt_addr = dma_alloc_coherent(ptr_dma_info->ptr_dma_dev, size, &bus_addr, GFP_ATOMIC);
     if (NULL != ptr_virt_addr)
     {
         ptr_node_data = kmalloc(sizeof(OSAL_MDC_DMA_NODE_T), GFP_KERNEL);
-        ptr_node_data->phy_addr      = (CLX_ADDR_T)phy_addr;
+        ptr_node_data->bus_addr      = (CLX_ADDR_T)bus_addr;
+        ptr_node_data->phy_addr      = virt_to_phys(ptr_virt_addr);
         ptr_node_data->ptr_virt_addr = ptr_virt_addr;
         ptr_node_data->size          = size;
 
@@ -1234,7 +1235,7 @@ _osal_mdc_allocSysDmaMem(
         {
             kfree(ptr_node_data);
             dma_free_coherent(ptr_dma_info->ptr_dma_dev, size,
-                              ptr_virt_addr, phy_addr);
+                              ptr_virt_addr, bus_addr);
             ptr_virt_addr = NULL;
         }
     }
@@ -1254,7 +1255,7 @@ _osal_mdc_freeSysDmaMem(
     if (CLX_E_OK == rc)
     {
         dma_free_coherent(ptr_dma_info->ptr_dma_dev, ptr_node_data->size,
-                          ptr_virt_addr, ptr_node_data->phy_addr);
+                          ptr_virt_addr, ptr_node_data->bus_addr);
 
         osal_mdc_list_deleteByData(ptr_dma_info->ptr_dma_list, ptr_node_data);
         kfree(ptr_node_data);
@@ -1964,7 +1965,7 @@ _osal_mdc_clearSysDmaList(
         dma_free_coherent(ptr_dma_info->ptr_dma_dev,
                           ptr_curr_node_data->size, 
                           phys_to_virt(ptr_curr_node_data->phy_addr),
-                          ptr_curr_node_data->phy_addr);
+                          ptr_curr_node_data->bus_addr);
         kfree(ptr_curr_node_data);
     }
 
@@ -1992,28 +1993,32 @@ _osal_mdc_ioctl_allocSysDmaMemCallback(
 #error "The DMA address of OS is not 64bit. Please disable CLX_EN_64BIT_ADDR in SDK."
 #endif
 
+
 	ptr_ioctl_data->size = round_up(ptr_ioctl_data->size, PAGE_SIZE);    
     virt_addr = dma_alloc_coherent(ptr_dma_info->ptr_dma_dev, ptr_ioctl_data->size,
-                                   (dma_addr_t *)&ptr_ioctl_data->phy_addr, GFP_KERNEL | GFP_DMA32);
+                                   (dma_addr_t *)&ptr_ioctl_data->bus_addr, GFP_KERNEL | GFP_DMA32);
     if (virt_addr == NULL)
     {
+        OSAL_PRINT(OSAL_DBG_ERR,"bus_addr:0x%llx,phy_addr:0x%llx,phy_size:0x%llx\n",ptr_ioctl_data->bus_addr,ptr_ioctl_data->phy_addr,ptr_ioctl_data->size);
         return (CLX_E_NO_MEMORY);
     }
 
     ptr_node_data = kmalloc(sizeof(OSAL_MDC_USER_MODE_DMA_NODE_T), GFP_KERNEL);
     if (NULL == ptr_node_data)
     {
+        OSAL_PRINT(OSAL_DBG_ERR,"bus_addr:0x%llx,phy_addr:0x%llx,phy_size:0x%llx\n",ptr_ioctl_data->bus_addr,ptr_ioctl_data->phy_addr,ptr_ioctl_data->size);
         dma_free_coherent(ptr_dma_info->ptr_dma_dev, ptr_ioctl_data->size,
-                          virt_addr, ptr_ioctl_data->phy_addr);
+                          virt_addr, ptr_ioctl_data->bus_addr);
         return (CLX_E_NO_MEMORY);
     }
 
     memset(ptr_node_data, 0, sizeof(OSAL_MDC_USER_MODE_DMA_NODE_T));
-    ptr_node_data->phy_addr      = ptr_ioctl_data->phy_addr;
+    ptr_node_data->bus_addr      = ptr_ioctl_data->bus_addr;
     ptr_node_data->size          = ptr_ioctl_data->size;
-    list_add(&(ptr_node_data->list), &_osal_mdc_sysDmaList[_osal_mdc_sysCurDmaListIdx]);
     ptr_ioctl_data->phy_addr     = virt_to_phys(virt_addr);
-    OSAL_PRINT(OSAL_DBG_DEBUG,"phy_addr:0x%llx,phy_size:0x%x\n",ptr_node_data->phy_addr,ptr_node_data->size);
+    ptr_node_data->bus_addr      = ptr_ioctl_data->phy_addr;
+    list_add(&(ptr_node_data->list), &_osal_mdc_sysDmaList[_osal_mdc_sysCurDmaListIdx]);
+    OSAL_PRINT(OSAL_DBG_DEBUG,"bus_addr:0x%llx,phy_addr:0x%llx,phy_size:0x%x\n",ptr_node_data->bus_addr, ptr_node_data->phy_addr,ptr_node_data->size);
 
     return (CLX_E_OK);
 }
@@ -2029,15 +2034,25 @@ _osal_mdc_ioctl_freeSysDmaMemCallback(
     OSAL_MDC_USER_MODE_DMA_NODE_T   *ptr_curr_node_data = NULL;
     OSAL_MDC_USER_MODE_DMA_NODE_T   *ptr_next_node_data = NULL;
 
+    OSAL_PRINT(OSAL_DBG_ERR,"free pram:bus_addr:0x%llx,phy_addr:0x%llx,phy_size:0x%llx\n",ptr_ioctl_data->bus_addr,ptr_ioctl_data->phy_addr,ptr_ioctl_data->size);
 
     list_for_each_entry_safe(ptr_curr_node_data, ptr_next_node_data,
                              &_osal_mdc_sysDmaList[_osal_mdc_sysCurDmaListIdx], list)
     {
-        if (ptr_curr_node_data->phy_addr == ptr_ioctl_data->phy_addr)
+        if (ptr_curr_node_data->bus_addr == ptr_ioctl_data->bus_addr)
         {
             dma_free_coherent(ptr_dma_info->ptr_dma_dev, ptr_curr_node_data->size,
-                    phys_to_virt(ptr_ioctl_data->phy_addr), ptr_ioctl_data->phy_addr);
-            OSAL_PRINT(OSAL_DBG_DEBUG,"free:phy_addr:0x%llx,phy_size:0x%llx\n",ptr_ioctl_data->phy_addr,ptr_curr_node_data->size);
+                    phys_to_virt(ptr_curr_node_data->phy_addr), ptr_curr_node_data->bus_addr);
+            OSAL_PRINT(OSAL_DBG_DEBUG,"free:bus_addr:0x%llx,phy_addr:0x%llx,phy_size:0x%llx\n",ptr_curr_node_data->bus_addr,ptr_curr_node_data->phy_addr,ptr_curr_node_data->size);
+            list_del(&(ptr_curr_node_data->list));
+            kfree(ptr_curr_node_data);
+            break;
+        }
+        else if (ptr_curr_node_data->phy_addr == ptr_ioctl_data->phy_addr)
+        {
+            dma_free_coherent(ptr_dma_info->ptr_dma_dev, ptr_curr_node_data->size,
+                    phys_to_virt(ptr_curr_node_data->phy_addr), ptr_curr_node_data->bus_addr);
+            OSAL_PRINT(OSAL_DBG_DEBUG,"free:bus_addr:0x%llx,phy_addr:0x%llx,phy_size:0x%llx\n",ptr_curr_node_data->bus_addr,ptr_curr_node_data->phy_addr,ptr_curr_node_data->size);
             list_del(&(ptr_curr_node_data->list));
             kfree(ptr_curr_node_data);
             break;
