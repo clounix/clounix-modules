@@ -25,7 +25,7 @@
 #define OSAL_MDC_H
 
 /* INCLUDE FILE DECLARATIONS */
-#if !defined(CLX_LINUX_KERNEL_MODE)
+#ifndef __KERNEL__
 #include <cmlib/cmlib_list.h>
 #endif
 #include <clx_types.h>
@@ -46,11 +46,56 @@
 #define OSAL_MDC_ISR_TASK_PRI               (99)
 #define OSAL_MDC_DMA_NODE_CACHE_NUM         (4)
 
+/* This flag value will be specified when user inserts kernel module. */
+#define OSAL_DBG_CRIT            (0x1UL << 0)
+#define OSAL_DBG_ERR             (0x1UL << 1)
+#define OSAL_DBG_WARN            (0x1UL << 2)
+#define OSAL_DBG_INFO            (0x1UL << 3)
+#define OSAL_DBG_DEBUG           (0x1UL << 4)
+#define OSAL_DBG_TX              (0x1UL << 5)
+#define OSAL_DBG_RX              (0x1UL << 6)
+#define OSAL_DBG_INTF            (0x1UL << 7)
+#define OSAL_DBG_PROFILE         (0x1UL << 8)
+#define OSAL_DBG_COMMON          (0x1UL << 9)
+#define OSAL_DBG_NETLINK         (0x1UL << 10)
+#define OSAL_DBG_INTR            (0x1UL << 11)
+
+#ifdef __KERNEL__
+#define OSAL_PRINT(__flag__, fmt, ...)      do                                  \
+{                                                                               \
+    if (0 != ((__flag__) & (verbosity)))                                        \
+    {                                                                           \
+        printk("CLX_KERN %s:%d: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);  \
+    }                                                                           \
+}while (0)
+#else
+#define OSAL_PRINT(__flag__, fmt, ...)      do                                  \
+{                                                                               \
+    if (0 != ((__flag__) & (verbosity)))                                        \
+    {                                                                           \
+        printf("%s:%d: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);           \
+    }                                                                           \
+}while (0)
+#endif
+
+#define OSAL_CHECK_PTR(__ptr__) do                                              \
+    {                                                                           \
+        if (NULL == (__ptr__))                                                  \
+        {                                                                       \
+            OSAL_PRINT(OSAL_DBG_CRIT,"%s is null pointer\n", #__ptr__);         \
+            return (CLX_E_BAD_PARAMETER);                                       \
+        }                                                                       \
+    } while (0)
+
+
+/* Signal SDK */
+#define SIG_CLX_INTR 43
+
 /* NAMING CONSTANT DECLARATIONS
  */
 
 /* linked list node */
-#if defined(CLX_LINUX_KERNEL_MODE)
+#ifdef __KERNEL__
 
 typedef struct OSAL_MDC_LIST_NODE_S
 {
@@ -95,7 +140,7 @@ typedef struct
     struct device       *ptr_dma_dev;       /* for allocate/free system memory */
 #endif
 
-#if defined(CLX_LINUX_KERNEL_MODE)
+#ifdef __KERNEL__
     OSAL_MDC_LIST_T     *ptr_dma_list;
 #else
     CMLIB_LIST_T        *ptr_dma_list;
@@ -112,9 +157,11 @@ typedef struct
 {
 #if defined(CLX_EN_DMA_RESERVED)
     CLX_ADDR_T              rsrv_dma_phy_addr;  /* information of reserved memory */
+    CLX_ADDR_T              rsrv_bus_addr;           /* information of bus addr for dma */
     CLX_ADDR_T              rsrv_dma_size;
 #else
     CLX_ADDR_T              phy_addr;           /* information of system memory */
+    CLX_ADDR_T              bus_addr;           /* information of bus addr for dma */
     CLX_ADDR_T              size;
 #endif
 } OSAL_MDC_IOCTL_DMA_DATA_T;
@@ -152,6 +199,40 @@ typedef enum
     OSAL_MDC_IOCTL_TYPE_MDC_DISCONNECT_ISR,
     OSAL_MDC_IOCTL_TYPE_MDC_SAVE_PCI_CONFIG,
     OSAL_MDC_IOCTL_TYPE_MDC_RESTORE_PCI_CONFIG,
+
+    /* network interface */
+    OSAL_MDC_IOCTL_TYPE_NETIF_CREATE_INTF ,
+    OSAL_MDC_IOCTL_TYPE_NETIF_DESTROY_INTF,
+    OSAL_MDC_IOCTL_TYPE_NETIF_GET_INTF,
+    OSAL_MDC_IOCTL_TYPE_NETIF_CREATE_PROFILE,
+    OSAL_MDC_IOCTL_TYPE_NETIF_DESTROY_PROFILE,
+    OSAL_MDC_IOCTL_TYPE_NETIF_GET_PROFILE,
+    OSAL_MDC_IOCTL_TYPE_NETIF_GET_INTF_CNT,
+    OSAL_MDC_IOCTL_TYPE_NETIF_CLEAR_INTF_CNT,
+    /* driver */
+    OSAL_MDC_IOCTL_TYPE_NETIF_WAIT_RX_FREE,
+    OSAL_MDC_IOCTL_TYPE_NETIF_WAIT_TX_FREE,     /* waitTxFree(ASYNC) */
+    OSAL_MDC_IOCTL_TYPE_NETIF_SET_RX_CFG,       /* setRxConfig       */
+    OSAL_MDC_IOCTL_TYPE_NETIF_GET_RX_CFG,       /* getRxConfig       */
+    OSAL_MDC_IOCTL_TYPE_NETIF_DEINIT_TASK,      /* deinitTask        */
+    OSAL_MDC_IOCTL_TYPE_NETIF_DEINIT_DRV,       /* deinitDrv         */
+    OSAL_MDC_IOCTL_TYPE_NETIF_INIT_TASK,        /* initTask          */
+    OSAL_MDC_IOCTL_TYPE_NETIF_INIT_DRV,         /* initDrv           */
+    /* counter */
+    OSAL_MDC_IOCTL_TYPE_NETIF_GET_TX_CNT,
+    OSAL_MDC_IOCTL_TYPE_NETIF_GET_RX_CNT,
+    OSAL_MDC_IOCTL_TYPE_NETIF_CLEAR_TX_CNT,
+    OSAL_MDC_IOCTL_TYPE_NETIF_CLEAR_RX_CNT,
+    /* port attribute */
+    OSAL_MDC_IOCTL_TYPE_NETIF_SET_PORT_ATTR,
+    OSAL_MDC_IOCTL_TYPE_NETIF_GET_PORT_ATTR,
+    /* netlink */
+    OSAL_MDC_IOCTL_TYPE_NETIF_NL_SET_INTF_PROPERTY,
+    OSAL_MDC_IOCTL_TYPE_NETIF_NL_GET_INTF_PROPERTY,
+    OSAL_MDC_IOCTL_TYPE_NETIF_NL_CREATE_NETLINK,
+    OSAL_MDC_IOCTL_TYPE_NETIF_NL_DESTROY_NETLINK,
+    OSAL_MDC_IOCTL_TYPE_NETIF_NL_GET_NETLINK,
+
     OSAL_MDC_IOCTL_TYPE_LAST
 
 } OSAL_MDC_IOCTL_TYPE_T;
@@ -173,7 +254,19 @@ typedef CLX_ERROR_NO_T
     const UI32_T        unit,
     void                *ptr_data);
 
+CLX_ERROR_NO_T
+_osal_mdc_registerIoctlCallback(
+    const OSAL_MDC_IOCTL_TYPE_T             type,
+    const OSAL_MDC_IOCTL_CALLBACK_FUNC_T    func);
 #endif /* End of CLX_LINUX_USER_MODE */
+
+typedef enum
+{
+    CLX_DEVICE_DAWN = 0,
+    CLX_DEVICE_LIGHTNING,
+    CLX_DEVICE_NAMCHABARWA,
+    CLX_DEVICE_NONE,
+} CLX_DEVICE_E;
 
 
 /* MACRO FUNCTION DECLARATIONS
@@ -184,6 +277,7 @@ typedef CLX_ERROR_NO_T
 
 /* EXPORTED SUBPROGRAM SPECIFICATIONS
  */
+
 CLX_ERROR_NO_T
 osal_mdc_readPciReg(
     const UI32_T        unit,
@@ -264,4 +358,6 @@ CLX_ERROR_NO_T
 osal_mdc_restorePciConfig(
     const UI32_T        unit);
 
+CLX_DEVICE_E clx_get_device_type(
+    const UI32_T        unit);
 #endif  /* OSAL_MDC_H */
