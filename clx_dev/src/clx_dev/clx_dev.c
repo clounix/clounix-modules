@@ -2016,7 +2016,7 @@ _osal_mdc_ioctl_allocSysDmaMemCallback(
     ptr_node_data->bus_addr      = ptr_ioctl_data->bus_addr;
     ptr_node_data->size          = ptr_ioctl_data->size;
     ptr_ioctl_data->phy_addr     = virt_to_phys(virt_addr);
-    ptr_node_data->bus_addr      = ptr_ioctl_data->phy_addr;
+    ptr_node_data->phy_addr      = ptr_ioctl_data->phy_addr;
     list_add(&(ptr_node_data->list), &_osal_mdc_sysDmaList[_osal_mdc_sysCurDmaListIdx]);
     OSAL_PRINT(OSAL_DBG_DEBUG,"bus_addr:0x%llx,phy_addr:0x%llx,phy_size:0x%x\n",ptr_node_data->bus_addr, ptr_node_data->phy_addr,ptr_node_data->size);
 
@@ -2046,7 +2046,7 @@ _osal_mdc_ioctl_freeSysDmaMemCallback(
             OSAL_PRINT(OSAL_DBG_DEBUG,"free:bus_addr:0x%llx,phy_addr:0x%llx,phy_size:0x%llx\n",ptr_curr_node_data->bus_addr,ptr_curr_node_data->phy_addr,ptr_curr_node_data->size);
             list_del(&(ptr_curr_node_data->list));
             kfree(ptr_curr_node_data);
-            break;
+            return (CLX_E_OK);
         }
         else if (ptr_curr_node_data->phy_addr == ptr_ioctl_data->phy_addr)
         {
@@ -2055,15 +2055,13 @@ _osal_mdc_ioctl_freeSysDmaMemCallback(
             OSAL_PRINT(OSAL_DBG_DEBUG,"free:bus_addr:0x%llx,phy_addr:0x%llx,phy_size:0x%llx\n",ptr_curr_node_data->bus_addr,ptr_curr_node_data->phy_addr,ptr_curr_node_data->size);
             list_del(&(ptr_curr_node_data->list));
             kfree(ptr_curr_node_data);
-            break;
-        }
-        else
-        {
-            OSAL_PRINT(OSAL_DBG_DEBUG,"NOT FOUND in DMA_NODE!!! free:phy_addr:0x%llx\n",ptr_ioctl_data->phy_addr);
+            return (CLX_E_OK);
         }
     }
 
-    return (CLX_E_OK);
+    OSAL_PRINT(OSAL_DBG_DEBUG,"NOT FOUND in DMA_NODE!!! free:phy_addr:0x%llx\n",ptr_ioctl_data->phy_addr);
+
+    return (CLX_E_TIMEOUT);
 }
 
 #endif
