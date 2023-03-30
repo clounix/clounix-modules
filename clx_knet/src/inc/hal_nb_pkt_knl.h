@@ -54,7 +54,7 @@
 #define HAL_NB_PDMA_CFW_GLOBAL_RESET                        (0x360)
 #define HAL_NB_PDMA_CFW_CHANNEL_RESET                       (0x364)
 #define HAL_NB_PDMA_CFW_CHANNEL_RESTART                     (0x368)
-
+#define HAL_NB_PDMA_IRQ_ABNORMAL_INTR                       (0x36c)
 
 #define HAL_NB_GET_PDMA_CH_RING_BASE_REG(__channel__)       (HAL_NB_PDMA_CFG_CH0_RING_BASE + (0x8 * (__channel__)))
 #define HAL_NB_GET_PDMA_CH_RING_SIZE_REG(__channel__)       (HAL_NB_PDMA_CFG_CH0_RING_SIZE + (0x4 * (__channel__)))
@@ -68,15 +68,10 @@
 #define HAL_NB_PDMA_DISABLE_CHANNEL                 0x0
 
 typedef enum {
-    NB_PCX_DMA_HOSTMEM_TO_HOSTMEM       = 0,
-    NB_PCX_DMA_HOSTMEM_TO_LOCALBUS      = 1,
-    NB_PCX_DMA_HOSTMEM_TO_ECPU          = 2,
-    NB_PCX_DMA_LOCALBUS_TO_HOSTMEM      = 4,
-    NB_PCX_DMA_LOCALBUS_TO_LOCALBUS     = 5,
-    NB_PCX_DMA_LOCALBUS_TO_ECPU         = 6,
-    NB_PCX_DMA_ECPU_TO_HOSTMEM          = 8,
-    NB_PCX_DMA_ECPU_TO_LOCALBUS         = 9,
-    NB_PCX_DMA_ECPU_TO_ECPU             = 10
+    HAL_NB_PDMA_CH_MODE_HOSTMEM_TO_HOSTMEM   = 0,
+    HAL_NB_PDMA_CH_MODE_LOCALBUS_TO_HOSTMEM  = 1,
+    HAL_NB_PDMA_CH_MODE_HOSTMEM_TO_LOCALBUS  = 2,
+    HAL_NB_PDMA_CH_MODE_LOCALBUS_TO_LOCALBUS = 3
 } HAL_NB_PDMA_CH_MODE;
 
 typedef enum {
