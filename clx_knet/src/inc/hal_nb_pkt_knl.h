@@ -110,7 +110,8 @@ typedef struct
     UI64_T  sinc                :  1;
     UI64_T  dinc                :  1;
     UI64_T  xfer_size           :  5;
-    UI64_T  reserve             :  5;
+    UI64_T  limit_xfer_en       :  1;
+    UI64_T  reserve             :  4;
 
 } HAL_NB_PDMA_DESC_T;
 
