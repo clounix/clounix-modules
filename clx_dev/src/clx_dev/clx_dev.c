@@ -1518,7 +1518,9 @@ _osal_mdc_notifyUserProcess(
     /* mask chip interrupt */
     osal_mdc_writePciReg(unit, _osal_mdc_isr_mask_addr,
         &_osal_mdc_isr_mask_val, sizeof(UI32_T));
-
+    // nb mask pdma
+    osal_mdc_writePciReg(unit, 0x051C14A4,
+        &_osal_mdc_isr_mask_val, sizeof(UI32_T));
     /* set the device bitmap. */
     spin_lock_irqsave(&_osal_mdc_isr_dev_bitmap_lock, flags);
     _osal_mdc_isr_dev_bitmap |= (1U << unit);
