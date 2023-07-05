@@ -31,6 +31,8 @@
 #define COSIM_SET_BIT(bitmap, mask_bitmap) (bitmap = ((bitmap) | (mask_bitmap)))
 #define COSIM_CLEAR_BIT(bitmap, mask_bitmap) (bitmap = ((bitmap) & (~(mask_bitmap))))
 
+#define HAL_NB_PCX_TOP_SYM_CMST_RESP_ERR_LOG                (0x051C0028)
+
 /*PDMA reg definition*/
 #define HAL_NB_PDMA_BASE_ADDR                               (0x51c1400)
 #define HAL_NB_PDMA_GET_MMIO(__offset__)                    (HAL_NB_PDMA_BASE_ADDR + (__offset__))
