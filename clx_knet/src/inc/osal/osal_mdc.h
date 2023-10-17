@@ -242,10 +242,9 @@ typedef union
     UI32_T      value;
     struct
     {
-        UI32_T  access      : 2;    /* 0:read, 1:write, 2:read and write, 3:none */
-        UI32_T  unit        : 6;    /* Maximum unit number is 64.                */
-        UI32_T  size        :14;    /* Maximum IOCTL data size is 16KB.          */
-        UI32_T  type        :10;    /* Maximum 1024 IOCTL types                  */
+        UI32_T                      unit :  6;      /* Maximum unit number is 64.       */
+        UI32_T                      type : 10;      /* Maximum 1024 IOCTL types         */
+        UI32_T                      rsvd : 16;
     } field;
 } OSAL_MDC_IOCTL_CMD_T;
 
