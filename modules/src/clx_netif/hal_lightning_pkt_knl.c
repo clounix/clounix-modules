@@ -1,18 +1,37 @@
-/*
- * Copyright 2022 Clounix
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation (the "GPL").
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License version 2 (GPLv2) for more details.
- *
- * You should have received a copy of the GNU General Public License
- * version 2 (GPLv2) along with this source code.
- */
+/*******************************************************************************
+*  Copyright Statement:
+*  --------------------
+*  This software and the information contained therein are protected by
+*  copyright and other intellectual property laws and terms herein is
+*  confidential. The software may not be copied and the information
+*  contained herein may not be used or disclosed except with the written
+*  permission of Hangzhou Clounix Technology Limited. (C) 2020-2023
+*
+*  BY OPENING THIS FILE, BUYER HEREBY UNEQUIVOCALLY ACKNOWLEDGES AND AGREES
+*  THAT THE SOFTWARE/FIRMWARE AND ITS DOCUMENTATIONS ("CLOUNIX SOFTWARE")
+*  RECEIVED FROM CLOUNIX AND/OR ITS REPRESENTATIVES ARE PROVIDED TO BUYER ON
+*  AN "AS-IS" BASIS ONLY. CLOUNIX EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES,
+*  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF
+*  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR NONINFRINGEMENT.
+*  NEITHER DOES CLOUNIX PROVIDE ANY WARRANTY WHATSOEVER WITH RESPECT TO THE
+*  SOFTWARE OF ANY THIRD PARTY WHICH MAY BE USED BY, INCORPORATED IN, OR
+*  SUPPLIED WITH THE CLOUNIX SOFTWARE, AND BUYER AGREES TO LOOK ONLY TO SUCH
+*  THIRD PARTY FOR ANY WARRANTY CLAIM RELATING THERETO. CLOUNIX SHALL ALSO
+*  NOT BE RESPONSIBLE FOR ANY CLOUNIX SOFTWARE RELEASES MADE TO BUYER'S
+*  SPECIFICATION OR TO CONFORM TO A PARTICULAR STANDARD OR OPEN FORUM.
+*
+*  BUYER'S SOLE AND EXCLUSIVE REMEDY AND CLOUNIX'S ENTIRE AND CUMULATIVE
+*  LIABILITY WITH RESPECT TO THE CLOUNIX SOFTWARE RELEASED HEREUNDER WILL BE,
+*  AT CLOUNIX'S OPTION, TO REVISE OR REPLACE THE CLOUNIX SOFTWARE AT ISSUE,
+*  OR REFUND ANY SOFTWARE LICENSE FEES OR SERVICE CHARGE PAID BY BUYER TO
+*  CLOUNIX FOR SUCH CLOUNIX SOFTWARE AT ISSUE.
+*
+*  THE TRANSACTION CONTEMPLATED HEREUNDER SHALL BE CONSTRUED IN ACCORDANCE
+*  WITH THE LAWS OF THE PEOPLE'S REPUBLIC OF CHINA, EXCLUDING ITS CONFLICT OF
+*  LAWS PRINCIPLES.  ANY DISPUTES, CONTROVERSIES OR CLAIMS ARISING THEREOF AND
+*  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN HANGZHOU,CHINA UNDER.
+*
+*******************************************************************************/
 
 /* FILE NAME:  hal_lightning_pkt_knl.c
  * PURPOSE:
@@ -90,7 +109,7 @@
 #define HAL_LIGHTNING_PKT_DBG_NETLINK         (0x1UL << 6)
 
 extern UI32_T                           ext_dbg_flag;
-extern UI32_T       clx_dev_tc;
+extern UI32_T                           clx_dev_tc;
 
 /*push vlan to rx enqueue pkt flag*/
 extern UI32_T                           vlan_push_flag;
@@ -1244,7 +1263,10 @@ hal_lightning_pkt_setPortAttr(
                 ptr_priv->speed = 400000;
                 break;
             default:
-                break;
+		HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_ERR,
+				"%s(%d): Failed to set speed %d to %s, size=%u\n",
+				__FUNCTION__, __LINE__, speed, ptr_net_dev->name);
+		break;
         }
     }
     return (CLX_E_OK);
@@ -1518,9 +1540,9 @@ _hal_lightning_pkt_enQueue(
 {
     CLX_ERROR_NO_T          rc = CLX_E_OK;
 
-    osal_takeSemaphore(&ptr_que->sema, CLX_SEMAPHORE_WAIT_FOREVER);
+    //osal_takeSemaphore(&ptr_que->sema, CLX_SEMAPHORE_WAIT_FOREVER);
     rc = osal_que_enque(&ptr_que->que_id, ptr_data);
-    osal_giveSemaphore(&ptr_que->sema);
+    //osal_giveSemaphore(&ptr_que->sema);
 
     return (rc);
 }
@@ -1545,9 +1567,9 @@ _hal_lightning_pkt_deQueue(
 {
     CLX_ERROR_NO_T          rc = CLX_E_OK;
 
-    osal_takeSemaphore(&ptr_que->sema, CLX_SEMAPHORE_WAIT_FOREVER);
+    //osal_takeSemaphore(&ptr_que->sema, CLX_SEMAPHORE_WAIT_FOREVER);
     rc = osal_que_deque(&ptr_que->que_id, pptr_data);
-    osal_giveSemaphore(&ptr_que->sema);
+    //osal_giveSemaphore(&ptr_que->sema);
 
     return (rc);
 }
@@ -1573,9 +1595,9 @@ _hal_lightning_pkt_getQueueCount(
 {
     CLX_ERROR_NO_T          rc = CLX_E_OK;
 
-    osal_takeSemaphore(&ptr_que->sema, CLX_SEMAPHORE_WAIT_FOREVER);
+    //osal_takeSemaphore(&ptr_que->sema, CLX_SEMAPHORE_WAIT_FOREVER);
     osal_que_getCount(&ptr_que->que_id, ptr_count);
-    osal_giveSemaphore(&ptr_que->sema);
+    //osal_giveSemaphore(&ptr_que->sema);
 
     return (rc);
 }
@@ -2134,6 +2156,8 @@ _hal_lightning_pkt_strictTxDeQueue(
     {
         /* It may happen at last gpd, return error and do not invoke callback. */
         rc = CLX_E_OTHERS;
+        osal_io_copyToUser(&ptr_cookie->rc, &rc, sizeof(CLX_ERROR_NO_T));
+        return CLX_E_OK;
     }
 
     return (rc);
@@ -2532,6 +2556,7 @@ _hal_lightning_pkt_rxEnQueue(
         ptr_net_dev = HAL_LIGHTNING_PKT_GET_PORT_NETDEV(port);
 
         vid_1st = ptr_sw_first_gpd->rx_gpd.pph_l2.vid_1st;
+        //vid_1st = ptr_sw_first_gpd->rx_gpd.etmh_eth.intf_fdid;
         //printk("vid_1st=%d \n",vid_1st);
 
         /* if the packet is composed of multiple gpd (skb), need to merge it into a single skb */
@@ -2709,7 +2734,7 @@ _hal_lightning_pkt_flushRxQueue(
  */
 static CLX_ERROR_NO_T
 _hal_lightning_pkt_schedRxDeQueue(
-    const UI32_T                    unit,
+    const UI32_T                          unit,
     HAL_LIGHTNING_PKT_IOCTL_RX_COOKIE_T   *ptr_cookie)
 {
     HAL_LIGHTNING_PKT_IOCTL_RX_COOKIE_T   ioctl_data;
@@ -2822,6 +2847,8 @@ _hal_lightning_pkt_schedRxDeQueue(
         {
             /* it means that all queue's are flush -> rx stop flow */
             rc = CLX_E_OTHERS;
+            osal_io_copyToUser(&ptr_cookie->rc, &rc, sizeof(CLX_ERROR_NO_T));
+            return CLX_E_OK;
         }
     }
 
@@ -5479,7 +5506,14 @@ _hal_lightning_pkt_isProtocolPkt(struct sk_buff *skb)
     unsigned int src_port = 0;
     unsigned int dest_port = 0;
     u8 lacp_addr[6] = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x02 };
-    u8 udld_addr[6] = { 0x01, 0x00, 0x0c, 0xcc, 0xcc, 0xcc };
+    HAL_LIGHTNING_PKT_FILTER_PROTO_TYPE_T proto_type;
+    HAL_LIGHTNING_PKT_FILTER_PROTO_T filter_proto[PROTO_TYPE_MAX] =
+                                     {
+                                         [PROTO_TYPE_UDLD]{.dst_addr = { 0x01, 0x00, 0x0c, 0xcc, 0xcc, 0xcc }},
+                                         [PROTO_TYPE_ISIS_L1]{.dst_addr = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x14 }},
+                                         [PROTO_TYPE_ISIS_L2]{.dst_addr = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x15 }},
+                                         [PROTO_TYPE_ISIS_ALL]{.dst_addr = { 0x09, 0x00, 0x2b, 0x00, 0x00, 0x05 }},
+                                     };
 
     HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_TX, 
 		    "queue_mapping=%u skbaddr=%p vlan_tagged=%d vlan_proto=0x%04x vlan_tci=0x%04x protocol=0x%04x ip_summed=%d len=%u data_len=%u",
@@ -5513,9 +5547,11 @@ _hal_lightning_pkt_isProtocolPkt(struct sk_buff *skb)
         return 1;
     }
 
-    //UDLD
-    if (ether_addr_equal(ether->h_dest, udld_addr)){
-        return 1;
+    //UDLD and IS-IS
+    for (proto_type = PROTO_TYPE_UDLD; proto_type < PROTO_TYPE_MAX; proto_type++) {
+        if (ether_addr_equal(ether->h_dest, filter_proto[proto_type].dst_addr)){
+            return 1;
+        }
     }
 
     switch(ntohs(skb->protocol)){
@@ -5543,6 +5579,7 @@ _hal_lightning_pkt_isProtocolPkt(struct sk_buff *skb)
             if ((ip_header->protocol == IPPROTO_TCP) && (
                     //BGP
                     (dest_port == 179) ||
+                    (src_port == 179) ||
                     //SSH
                     (dest_port == 22))){
                 return 1;
@@ -5594,7 +5631,7 @@ _hal_lightning_pkt_isProtocolPkt(struct sk_buff *skb)
 
             if ((ip6h->nexthdr == IPPROTO_TCP) && 
                     //BGPv6 and ssh
-                    ((dest_port == 179) || (dest_port == 22))){
+                    ((dest_port == 179) || (src_port == 179) || (dest_port == 22))){
                 return 1;
             }
 
