@@ -1,18 +1,37 @@
-/*
- * Copyright 2022 Clounix
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation (the "GPL").
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License version 2 (GPLv2) for more details.
- *
- * You should have received a copy of the GNU General Public License
- * version 2 (GPLv2) along with this source code.
- */
+/*******************************************************************************
+*  Copyright Statement:
+*  --------------------
+*  This software and the information contained therein are protected by
+*  copyright and other intellectual property laws and terms herein is
+*  confidential. The software may not be copied and the information
+*  contained herein may not be used or disclosed except with the written
+*  permission of Hangzhou Clounix Technology Limited. (C) 2020-2023
+*
+*  BY OPENING THIS FILE, BUYER HEREBY UNEQUIVOCALLY ACKNOWLEDGES AND AGREES
+*  THAT THE SOFTWARE/FIRMWARE AND ITS DOCUMENTATIONS ("CLOUNIX SOFTWARE")
+*  RECEIVED FROM CLOUNIX AND/OR ITS REPRESENTATIVES ARE PROVIDED TO BUYER ON
+*  AN "AS-IS" BASIS ONLY. CLOUNIX EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES,
+*  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF
+*  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR NONINFRINGEMENT.
+*  NEITHER DOES CLOUNIX PROVIDE ANY WARRANTY WHATSOEVER WITH RESPECT TO THE
+*  SOFTWARE OF ANY THIRD PARTY WHICH MAY BE USED BY, INCORPORATED IN, OR
+*  SUPPLIED WITH THE CLOUNIX SOFTWARE, AND BUYER AGREES TO LOOK ONLY TO SUCH
+*  THIRD PARTY FOR ANY WARRANTY CLAIM RELATING THERETO. CLOUNIX SHALL ALSO
+*  NOT BE RESPONSIBLE FOR ANY CLOUNIX SOFTWARE RELEASES MADE TO BUYER'S
+*  SPECIFICATION OR TO CONFORM TO A PARTICULAR STANDARD OR OPEN FORUM.
+*
+*  BUYER'S SOLE AND EXCLUSIVE REMEDY AND CLOUNIX'S ENTIRE AND CUMULATIVE
+*  LIABILITY WITH RESPECT TO THE CLOUNIX SOFTWARE RELEASED HEREUNDER WILL BE,
+*  AT CLOUNIX'S OPTION, TO REVISE OR REPLACE THE CLOUNIX SOFTWARE AT ISSUE,
+*  OR REFUND ANY SOFTWARE LICENSE FEES OR SERVICE CHARGE PAID BY BUYER TO
+*  CLOUNIX FOR SUCH CLOUNIX SOFTWARE AT ISSUE.
+*
+*  THE TRANSACTION CONTEMPLATED HEREUNDER SHALL BE CONSTRUED IN ACCORDANCE
+*  WITH THE LAWS OF THE PEOPLE'S REPUBLIC OF CHINA, EXCLUDING ITS CONFLICT OF
+*  LAWS PRINCIPLES.  ANY DISPUTES, CONTROVERSIES OR CLAIMS ARISING THEREOF AND
+*  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN HANGZHOU,CHINA UNDER.
+*
+*******************************************************************************/
 
 /* FILE NAME:  netif_osal.h
  * PURPOSE:
@@ -66,8 +85,8 @@
 #include <linux/pci.h>
 #include <linux/module.h>
 
-#include "clx_types.h"
-#include "clx_error.h"
+#include <clx_types.h>
+#include <clx_error.h>
 
 /* ----------------------------------------------------------------------------------- macro value */
 /* Thread */
@@ -91,7 +110,7 @@
 #define OSAL_QUEUE_DFT_NAME                 ("Unknown")
 
 #define OSAL_PRN_BUF_SZ                     (256)
-#define OSAL_TICKS_PER_SEC                  (1000000)
+#define OSAL_USEC_PER_TICK                  (OSAL_US_PER_SECOND / HZ) 
 
 /* ----------------------------------------------------------------------------------- struct */
 typedef struct linux_thread_s
@@ -278,7 +297,7 @@ osal_destroyIsrLock(
 /* timer */
 CLX_ERROR_NO_T
 osal_sleepThread(
-    const UI32_T            usecond);
+    const UI64_T            usecond);
 
 CLX_ERROR_NO_T
 osal_getTime(
@@ -309,28 +328,13 @@ osal_que_getCount(
     CLX_HUGE_T              *ptr_queue_id,
     unsigned int            *ptr_count);
 
-/* IO */
-int
-osal_io_copyToUser(
-    void                    *ptr_usr_buf,
-    void                    *ptr_knl_buf,
-    unsigned int            size);
-
-int
-osal_io_copyFromUser(
-    void                    *ptr_knl_buf,
-    void                    *ptr_usr_buf,
-    unsigned int            size);
-
 /* dma */
 void *
 osal_dma_alloc(
-    struct device           *ptr_dev,
     const UI32_T            size);
 
 CLX_ERROR_NO_T
 osal_dma_free(
-    struct device           *ptr_dev,
     void                    *ptr_dma_mem);
 
 dma_addr_t

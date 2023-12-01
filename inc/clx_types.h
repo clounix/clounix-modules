@@ -1,18 +1,37 @@
-/*
- * Copyright 2022 Clounix
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation (the "GPL").
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License version 2 (GPLv2) for more details.
- *
- * You should have received a copy of the GNU General Public License
- * version 2 (GPLv2) along with this source code.
- */
+/*******************************************************************************
+*  Copyright Statement:
+*  --------------------
+*  This software and the information contained therein are protected by
+*  copyright and other intellectual property laws and terms herein is
+*  confidential. The software may not be copied and the information
+*  contained herein may not be used or disclosed except with the written
+*  permission of Hangzhou Clounix Technology Limited. (C) 2020-2023
+*
+*  BY OPENING THIS FILE, BUYER HEREBY UNEQUIVOCALLY ACKNOWLEDGES AND AGREES
+*  THAT THE SOFTWARE/FIRMWARE AND ITS DOCUMENTATIONS ("CLOUNIX SOFTWARE")
+*  RECEIVED FROM CLOUNIX AND/OR ITS REPRESENTATIVES ARE PROVIDED TO BUYER ON
+*  AN "AS-IS" BASIS ONLY. CLOUNIX EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES,
+*  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF
+*  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR NONINFRINGEMENT.
+*  NEITHER DOES CLOUNIX PROVIDE ANY WARRANTY WHATSOEVER WITH RESPECT TO THE
+*  SOFTWARE OF ANY THIRD PARTY WHICH MAY BE USED BY, INCORPORATED IN, OR
+*  SUPPLIED WITH THE CLOUNIX SOFTWARE, AND BUYER AGREES TO LOOK ONLY TO SUCH
+*  THIRD PARTY FOR ANY WARRANTY CLAIM RELATING THERETO. CLOUNIX SHALL ALSO
+*  NOT BE RESPONSIBLE FOR ANY CLOUNIX SOFTWARE RELEASES MADE TO BUYER'S
+*  SPECIFICATION OR TO CONFORM TO A PARTICULAR STANDARD OR OPEN FORUM.
+*
+*  BUYER'S SOLE AND EXCLUSIVE REMEDY AND CLOUNIX'S ENTIRE AND CUMULATIVE
+*  LIABILITY WITH RESPECT TO THE CLOUNIX SOFTWARE RELEASED HEREUNDER WILL BE,
+*  AT CLOUNIX'S OPTION, TO REVISE OR REPLACE THE CLOUNIX SOFTWARE AT ISSUE,
+*  OR REFUND ANY SOFTWARE LICENSE FEES OR SERVICE CHARGE PAID BY BUYER TO
+*  CLOUNIX FOR SUCH CLOUNIX SOFTWARE AT ISSUE.
+*
+*  THE TRANSACTION CONTEMPLATED HEREUNDER SHALL BE CONSTRUED IN ACCORDANCE
+*  WITH THE LAWS OF THE PEOPLE'S REPUBLIC OF CHINA, EXCLUDING ITS CONFLICT OF
+*  LAWS PRINCIPLES.  ANY DISPUTES, CONTROVERSIES OR CLAIMS ARISING THEREOF AND
+*  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN HANGZHOU,CHINA UNDER.
+*
+*******************************************************************************/
 
 /* FILE NAME:   clx_types.h
  * PURPOSE:
@@ -26,7 +45,7 @@
 /* INCLUDE FILE DECLARATIONS
  */
 
-#include "osal_types.h"
+#include <osal/osal_types.h>
 
 /* NAMING CONSTANT DECLARATIONS
  */
@@ -37,6 +56,8 @@
 #define CLX_INVALID_ID      (0xFFFFFFFF)
 #define CLX_PORT_INVALID    (CLX_INVALID_ID)
 #define CLX_SEG_INVALID     (CLX_INVALID_ID)
+#define CLX_FDID_INVALID    (0)
+
 
 /* for CPU Rx packet, indicate that the packet
  * is not received from remote switch
@@ -80,7 +101,7 @@ typedef unsigned int            CLX_ADDR_T;
 #define CLX_ADDR_32_TO_64(__hi32__,__low32__)       (__low32__)
 #endif
 
-#define CLX_BITMAP_SIZE(bit_num)                    ((((bit_num) - 1) / 32) + 1)
+#define CLX_BITMAP_SIZE(bit_num)                    (((bit_num) > 0) ? ((((bit_num) - 1) / 32) + 1) : (0))
 #define CLX_IPV4_IS_MULTICAST(addr)                 (0xE0000000 == ((addr) & 0xF0000000))
 #define CLX_IPV6_IS_MULTICAST(addr)                 (0xFF == (((UI8_T *)(addr))[0]))
 #define CLX_MAC_IS_MULTICAST(mac)                   ((mac[0]) & (0x1))
@@ -96,13 +117,23 @@ typedef UI8_T   CLX_MAC_T[6];
 typedef UI32_T  CLX_IPV4_T;
 typedef UI8_T   CLX_IPV6_T[16];
 
-typedef UI32_T  CLX_TIME_T;
+typedef UI64_T  CLX_TIME_T;
 
 /* Bridge Domain id data type. */
 typedef UI32_T CLX_BRIDGE_DOMAIN_T;
 
 /* TRILL nickname type. */
 typedef UI16_T CLX_TRILL_NICKNAME_T;
+
+/*vm tag type enum*/
+typedef enum
+{
+    CLX_VM_TAG_TYPE_ETAG = 1,/* 802.1BR E_Tag  */
+    CLX_VM_TAG_TYPE_VNTAG,   /* NIV VN_Tag     */
+    CLX_VM_TAG_TYPE_VEPA,    /* 802.1Qbg S_Tag */
+    CLX_VM_TAG_TYPE_LAST
+} CLX_VM_TAG_TYPE_T;
+
 
 typedef union CLX_IP_U
 {
@@ -145,6 +176,9 @@ typedef enum
     CLX_TUNNEL_TYPE_VXLANGPE_V4,
     CLX_TUNNEL_TYPE_VXLANGPE_V6,
     CLX_TUNNEL_TYPE_VXLANGPE_NSH,
+    CLX_TUNNEL_TYPE_GENEVE_L2,
+    CLX_TUNNEL_TYPE_GENEVE_V4,
+    CLX_TUNNEL_TYPE_GENEVE_V6,
     CLX_TUNNEL_TYPE_FLEX0_L2,
     CLX_TUNNEL_TYPE_FLEX0_V4,
     CLX_TUNNEL_TYPE_FLEX0_V6,
@@ -161,19 +195,22 @@ typedef enum
     CLX_TUNNEL_TYPE_FLEX3_V4,
     CLX_TUNNEL_TYPE_FLEX3_V6,
     CLX_TUNNEL_TYPE_FLEX3_NSH,
+    CLX_TUNNEL_TYPE_SRV6,
+    CLX_TUNNEL_TYPE_INT_REPORT,
     CLX_TUNNEL_TYPE_LAST
 } CLX_TUNNEL_TYPE_T;
 
 /* tunnel key */
 typedef struct CLX_TUNNEL_KEY_S
 {
-    CLX_IP_ADDR_T       src_ip;           /* key: The outer source IP address used by tunnel encapsulation.*/
+    CLX_IP_ADDR_T       src_ip;           /* key: The outer source IP address used by tunnel encapsulation. */
     CLX_IP_ADDR_T       dst_ip;           /* key: The outer destination IP address used by tunnel encapsulation.
                                            * For automatic tunnel, this is not required. If not specified,
                                            * its ip address value must be set to 0, but the IP version
                                            * must be same with src_ip.
                                            */
-    CLX_TUNNEL_TYPE_T   tunnel_type;      /*key: The tunnel type.*/
+    CLX_TUNNEL_TYPE_T   tunnel_type;      /* key: The tunnel type. */
+    UI16_T              vrfo;             /* key: Vrf id of the ip-tnl underlay network. */
 }CLX_TUNNEL_KEY_T;
 
 typedef UI16_T CLX_VLAN_T;
@@ -193,26 +230,28 @@ typedef enum{
     CLX_PORT_TYPE_MPLS_PW,
     CLX_PORT_TYPE_CPU_PORT,
     CLX_PORT_TYPE_SFC,
+    CLX_PORT_TYPE_SRV6,
+    CLX_PORT_TYPE_ECMP_PORT,
     CLX_PORT_TYPE_LAST
 }CLX_PORT_TYPE_T;
 
 /*support Green/Yellow/Red color*/
 typedef enum
 {
-    CLX_COLOR_GREEN = 0,
-    CLX_COLOR_YELLOW,
-    CLX_COLOR_RED,
+    CLX_COLOR_GREEN = 0,                    /* The green color */
+    CLX_COLOR_YELLOW,                       /* The yellow color */
+    CLX_COLOR_RED,                          /* The red color */
     CLX_COLOR_LAST
 }CLX_COLOR_T;
 typedef enum
 {
-    CLX_FWD_ACTION_FLOOD = 0,
+    CLX_FWD_ACTION_FLOOD = 0,         /* CL8600 not support. */
     CLX_FWD_ACTION_NORMAL,
     CLX_FWD_ACTION_DROP,
     CLX_FWD_ACTION_COPY_TO_CPU,
     CLX_FWD_ACTION_REDIRECT_TO_CPU,
-    CLX_FWD_ACTION_FLOOD_COPY_TO_CPU,
-    CLX_FWD_ACTION_DROP_COPY_TO_CPU,
+    CLX_FWD_ACTION_FLOOD_COPY_TO_CPU, /* CL8600 not support. */
+    CLX_FWD_ACTION_DROP_COPY_TO_CPU,  /* CL8600 not support. */
     CLX_FWD_ACTION_LAST
 } CLX_FWD_ACTION_T;
 
@@ -220,6 +259,14 @@ typedef CLX_HUGE_T  CLX_THREAD_ID_T;
 typedef CLX_HUGE_T  CLX_SEMAPHORE_ID_T;
 typedef CLX_HUGE_T  CLX_ISRLOCK_ID_T;
 typedef CLX_HUGE_T  CLX_IRQ_FLAGS_T;
+typedef CLX_HUGE_T  CLX_LOCK_ID_T;
+
+typedef enum
+{
+    CLX_LOCK_NORMAL  = 0,
+    CLX_LOCK_RECURSIVE,
+    CLX_LOCK_LAST
+}CLX_LOCK_T;
 
 typedef enum
 {
@@ -231,6 +278,9 @@ typedef enum
 
 typedef enum
 {
+    CLX_VLAN_ACTION_DEFAULT = 0, /* In LT it means CLX_VLAN_ACTION_SET.
+                                  * In NB it means CLX_VLAN_ACTION_NOT_SUPPORT.
+                                  */
     CLX_VLAN_ACTION_SET,
     CLX_VLAN_ACTION_KEEP,
     CLX_VLAN_ACTION_REMOVE,
@@ -247,9 +297,7 @@ typedef enum
  */
 typedef enum
 {
-    CLX_VLAN_PRECEDENCE_SUBNET_MAC_PROTOCOL_PORT = 1,
-    CLX_VLAN_PRECEDENCE_MAC_SUBNET_PROTOCOL_PORT = 4,
-    CLX_VLAN_PRECEDENCE_PORT_ONLY                = 7,
+    CLX_VLAN_PRECEDENCE_UNUSED                   = 0,
     CLX_VLAN_PRECEDENCE_FAVOR_TYPE               = 8,
     CLX_VLAN_PRECEDENCE_FAVOR_ADDR               = 9,
     CLX_VLAN_PRECEDENCE_LAST
@@ -323,38 +371,14 @@ typedef struct CLX_FDL_INFO_S
     UI32_T    threshold;   /* range 0 ~ (2^20)-1 */
 } CLX_FDL_INFO_T;
 
+typedef enum
+{
+    CLX_SA_MISS_REASON_0 = 0,    /* New */
+    CLX_SA_MISS_REASON_1,        /* New */
+    CLX_SA_MISS_REASON_LAST
+} CLX_SA_MISS_REASON_T;
+
 /* EXPORTED SUBPROGRAM SPECIFICATIONS
  */
-
-
-#ifndef KBUILD_MODNAME
-#define KBUILD_MODNAME __FILE__
-#endif
-
-#define clx_fmt(fmt) "%s:%s: " fmt, KBUILD_MODNAME, __func__
-enum log_level
-{
-    LOG_ERR = 0x01,
-    LOG_WARNING = 0x02,
-    LOG_INFO = 0x04,
-    LOG_DEBUG = 0x08,
-};
-
-#define clx_print(level, fmt, ...)                         \
-    do                                                     \
-    {                                                      \
-        if (LOG_##level & loglevel)                        \
-            printk(KERN_DEBUG clx_fmt(fmt), ##__VA_ARGS__); \
-    } while (0)
-
-
-#define CLX_CHECK_NULL_POINTER(__ptr__) do                  \
-    {                                                       \
-        if (NULL == __ptr__) {                              \
-            clx_print(ERR, #__ptr__" is null pointer");     \
-            return CLX_E_BAD_PARAMETER;                     \
-        }                                                   \
-    } while(0)
-
 
 #endif  /* CLX_TYPES_H */
