@@ -60,7 +60,7 @@
 #define OSAL_MDC_DMA_LIST_SZ_UNLIMITED      (0)
 #define OSAL_MDC_DMA_LIST_NAME              "RSRV_DMA"
 #define OSAL_MDC_DMA_SEMAPHORE_NAME         "DMALIST"
-#define OSAL_MDC_DEV_FILE_PATH              "/dev/"OSAL_MDC_DRIVER_NAME
+#define OSAL_MDC_DEV_FILE_PATH              "/dev/" OSAL_MDC_DRIVER_NAME
 
 #define OSAL_MDC_MAX_CHIPS_PER_SYSTEM       (16)
 #define OSAL_MDC_ISR_MAX_NUM                (32)
