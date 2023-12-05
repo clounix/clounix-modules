@@ -33,69 +33,67 @@
 *
 *******************************************************************************/
 
-/* FILE NAME:   clx_error.h
+/* FILE NAME:  netif_pkt_knl.h
  * PURPOSE:
- *      Define the generic error code on CLX SDK.
+ *      
  * NOTES:
+ *
  */
+#ifndef NETIF_PKT_NL_H
+#define NETIF_PKT_NL_H
 
-#ifndef CLX_ERROR_H
-#define CLX_ERROR_H
-
-/* INCLUDE FILE DECLARATIONS
+/* INCLUDE FILE DECLARTIONS
  */
+#include <linux/fs.h>
+#include <linux/netdevice.h>
+
 #include <clx_types.h>
+#include <clx_error.h>
+#include <clx_pkt.h>
 
+CLX_ERROR_NO_T
+hal_lt_dawn_pkt_getNetDev(
+    const UI32_T                        unit,
+    const UI32_T                        port,
+    struct net_device                   **pptr_net_dev);
 
-/* NAMING CONSTANT DECLARATIONS
- */
+CLX_ERROR_NO_T
+hal_lt_dawn_pkt_dev_tx(
+    const UI32_T                        unit,
+    void                                *ptr_data);
 
-/* MACRO FUNCTION DECLARATIONS
- */
+long
+hal_lt_dawn_pkt_dev_ioctl(
+    const UI32_T                        unit);
 
-/* DATA TYPE DECLARATIONS
- */
+CLX_ERROR_NO_T
+hal_lt_lightning_pkt_getNetDev(
+    const UI32_T                        unit,
+    const UI32_T                        port,
+    struct net_device                   **pptr_net_dev);
 
-typedef enum
-{
-    CLX_E_OK = 0,           /* Ok and no error */
-    CLX_E_BAD_PARAMETER,    /* Parameter is wrong */
-    CLX_E_NO_MEMORY,        /* No memory is available */
-    CLX_E_TABLE_FULL,       /* Table is full */
-    CLX_E_ENTRY_NOT_FOUND,  /* Entry is not found */
-    CLX_E_ENTRY_EXISTS,     /* Entry already exists */
-    CLX_E_NOT_SUPPORT,      /* Feature is not supported */
-    CLX_E_ALREADY_INITED,   /* Module is reinitialized */
-    CLX_E_NOT_INITED,       /* Module is not initialized */
-    CLX_E_OTHERS,           /* Other errors */
-    CLX_E_ENTRY_IN_USE,     /* Entry is in use */
-    CLX_E_TIMEOUT,          /* Time out error */
-    CLX_E_OP_INVALID,       /* Operation is invalid */
-    CLX_E_OP_STOPPED,       /* Operation is stopped by user callback */
-    CLX_E_OP_INCOMPLETE,    /* Operation is incomplete */
-    CLX_E_LAST
-} CLX_ERROR_NO_T;
+CLX_ERROR_NO_T
+hal_lt_lightning_pkt_dev_tx(
+    const UI32_T                        unit,
+    void                                *ptr_data);
 
-/* EXPORTED SUBPROGRAM SPECIFICATIONS
- */
-/* FUNCTION NAME:   clx_error_getString
- * PURPOSE:
- *      To obtain the error string of the specified error code
- *
- * INPUT:
- *      cause  -- The specified error code
- * OUTPUT:
- *      None
- * RETURN:
- *      Pointer to the target error string
- *
- * NOTES:
- *
- *
- */
-C8_T *
-clx_error_getString(
-    const CLX_ERROR_NO_T cause );
+long
+hal_lt_lightning_pkt_dev_ioctl(
+    const UI32_T                        unit);
 
-#endif  /* CLX_ERROR_H */
+CLX_ERROR_NO_T
+hal_mt_namchabarwa_pkt_getNetDev(
+    const UI32_T                        unit,
+    const UI32_T                        port,
+    struct net_device                   **pptr_net_dev);
 
+CLX_ERROR_NO_T
+hal_mt_namchabarwa_pkt_dev_tx(
+    const UI32_T                        unit,
+    void                                *ptr_data);
+
+long
+hal_mt_namchabarwa_pkt_dev_ioctl(
+    const UI32_T                        unit);
+
+#endif  /* End of NETIF_PKT_KNL_H */
