@@ -24,8 +24,7 @@ CP                  := cp
 MV                  := mv
 TEST_PATH           := test -d
 
-#KVERSION            ?= $(shell uname -r)
-KVERSION            ?= 4.19.0-12-2-$(CONFIGURED_ARCH)
+KVERSION            ?= $(shell uname -r)
 OS_PATH             := /lib/modules/$(KVERSION)/build
 SRC_PATH            := $(KERNEL_MODULE)/src
 INC_PATH            := $(SRC_PATH)/inc
