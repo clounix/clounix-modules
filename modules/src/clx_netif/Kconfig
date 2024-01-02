@@ -1,0 +1,10 @@
+#
+# Clounix device configuration
+#
+
+config CLX_NETIF
+	tristate "Clounix Netif driver Support"
+	default m
+	depends on PCI
+	---help---
+	  This enables the support for the Clounix platform.

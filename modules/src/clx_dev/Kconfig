@@ -1,0 +1,10 @@
+#
+# Clounix device configuration
+#
+
+config CLX_DEV
+	tristate "Clounix Dev driver Support"
+	default m
+	depends on PCI
+	---help---
+	  This enables the support for the Clounix platform.

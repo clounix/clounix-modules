@@ -96,3 +96,5 @@ clean::
 .PHONY: all compile install clean
 .NOTPARALLEL: all compile install clean
 
+obj-$(CONFIG_CLX_DEV) += clx_dev.o
+obj-$(CONFIG_CLX_NETIF) += clx_netif.o
