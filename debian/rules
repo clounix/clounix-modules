@@ -1,12 +1,12 @@
 #!/usr/bin/make -f
 export INSTALL_MOD_DIR:=extra
 
-PACKAGE_NAME := nb-modules
+PACKAGE_NAME := clounix-modules
 KVERSION     ?= $(shell uname -r)
 KERNEL_SRC   := /lib/modules/$(KVERSION)
 SERVICE_DIR  := service
 INITD_DIR    := init.d
-MODULE_SRC   := $(shell pwd)/clx_dev
+MODULE_SRC   := $(shell pwd)
 CURRENT_DIR  := $(cd "$(dirname "$0")"; pwd)
 
 %:
