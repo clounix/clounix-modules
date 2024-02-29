@@ -110,7 +110,7 @@
 #define OSAL_QUEUE_DFT_NAME                 ("Unknown")
 
 #define OSAL_PRN_BUF_SZ                     (256)
-#define OSAL_USEC_PER_TICK                  (OSAL_US_PER_SECOND / HZ) 
+#define OSAL_USEC_PER_TICK                  (OSAL_US_PER_SECOND / HZ)
 
 /* ----------------------------------------------------------------------------------- struct */
 typedef struct linux_thread_s
