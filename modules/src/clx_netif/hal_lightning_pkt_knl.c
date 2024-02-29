@@ -2120,7 +2120,9 @@ _hal_lightning_pkt_strictTxDeQueue(
         osal_waitEvent(&ptr_tx_cb->sync_sema);
         if (FALSE == ptr_tx_cb->running)
         {
-            return (CLX_E_OTHERS); /* deinit */
+            rc = CLX_E_OTHERS;
+            osal_io_copyToUser(&ptr_cookie->rc, &rc, sizeof(CLX_ERROR_NO_T));
+            return CLX_E_OK;
         }
 
         ptr_tx_cb->cnt.wait_event++;
@@ -2535,18 +2537,7 @@ _hal_lightning_pkt_rxEnQueue(
              */
             osal_skb_unmapDma(phy_addr, ptr_skb->len, DMA_FROM_DEVICE);
 
-            /* reset ptr_skb->len with real packet len instead of total buffer size */
-            if (NULL == ptr_sw_gpd->ptr_next)
-            {
-                /* strip CRC padded by asic for the last gpd segment */
-                ptr_skb->len = len - ETH_FCS_LEN;
-            }
-            else
-            {
-                ptr_skb->len = len;
-            }
-
-            skb_set_tail_pointer(ptr_skb, ptr_skb->len);
+            ptr_skb->len = len;
 
             /* next */
             ptr_sw_gpd = ptr_sw_gpd->ptr_next;
@@ -2556,7 +2547,6 @@ _hal_lightning_pkt_rxEnQueue(
         ptr_net_dev = HAL_LIGHTNING_PKT_GET_PORT_NETDEV(port);
 
         vid_1st = ptr_sw_first_gpd->rx_gpd.pph_l2.vid_1st;
-        //vid_1st = ptr_sw_first_gpd->rx_gpd.etmh_eth.intf_fdid;
         //printk("vid_1st=%d \n",vid_1st);
 
         /* if the packet is composed of multiple gpd (skb), need to merge it into a single skb */
@@ -2565,7 +2555,7 @@ _hal_lightning_pkt_rxEnQueue(
             HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_RX,
                             "u=%u, rxch=%u, rcv pkt size=%u > gpd buf size=%u\n",
                             unit, channel, total_len, ptr_rx_cb->buf_len);
-            ptr_merge_skb = osal_skb_alloc(total_len - ETH_FCS_LEN);
+            ptr_merge_skb = osal_skb_alloc(total_len);
             if (NULL != ptr_merge_skb)
             {
                 copy_offset = 0;
@@ -2589,7 +2579,7 @@ _hal_lightning_pkt_rxEnQueue(
             {
                 HAL_LIGHTNING_PKT_DBG((HAL_LIGHTNING_PKT_DBG_ERR | HAL_LIGHTNING_PKT_DBG_RX),
                                 "u=%u, rxch=%u, alloc skb failed, size=%u\n",
-                                unit, channel, (total_len - ETH_FCS_LEN));
+                                unit, channel, total_len);
             }
 
             /* free both sw_gpd and the skb attached on it */
@@ -2616,6 +2606,10 @@ _hal_lightning_pkt_rxEnQueue(
         ptr_skb->dev = ptr_net_dev;
         ptr_skb->pkt_type = PACKET_HOST; /* this packet is for me */
         ptr_skb->ip_summed = CHECKSUM_UNNECESSARY; /* skip checksum */
+
+        /* strip CRC padded by asic for the last gpd segment */
+        ptr_skb->len = len - ETH_FCS_LEN;
+        skb_set_tail_pointer(ptr_skb, ptr_skb->len);
 
         /* send to linux */
         if (dest_type == HAL_LIGHTNING_PKT_DEST_NETDEV)
@@ -5833,8 +5827,8 @@ _hal_lightning_pkt_net_dev_tx(
 
     /* pad 4-bytes for chip-crc */
     skb_pad(ptr_skb, ETH_FCS_LEN);
-    skb_set_tail_pointer(ptr_skb, ETH_FCS_LEN);
     ptr_skb->len += ETH_FCS_LEN;
+    skb_set_tail_pointer(ptr_skb, ptr_skb->len);
 
     /* alloc gpd */
     ptr_sw_gpd = osal_alloc(sizeof(HAL_LIGHTNING_PKT_TX_SW_GPD_T));

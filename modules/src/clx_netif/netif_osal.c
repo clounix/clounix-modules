@@ -764,6 +764,8 @@ osal_skb_recv(
      * 2. netif_rx_ni()       : handle skb in interrupt context
      * 3. netif_receive_skb() : for NAPI
      */
+    local_bh_disable();
     netif_rx(ptr_skb);
+    local_bh_enable();
 }
 
