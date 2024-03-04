@@ -2083,7 +2083,11 @@ _osal_mdc_ioctl_allocSysDmaMemCallback(
 #error "The DMA address of OS is not 64bit. Please disable CLX_EN_64BIT_ADDR in SDK."
 #endif
 
+#if defined(CONFIG_ARCH_DMA_ADDR_T_64BIT) && defined(CLX_EN_64BIT_ADDR)
+	if (dma_set_mask_and_coherent(ptr_dma_info->ptr_dma_dev, DMA_BIT_MASK(48))) {
+#else
 	if (dma_set_mask_and_coherent(ptr_dma_info->ptr_dma_dev, DMA_BIT_MASK(32))) {
+#endif
 		dev_err(ptr_dma_info->ptr_dma_dev, "dma_set_mask_and_coherent failed\n");
 	}
 

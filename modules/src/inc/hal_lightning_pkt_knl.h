@@ -2015,6 +2015,10 @@ typedef struct
 
     /* metadata */
     UI8_T                       mac[6];
+#define HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_STRIP                  (0)
+#define HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_KEEP                   (1)
+#define HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_ORIGINAL               (2)
+    UI8_T                       vlan_tag_type; /* 0:VLAN_TAG_STRIP 1:VLAN_TAG_KEEP 2:VLAN_TAG_ORIGINAL*/
 
 #define HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_MAC        (1UL << 0)
     UI32_T                      flags;
@@ -2108,6 +2112,7 @@ typedef enum
     HAL_LIGHTNING_PKT_IOCTL_TYPE_NL_DESTROY_NETLINK,
     HAL_LIGHTNING_PKT_IOCTL_TYPE_NL_GET_NETLINK,
 #endif
+    HAL_LIGHTNING_PKT_IOCTL_TYPE_SET_INTF,
     HAL_LIGHTNING_PKT_IOCTL_TYPE_LAST
 
 } HAL_LIGHTNING_PKT_IOCTL_TYPE_T;
@@ -2177,6 +2182,7 @@ typedef struct
     UI32_T                          buf_len;            /* setRxCfg[In]                     */
     HAL_LIGHTNING_PKT_IOCTL_RX_TYPE_T     rx_type;      /* setRxCfg[In]                     */
     CLX_ERROR_NO_T                  rc;
+    UI32_T                          phy_di_num;         /* setRxCfg[In]                     */
 
 } HAL_LIGHTNING_PKT_IOCTL_RX_COOKIE_T;
 

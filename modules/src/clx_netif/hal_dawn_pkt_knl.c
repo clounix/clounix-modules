@@ -42,6 +42,7 @@
 #include <linux/pci.h>
 #include <linux/module.h>
 #include <linux/if.h>
+#include <linux/ethtool.h>
 
 /* netif */
 #include <netif_osal.h>

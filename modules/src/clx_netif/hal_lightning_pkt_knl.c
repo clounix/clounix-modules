@@ -207,6 +207,7 @@ static HAL_LIGHTNING_PKT_NETIF_PORT_DB_T              _hal_lightning_pkt_port_db
 #define HAL_LIGHTNING_PKT_GET_PORT_DB(port)                   (&_hal_lightning_pkt_port_db[port])
 #define HAL_LIGHTNING_PKT_GET_PORT_PROFILE_LIST(port)         (_hal_lightning_pkt_port_db[port].ptr_profile_list)
 #define HAL_LIGHTNING_PKT_GET_PORT_NETDEV(port)               _hal_lightning_pkt_port_db[port].ptr_net_dev
+#define HAL_LIGHTNING_PKT_GET_PORT_NETIF(port)                (&_hal_lightning_pkt_port_db[port].meta)
 
 /*****************************************************************************
  * DATA TYPE DECLARATIONS
@@ -320,6 +321,7 @@ typedef struct
 {
     /* Rx system configuration */
     UI32_T                          buf_len;
+    UI32_T                          phy_di_num; /* for stacking mode */
 
     HAL_LIGHTNING_PKT_RX_SCHED_T          sched_mode;
     HAL_LIGHTNING_PKT_RX_PDMA_T           pdma[HAL_LIGHTNING_PKT_RX_CHANNEL_LAST];
@@ -2148,11 +2150,15 @@ _hal_lightning_pkt_strictTxDeQueue(
 
             /* free kernel sw_gpd */
             _hal_lightning_pkt_freeTxGpdList(unit, ptr_sw_gpd);
+            rc = CLX_E_OK;
         }
         else
         {
             ptr_tx_cb->cnt.deque_fail++;
+            rc = CLX_E_OTHERS;
         }
+        osal_io_copyToUser(&ptr_cookie->rc, &rc, sizeof(CLX_ERROR_NO_T));
+        rc = CLX_E_OK;
     }
     else
     {
@@ -2481,9 +2487,11 @@ _hal_lightning_pkt_rxEnQueue(
     UI32_T                          copy_offset;
     void                            *ptr_dest;
     UI32_T                          vid_1st = 0;
+    UI32_T                          vid_2st = 0;
     struct ethhdr                   *ether = NULL;
     static UI8_T stp_mac[ETH_ALEN] = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x00 };
     static UI8_T pvst_mac[ETH_ALEN] = { 0x01, 0x00, 0x0c, 0xcc, 0xcc, 0xcd };
+    HAL_LIGHTNING_PKT_NETIF_INTF_T   *ptr_netif = NULL;
 
 #if defined(PERF_EN_TEST)
     /* To verify kernel Rx performance */
@@ -2545,9 +2553,23 @@ _hal_lightning_pkt_rxEnQueue(
 
         port = ptr_sw_first_gpd->rx_gpd.itmh_eth.igr_phy_port;
         ptr_net_dev = HAL_LIGHTNING_PKT_GET_PORT_NETDEV(port);
+        /* if NULL netdev, drop the skb */
+        if (NULL == ptr_net_dev)
+        {
+            ptr_rx_cb->cnt.channel[channel].netdev_miss++;
+            osal_skb_free(ptr_skb);
+            HAL_LIGHTNING_PKT_DBG((HAL_LIGHTNING_PKT_DBG_ERR | HAL_LIGHTNING_PKT_DBG_RX),
+                            "u=%u, rxch=%u, find netdev failed\n",
+                            unit, channel);
+            return;
+        }
 
         vid_1st = ptr_sw_first_gpd->rx_gpd.pph_l2.vid_1st;
-        //printk("vid_1st=%d \n",vid_1st);
+        vid_2st = ptr_sw_first_gpd->rx_gpd.pph_l2.vid_2nd_w0 << 7 |
+                    ptr_sw_first_gpd->rx_gpd.pph_l2.vid_2nd_w1;
+        //vid_1st = ptr_sw_first_gpd->rx_gpd.etmh_eth.intf_fdid;
+        HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_RX,
+            "vid_1st=%d vid_2st=%d vlan_push_flag=%d\n",vid_1st,vid_2st,vlan_push_flag);
 
         /* if the packet is composed of multiple gpd (skb), need to merge it into a single skb */
         if (NULL != ptr_sw_first_gpd->ptr_next)
@@ -2591,17 +2613,6 @@ _hal_lightning_pkt_rxEnQueue(
             _hal_lightning_pkt_freeRxGpdList(unit, ptr_sw_first_gpd, FALSE);
         }
 
-        /* if NULL netdev, drop the skb */
-        if (NULL == ptr_net_dev)
-        {
-            ptr_rx_cb->cnt.channel[channel].netdev_miss++;
-            osal_skb_free(ptr_skb);
-            HAL_LIGHTNING_PKT_DBG((HAL_LIGHTNING_PKT_DBG_ERR | HAL_LIGHTNING_PKT_DBG_RX),
-                            "u=%u, rxch=%u, find netdev failed\n",
-                            unit, channel);
-            return;
-        }
-
         /* skb handling */
         ptr_skb->dev = ptr_net_dev;
         ptr_skb->pkt_type = PACKET_HOST; /* this packet is for me */
@@ -2614,6 +2625,8 @@ _hal_lightning_pkt_rxEnQueue(
         /* send to linux */
         if (dest_type == HAL_LIGHTNING_PKT_DEST_NETDEV)
         {
+            ptr_netif = HAL_LIGHTNING_PKT_GET_PORT_NETIF(port);
+
             /* skip ethernet header only for Linux net interface*/
             ptr_skb->protocol = eth_type_trans(ptr_skb, ptr_net_dev);
 
@@ -2623,10 +2636,15 @@ _hal_lightning_pkt_rxEnQueue(
                 if(ether_addr_equal(stp_mac, ether->h_dest) ||
                     ether_addr_equal(pvst_mac, ether->h_dest))
                 {
-                    if (ETH_P_8021Q == ntohs(ether->h_proto))
+                    if (ETH_P_8021Q == ntohs(ether->h_proto) || ETH_P_8021AD == ntohs(ether->h_proto))
                     {
+                        if(HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_STRIP == ptr_netif->vlan_tag_type)
+                    {
+                            skb_push(ptr_skb, ETH_HLEN);
+                            skb_vlan_pop(ptr_skb);
                         HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_RX,
-                            "u=%u, frame already have vlan tag, no need insert\n", unit);
+                                "u=%u, frame have vlan tag, strip vlan tag\n", unit);
+                    }
                     }
                     else if (vlan_push_flag)
                     {
@@ -2634,14 +2652,39 @@ _hal_lightning_pkt_rxEnQueue(
                         {
                             skb_vlan_push(ptr_skb, htons(ETH_P_8021Q), frame_vid);
                             HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_RX,
-                                "u=%u, add frame vlan tag, frame_vid=%u\n", unit, frame_vid);
+                                "u=%u, force add frame vlan tag, frame_vid=%u\n", unit, frame_vid);
                         }
                         else if((0 != vid_1st) && (vid_1st < 4095))
                         {
                             skb_vlan_push(ptr_skb, htons(ETH_P_8021Q), vid_1st);
                             HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_RX,
-                                "u=%u, add vlan tag, vid_1st=%u\n", unit, vid_1st);
+                                "u=%u, force add vlan tag, vid_1st=%u\n", unit, vid_1st);
                         }
+                    }
+                    else if(HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_KEEP == ptr_netif->vlan_tag_type)
+                    {
+                        skb_vlan_push(ptr_skb, htons(ETH_P_8021Q), vid_1st);
+                        HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_RX,
+                                "u=%u, keep vlan tag, vid_1st=%u\n", unit, vid_1st);
+                }
+            }
+                else
+                {
+                    if (ETH_P_8021Q == ntohs(ether->h_proto) || ETH_P_8021AD == ntohs(ether->h_proto))
+                    {
+                        if(HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_STRIP == ptr_netif->vlan_tag_type)
+                        {
+                            skb_push(ptr_skb, ETH_HLEN);
+                            skb_vlan_pop(ptr_skb);
+                            HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_RX,
+                                "u=%u, frame have vlan tag, strip vlan tag\n", unit);
+                        }
+                    }
+                    else if(HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_KEEP == ptr_netif->vlan_tag_type)
+                    {
+                        skb_vlan_push(ptr_skb, htons(ETH_P_8021Q), vid_1st);
+                        HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_RX,
+                                "u=%u, keep vlan tag, vid_1st=%u\n", unit, vid_1st);
                     }
                 }
             }
@@ -3245,6 +3288,7 @@ hal_lightning_pkt_setRxKnlConfig(
         }
 
         osal_io_copyFromUser(&ptr_rx_cb->buf_len, &ptr_cookie->buf_len, sizeof(UI32_T));
+        osal_io_copyFromUser(&ptr_rx_cb->phy_di_num, &ptr_cookie->phy_di_num, sizeof(UI32_T));
         _hal_lightning_pkt_rxStart(unit);
     }
 
@@ -6222,6 +6266,40 @@ _hal_lightning_pkt_getIntf(
     return (CLX_E_OK);
 }
 
+static CLX_ERROR_NO_T
+_hal_lightning_pkt_setIntf(
+    const UI32_T                        unit,
+    HAL_LIGHTNING_PKT_IOCTL_NETIF_COOKIE_T    *ptr_cookie)
+{
+    HAL_LIGHTNING_PKT_NETIF_INTF_T            net_intf = {0};
+    HAL_LIGHTNING_PKT_NETIF_PORT_DB_T         *ptr_port_db;
+    UI32_T                              port = 0;
+    CLX_ERROR_NO_T                      rc = CLX_E_ENTRY_NOT_FOUND;
+
+    osal_io_copyFromUser(&net_intf, &ptr_cookie->net_intf, sizeof(HAL_LIGHTNING_PKT_NETIF_INTF_T));
+
+    for (port = 0; port < HAL_LIGHTNING_PKT_MAX_PORT_NUM; port++)
+    {
+        ptr_port_db = HAL_LIGHTNING_PKT_GET_PORT_DB(port);
+        if (NULL != ptr_port_db->ptr_net_dev)       /* valid intf */
+        {
+            if (ptr_port_db->meta.id == net_intf.id)
+            {
+                HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_INTF, "u=%u, find intf id=%d\n", unit, net_intf.id);
+                _hal_lightning_pkt_traverseProfList(net_intf.id, ptr_port_db->ptr_profile_list);
+                osal_memcpy(&ptr_port_db->meta, &net_intf, sizeof(HAL_LIGHTNING_PKT_NETIF_INTF_T));
+
+                rc = CLX_E_OK;
+                break;
+            }
+        }
+    }
+
+    osal_io_copyToUser(&ptr_cookie->rc, &rc, sizeof(CLX_ERROR_NO_T));
+
+    return (CLX_E_OK);
+}
+
 static HAL_LIGHTNING_PKT_NETIF_PROFILE_T  *
 _hal_lightning_pkt_getProfEntry(
     const UI32_T                 id)
@@ -6535,6 +6613,7 @@ hal_lightning_pkt_dev_tx(
     return (ret);
 }
 
+
 long
 hal_lightning_pkt_dev_ioctl(
     struct file             *filp,
@@ -6564,6 +6643,10 @@ hal_lightning_pkt_dev_ioctl(
 
         case HAL_LIGHTNING_PKT_IOCTL_TYPE_GET_INTF:
             ret = _hal_lightning_pkt_getIntf(unit, (HAL_LIGHTNING_PKT_IOCTL_NETIF_COOKIE_T *)arg);
+            break;
+
+        case HAL_LIGHTNING_PKT_IOCTL_TYPE_SET_INTF:
+            ret = _hal_lightning_pkt_setIntf(unit, (HAL_LIGHTNING_PKT_IOCTL_NETIF_COOKIE_T *)arg);
             break;
 
         case HAL_LIGHTNING_PKT_IOCTL_TYPE_CREATE_PROFILE:
@@ -6661,7 +6744,6 @@ hal_lightning_pkt_dev_ioctl(
             ret = _hal_lightning_pkt_getNetlink(unit, (HAL_LIGHTNING_PKT_NL_IOCTL_COOKIE_T *)arg);
             break;
 #endif
-
         default:
             ret = -1;
             break;
