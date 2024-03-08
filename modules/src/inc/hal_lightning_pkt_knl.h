@@ -2113,6 +2113,7 @@ typedef enum
     HAL_LIGHTNING_PKT_IOCTL_TYPE_NL_GET_NETLINK,
 #endif
     HAL_LIGHTNING_PKT_IOCTL_TYPE_SET_INTF,
+    HAL_LIGHTNING_PKT_IOCTL_TYPE_SET_SWITCH_ID,
     HAL_LIGHTNING_PKT_IOCTL_TYPE_LAST
 
 } HAL_LIGHTNING_PKT_IOCTL_TYPE_T;
@@ -2226,6 +2227,13 @@ typedef union
     } field;
 
 } HAL_LIGHTNING_PKT_IOCTL_CMD_T;
+
+typedef struct
+{
+    UI32_T                          switch_id;
+    CLX_ERROR_NO_T                  rc;
+
+} HAL_LIGHTNING_PKT_IOCTL_SWITCH_ID_COOKIE_T;
 
 #endif /* End of CLX_EN_NETIF */
 

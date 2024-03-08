@@ -151,11 +151,10 @@ typedef enum
     CLX_PKT_RX_REASON_VM_PDU,                       /* Received frames whose E-CID matches the IBR upstream Port's PCID.  */
     CLX_PKT_RX_REASON_PIM_REGISTER,                 /* For source hit and group miss, send to CPU for PIM-registration.   */
     CLX_PKT_RX_REASON_TUNNEL_TERM_LKP_MISS,         /* Tunnel term lookup failed with bank error or entry miss.           */
-    CLX_PKT_RX_REASON_PP,                           /* Protocol/Management packet for SDN.                                */
     CLX_PKT_RX_REASON_EGR_FD_SFLOW,                 /* Egress fd-based sflow hit.                                         */
     CLX_PKT_RX_REASON_VXLAN_ROUTER_ALERT,           /* VXLAN packet with router alert to CPU.                             */
-    /* 32 */
     CLX_PKT_RX_REASON_NVGRE_ROUTER_ALERT,           /* NVGRE packet with router alert to CPU.                             */
+    /* 32 */
     CLX_PKT_RX_REASON_EX_PMOD_LIMIT,                /* Packet modification is excess PMOD's limitation.                   */
     CLX_PKT_RX_REASON_L3MC_SPT_READY_UNSET,         /* L3MC to CPU to trigger setting Shortest Path Tree ready bit.       */
     CLX_PKT_RX_REASON_IGR_MTU_FAIL,                 /* Ingress MTU check fail to CPU.                                     */
@@ -165,13 +164,6 @@ typedef enum
     CLX_PKT_RX_REASON_REDIRECT_TO_CPU_L3MC,         /* L3MC Redirect to CPU.                                              */
     CLX_PKT_RX_REASON_REDIRECT_TO_CPU_L2UC,         /* L2UC Redirect to CPU.                                              */
     CLX_PKT_RX_REASON_REDIRECT_TO_CPU_L3UC,         /* L3UC Redirect to CPU.                                              */
-    CLX_PKT_RX_REASON_SDN_IGR_FLOW_SFLOW,           /* SDN ingress flow-based sflow hit.                                  */
-    CLX_PKT_RX_REASON_SDN_EGR_FLOW_SFLOW,           /* SDN egress flow-based sflow hit.                                   */
-    CLX_PKT_RX_REASON_SDN_HW_LIMITATION,            /* SDN hardware limitation to CPU.                                    */
-    CLX_PKT_RX_REASON_SDN_OTHERS,                   /* SDN other exceptions to CPU.                                       */
-    CLX_PKT_RX_REASON_SDN_PKT_IN,                   /* SDN output controller port (packet-in) to CPU.                     */
-    CLX_PKT_RX_REASON_SDN_TO_LOCAL,                 /* SDN output local port to CPU.                                      */
-    /* 48 */
     CLX_PKT_RX_REASON_CIA_0,                        /* CIA To CPU. */
     CLX_PKT_RX_REASON_CIA_1,                        /* CIA To CPU. */
     CLX_PKT_RX_REASON_CIA_2,                        /* CIA To CPU. */
@@ -179,23 +171,24 @@ typedef enum
     CLX_PKT_RX_REASON_CIA_4,                        /* CIA To CPU. */
     CLX_PKT_RX_REASON_CIA_5,                        /* CIA To CPU. */
     CLX_PKT_RX_REASON_CIA_6,                        /* CIA To CPU. */
+    /* 48 */
     CLX_PKT_RX_REASON_CIA_7,                        /* CIA To CPU. */
-    CLX_PKT_RX_REASON_USR_DEFINE_0,
-    CLX_PKT_RX_REASON_USR_DEFINE_1,
-    CLX_PKT_RX_REASON_USR_DEFINE_2,
-    CLX_PKT_RX_REASON_USR_DEFINE_3,
-    CLX_PKT_RX_REASON_USR_DEFINE_4,
-    CLX_PKT_RX_REASON_USR_DEFINE_5,
-    CLX_PKT_RX_REASON_USR_DEFINE_6,
-    CLX_PKT_RX_REASON_USR_DEFINE_7,
-    /* 64 */
-    CLX_PKT_RX_REASON_USR_DEFINE_8,
-    CLX_PKT_RX_REASON_USR_DEFINE_9,
-    CLX_PKT_RX_REASON_USR_DEFINE_10,
-    CLX_PKT_RX_REASON_USR_DEFINE_11,
-    CLX_PKT_RX_REASON_USR_DEFINE_12,
-    CLX_PKT_RX_REASON_USR_DEFINE_13,
+    CLX_PKT_RX_REASON_USR_DEFINE_0,                 /* user define */
+    CLX_PKT_RX_REASON_USR_DEFINE_1,                 /* user define */
+    CLX_PKT_RX_REASON_USR_DEFINE_2,                 /* user define */
+    CLX_PKT_RX_REASON_USR_DEFINE_3,                 /* user define */
+    CLX_PKT_RX_REASON_USR_DEFINE_4,                 /* user define */
+    CLX_PKT_RX_REASON_USR_DEFINE_5,                 /* user define */
+    CLX_PKT_RX_REASON_USR_DEFINE_6,                 /* user define */
+    CLX_PKT_RX_REASON_USR_DEFINE_7,                 /* user define */
+    CLX_PKT_RX_REASON_USR_DEFINE_8,                 /* user define */
+    CLX_PKT_RX_REASON_USR_DEFINE_9,                 /* user define */
+    CLX_PKT_RX_REASON_USR_DEFINE_10,                 /* user define */
+    CLX_PKT_RX_REASON_USR_DEFINE_11,                 /* user define */
+    CLX_PKT_RX_REASON_USR_DEFINE_12,                 /* user define */
+    CLX_PKT_RX_REASON_USR_DEFINE_13,                 /* user define */
     CLX_PKT_RX_REASON_L2_LKP_MISS,                  /* L2 lookup failed with the bank error or entry miss.                */
+    /* 64 */
     CLX_PKT_RX_REASON_L2_HDR_MISS,                  /* l2 bridge copy without ingress Ethernet header.                    */
     CLX_PKT_RX_REASON_L2_SA_MISS,                   /* L2 lookup SA miss.                                                 */
     CLX_PKT_RX_REASON_L2_SA_MOVE,                   /* L2 lookup SA hit but interface move.                               */
@@ -205,24 +198,23 @@ typedef enum
     CLX_PKT_RX_REASON_IPV4_CHKSM_ERR,               /* IPv4 packet checksum error.                                        */
     CLX_PKT_RX_REASON_IPV4_MC_MALFORMED,            /* IPv4 multicast packet is malformed from RFC.                       */
     CLX_PKT_RX_REASON_IPV4_MC_LKP_MISS,             /* IPv4 multicast packet lookup miss.                                 */
-    /* 80 */
     CLX_PKT_RX_REASON_IPV6_VER_ERR,                 /* IPv6 packet has bad version.                                       */
     CLX_PKT_RX_REASON_IPV6_LEN_ERR,                 /* IPv6 packet total length does not cover 40-Bytes IPv6 base header. */
     CLX_PKT_RX_REASON_IPV6_MC_MALFORMED,            /* IPv6 multicast packet is malformed from RFC.                       */
     CLX_PKT_RX_REASON_IPV6_MC_LKP_MISS,             /* IPv6 multicast packet lookup miss.                                 */
     CLX_PKT_RX_REASON_FCOE_VER_ERR,                 /* FCoE packet has bad version.                                       */
     CLX_PKT_RX_REASON_FCOE_LKP_MISS,                /* FCoE DID lookup failed, bank error or entry miss.                  */
+    /* 80 */
     CLX_PKT_RX_REASON_FCOE_ZONING_FAIL,             /* FCoE zoning check failed to CPU.                                   */
     CLX_PKT_RX_REASON_MPLS_CTRL_PKT,                /* MPLS control packets to CPU.                                       */
     CLX_PKT_RX_REASON_MPLS_INVALID_PKT,             /* MPLS packet is illegal from RFC.                                   */
     CLX_PKT_RX_REASON_MPLS_LKP_MISS,                /* MPLS lookup failed with the bank error or entry miss.              */
-    CLX_PKT_RX_REASON_MPLS_UHP_P2P_MISS,            /* */
+    CLX_PKT_RX_REASON_MPLS_UHP_P2P_MISS,            /* MPLS UHP packet p2p miss                                           */
     CLX_PKT_RX_REASON_MPLS_UHP_TTL_0,               /* MPLS UHP packet TTL is 0.                                          */
     CLX_PKT_RX_REASON_MPLS_UHP_TTL_1,               /* MPLS UHP packet TTL is 1.                                          */
     CLX_PKT_RX_REASON_MPLS_TRANSIT_TTL_0,           /* MPLS transit packet TTL is 0.                                      */
     CLX_PKT_RX_REASON_MPLS_TRANSIT_TTL_1,           /* MPLS transit packet TTL is 1.                                      */
     CLX_PKT_RX_REASON_MPLS_TERM_TTL_0,              /* MPLS term packet TTL is 0.                                         */
-    /* 96 */
     CLX_PKT_RX_REASON_MPLS_TERM_TTL_1,              /* MPLS term packet TTL is 1.                                         */
     CLX_PKT_RX_REASON_IP_TUNNEL_CTRL_PKT,           /* IP tunnel control packets to CPU.                                  */
     CLX_PKT_RX_REASON_IP_TUNNEL_INNER_IPV4_UC_LCL,  /* IP tunnel packet has inner IPv4 unicast link local address.        */
@@ -230,6 +222,7 @@ typedef enum
     CLX_PKT_RX_REASON_IP_TUNNEL_INNER_MC_LCL,       /* IP tunnel packet has inner multicast link local address.           */
     CLX_PKT_RX_REASON_IP_TUNNEL_INNER_VER_ERR,      /* IP tunnel packet inner is not IPv4 and IPv6.                       */
     CLX_PKT_RX_REASON_IP_TUNNEL_INNER_L3_ROUTE,     /* Not allow GRE, IPoMPLS or MPLS VPN routed by inner header.         */
+    /* 96 */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV4_FRAG,    /* IP tunnel packet outer IPv4 fragment offset is not 0.              */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV4_OPT,     /* IP tunnel packet outer IPv4 has options.                           */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV4_AH,      /* IP tunnel packet outer IPv4 has authentication header.             */
@@ -239,13 +232,13 @@ typedef enum
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV6_OPT,     /* IP tunnel packet outer IPv6 has extension header.                  */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV6_AH,      /* IP tunnel packet outer IPv6 has authentication header.             */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV6_TTL_0,   /* IP tunnel packet outer IPv6 TTL is 0.                              */
-    /* 112 */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV6_TTL_1,   /* IP tunnel packet outer IPv6 TTL is 1.                              */
     CLX_PKT_RX_REASON_IPUC_TUNNEL_INNER_VLAN_MISS,  /* IP unicast tunnel packet inner VLAN miss.                          */
     CLX_PKT_RX_REASON_IPMC_TUNNEL_INNER_VLAN_MISS,  /* IP multicast tunnel packet inner VLAN miss.                        */
     CLX_PKT_RX_REASON_AUTO_TUNNEL_DIP_MISS,         /* Auto tunnel outer IPv4 and inner IPv6 DIP are unmatched.           */
     CLX_PKT_RX_REASON_AUTO_TUNNEL_SIP_MISS,         /* Auto tunnel outer IPv4 and inner IPv6 SIP are unmatched.           */
     CLX_PKT_RX_REASON_ETHER_IP_VER_ERR,             /* Ethernet-within-IP tunnel version is illegal from RFC 3378.        */
+    /* 112 */
     CLX_PKT_RX_REASON_GRE_VER_ERR,                  /* GRE tunnel version is illegal from RFC 2784.                       */
     CLX_PKT_RX_REASON_GRE_RSVD_NON_ZERO,            /* GRE tunnel reserved fields is illegal from RFC 2784.               */
     CLX_PKT_RX_REASON_GRE_CTRL_FLAG_ERR,            /* GRE tunnel control flag is illegal from RFC 2784.                  */
@@ -256,7 +249,6 @@ typedef enum
     CLX_PKT_RX_REASON_VXLAN_BAS_RSVD_NON_ZERO,      /* VXLAN Basic header reserved fields is illegal from RFC.            */
     CLX_PKT_RX_REASON_VXLAN_BAS_VNI_FLAG_ERR,       /* VXLAN Basic header VNI flag is illegal from RFC.                   */
     CLX_PKT_RX_REASON_VXLAN_BAS_CTRL_FLAG_ERR,      /* VXLAN Basic header control flag is illegal from RFC.               */
-    /* 128 */
     CLX_PKT_RX_REASON_VXLAN_BAS_UDP_CHKSM_ERR,      /* VXLAN Basic header UDP checksum is abnormal.                       */
     CLX_PKT_RX_REASON_VXLAN_GPE_VNI_FLAG_ERR,       /* VXLAN GRE header VNI flag is illegal from RFC.                     */
     CLX_PKT_RX_REASON_VXLAN_GPE_CTRL_FLAG_ERR,      /* VXLAN GPE header control flag is illegal from RFC.                 */
@@ -264,6 +256,7 @@ typedef enum
     CLX_PKT_RX_REASON_TRILL_VER_ERR,                /* TRILL version is illegal from RFC.                                 */
     CLX_PKT_RX_REASON_TRILL_MC_FLAG_ERR,            /* TRILL multicast flag is unmatched DMAC.                            */
     CLX_PKT_RX_REASON_TRILL_OPT,                    /* TRILL packet has option or option header length is illegal.        */
+    /* 128 */
     CLX_PKT_RX_REASON_TRILL_LKP_MISS,               /* TRILL lookup failed with the bank error or entry miss.             */
     CLX_PKT_RX_REASON_TRILL_TRANSIT_TTL_0,          /* TRILL transit packet TTL is 0.                                     */
     CLX_PKT_RX_REASON_TRILL_TRANSIT_TTL_1,          /* TRILL transit packet TTL is 1.                                     */
@@ -273,7 +266,6 @@ typedef enum
     CLX_PKT_RX_REASON_NSH_CTRL_PKT,                 /* NSH control packets to CPU.                                        */
     CLX_PKT_RX_REASON_NSH_INVALID_PKT,              /* NSH packet is illegal from RFC.                                    */
     CLX_PKT_RX_REASON_NSH_LKP_MISS,                 /* NSH lookup failed with the bank error or entry miss.               */
-    /* 144 */
     CLX_PKT_RX_REASON_ECMP_LKP_MISS,                /* ECMP lookup failed with the bank error or entry miss.              */
     CLX_PKT_RX_REASON_ACL_LKP_MISS,                 /* ACL lookup failed with the bank error or entry miss.               */
     CLX_PKT_RX_REASON_FLOW_LKP_MISS,                /* Flow lookup failed with the bank error or entry miss.              */
@@ -281,6 +273,7 @@ typedef enum
     CLX_PKT_RX_REASON_EGR_FLOW_SFLOW,               /* Egress flow-based sflow hit.                                       */
     CLX_PKT_RX_REASON_HW_ERROR,                     /* HW error. e.g. ECC.                                                */
     CLX_PKT_RX_REASON_1588_RX_PKT,                  /* User spcified the 1588 packets.                                    */
+    /* 144 */
     CLX_PKT_RX_REASON_STP_BLOCK,                    /* STP block packets to CPU.                                          */
     CLX_PKT_RX_REASON_STACKING_NEIGHBOR,            /* The stacking packets from neighbor.                                */
     CLX_PKT_RX_REASON_STACKING_BROADCAST,           /* The stacking broadcast packets.                                    */
@@ -290,7 +283,6 @@ typedef enum
     CLX_PKT_RX_REASON_TUNNEL_INNER_VLAN_MISS,       /* IP Tunnel or TRILL packets miss inner VLAN.                        */
     CLX_PKT_RX_REASON_TUNNEL_INNER_VLAN_UNEXP,      /* IP Tunnel or TRILL packets not allowed inner VLAN.                 */
     CLX_PKT_RX_REASON_IGR_L3_MTU_FAIL,              /* Ingress L3 MTU check fail to CPU.                                  */
-    /* 160 */
     CLX_PKT_RX_REASON_EGR_L3_MTU_FAIL,              /* Egress L3 MTU check fail to CPU.                                   */
     CLX_PKT_RX_REASON_IGR_TUNNEL_MTU_FAIL,          /* Ingress Tunnel MTU check fail to CPU.                              */
     CLX_PKT_RX_REASON_EGR_TUNNEL_MTU_FAIL,          /* Egress Tunnel MTU check fail to CPU.                               */
@@ -298,6 +290,7 @@ typedef enum
     CLX_PKT_RX_REASON_EGR_IPV6_TTL_1,               /* Egress IPv6 interface configure TTL 1.                             */
     CLX_PKT_RX_REASON_COPY_TO_CPU_L2MC,             /* L2MC Copy to CPU.                                                  */
     CLX_PKT_RX_REASON_COPY_TO_CPU_L3MC,             /* L3MC Copy to CPU.                                                  */
+    /* 160 */
     CLX_PKT_RX_REASON_COPY_TO_CPU_L2UC,             /* L2UC Copy to CPU.                                                  */
     CLX_PKT_RX_REASON_COPY_TO_CPU_L3UC,             /* L3UC Copy to CPU.                                                  */
     CLX_PKT_RX_REASON_FLEX_TUNNEL_UDP_CHKSM_ERR,    /* Flex tunnel packet UDP checksum is abnormal.                       */
@@ -307,7 +300,6 @@ typedef enum
     CLX_PKT_RX_REASON_FLEX_TUNNEL_3_CHK,            /* Flex tunnel 3 with sanity, type, or length check fail.             */
     CLX_PKT_RX_REASON_EGR_SFLOW_HIGH_LATENCY,       /* Sample high latency packet. */
     CLX_PKT_RX_REASON_DPP_LOOPBACK,                 /* DPP loopback packet */
-    /* 176 */
     CLX_PKT_RX_REASON_PPPOE_SRV_UNKNOWN,            /* PPPOE service unknown */
     CLX_PKT_RX_REASON_PPPOE_HDR_ERR,                /* PPPOE header error */
     CLX_PKT_RX_REASON_PPPOE_ENCAP_ERR,              /* PPPOE encap error */
@@ -315,6 +307,7 @@ typedef enum
     CLX_PKT_RX_REASON_IP_TUNNEL_IPV6_ERR,           /* IP tunnel IPv6 header error */
     CLX_PKT_RX_REASON_DECAP_NSH_TTL_1,              /* NSH TLL 1 error */
     CLX_PKT_RX_REASON_TRANSIT_NSH_TTL_1,            /* NSH TLL 1 error */
+    /* 176 */
     CLX_PKT_RX_REASON_PORT_MTR_DROP,                /* Meter over rate drop */
     CLX_PKT_RX_REASON_WECMP,                        /* WECMP config error */
     CLX_PKT_RX_REASON_IOAM_NODE_LEN_INVALID_IPV6,   /* IOAM over IPv6 node len not align */

@@ -2161,7 +2161,7 @@ CLX_ERROR_NO_T
 hal_dawn_pkt_prepareGpd(
     const UI32_T                        unit,
     const CLX_ADDR_T                    phy_addr,
-    const UI32_T                        len,
+    const struct sk_buff                *ptr_skb,
     const UI32_T                        port,
     HAL_DAWN_PKT_TX_SW_GPD_T             *ptr_sw_gpd);
 
