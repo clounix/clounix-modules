@@ -5297,21 +5297,21 @@ CLX_ERROR_NO_T
 hal_dawn_pkt_prepareGpd(
     const UI32_T                unit,
     const CLX_ADDR_T            phy_addr,
-    const UI32_T                len,
+    const struct sk_buff        *ptr_skb,
     const UI32_T                port,
     HAL_DAWN_PKT_TX_SW_GPD_T     *ptr_sw_gpd)
 {
     /* fill up tx_gpd */
     ptr_sw_gpd->tx_gpd.data_buf_addr_hi              = CLX_ADDR_64_HI(phy_addr);
     ptr_sw_gpd->tx_gpd.data_buf_addr_lo              = CLX_ADDR_64_LOW(phy_addr);
-    ptr_sw_gpd->tx_gpd.data_buf_size                 = len;
+    ptr_sw_gpd->tx_gpd.data_buf_size                 = ptr_skb->len;
     ptr_sw_gpd->tx_gpd.chksum                        = 0x0;
     ptr_sw_gpd->tx_gpd.ipc                           = 0; /* Raw mode, sent to plane 0 */
     ptr_sw_gpd->tx_gpd.prg                           = HAL_DAWN_PKT_PRG_PROCESS_GPD;
     ptr_sw_gpd->tx_gpd.hwo                           = HAL_DAWN_PKT_HWO_HW_OWN;
     ptr_sw_gpd->tx_gpd.ch                            = HAL_DAWN_PKT_CH_LAST_GPD;
     ptr_sw_gpd->tx_gpd.ioc                           = HAL_DAWN_PKT_IOC_HAS_INTR;
-    ptr_sw_gpd->tx_gpd.pkt_len                       = len;
+    ptr_sw_gpd->tx_gpd.pkt_len                       = ptr_skb->len;
     ptr_sw_gpd->tx_gpd.crcc                          = HAL_DAWN_PKT_CRCC_SUM_BY_HW;
 
     /* fill up cpu header */
@@ -5495,7 +5495,7 @@ _hal_dawn_pkt_net_dev_tx(
             ptr_sw_gpd->channel    = channel;
 
             /* prepare gpd */
-            hal_dawn_pkt_prepareGpd(unit, phy_addr, ptr_skb->len, ptr_priv->port, ptr_sw_gpd);
+            hal_dawn_pkt_prepareGpd(unit, phy_addr, ptr_skb, ptr_priv->port, ptr_sw_gpd);
 
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(4,6,7)
             ptr_net_dev->trans_start = jiffies;

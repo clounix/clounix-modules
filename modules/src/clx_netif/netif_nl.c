@@ -71,7 +71,9 @@ extern UI32_T       ext_dbg_flag;
 #define NETIF_NL_FAMILY_IS_PSAMPLE(__ptr_family__)              (0 == strncmp(__ptr_family__->name,                     \
                                                                               NETIF_NL_PSAMPLE_FAMILY_NAME,             \
                                                                               NETIF_NL_NETLINK_NAME_LEN)) ? 1 : 0
-
+#define NETIF_NL_FAMILY_IS_MOD(__ptr_family__)                  (0 == strncmp(__ptr_family__->name,                     \
+                                                                              NETIF_NL_MOD_FAMILY_NAME,                 \
+                                                                              NETIF_NL_NETLINK_NAME_LEN)) ? 1 : 0
 /* porting part */
 #define NETIF_NL_VER_NUM                                        (1)
 #define NETIF_NL_PSAMPLE_MAX_ATTR_NUM                           (NETIF_NL_PSAMPLE_ATTR_LAST)
@@ -124,6 +126,7 @@ extern UI32_T       ext_dbg_flag;
 
 #define NETIF_NL_PSAMPLE_PKT_LEN_MAX                            (9216)
 #define NETIF_NL_PSAMPLE_DFLT_USR_GROUP_ID                      (1)
+#define NETIF_NL_MOD_FAMILY_NAME                                "mod"
 
 typedef enum
 {
@@ -704,7 +707,7 @@ _netif_nl_allocNetlinkSkb(
     CLX_ERROR_NO_T      rc = CLX_E_OK;
 
     /* need to fill specific skb header format */
-    if (NETIF_NL_FAMILY_IS_PSAMPLE(ptr_nl_family))
+    if (NETIF_NL_FAMILY_IS_PSAMPLE(ptr_nl_family) || NETIF_NL_FAMILY_IS_MOD(ptr_nl_family))
     {
         rc = _netif_nl_allocPsampleSkb(ptr_cb, ptr_nl_family,
                                        ptr_ori_skb, pptr_nl_skb);

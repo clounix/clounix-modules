@@ -76,6 +76,7 @@
 #include <netif_nl.h>
 
 #include <hal_lightning_pkt_knl.h>
+#include <hal_lightning_pkt_rx_reason.h>
 
 /* clx_sdk */
 #include <osal/osal_mdc.h>
@@ -116,6 +117,7 @@ extern UI32_T                           vlan_push_flag;
 extern UI32_T                           frame_vid;
 
 extern UI32_T                           intel_iommu_flag;
+static UI32_T                           g_switch_id = 0;
 
 #define HAL_LIGHTNING_PKT_DBG(__flag__, ...)      do                  \
 {                                                               \
@@ -366,6 +368,104 @@ typedef enum
     HAL_LIGHTNING_PKT_DEST_LAST
 } HAL_LIGHTNING_PKT_DEST_T;
 
+#if defined(CLX_EN_BIG_ENDIAN)
+struct mod_hdr
+{
+    UI32_T      sw_id;
+
+    UI32_T      decap_act:3;
+    UI32_T      igr_l2_vid:2;
+    UI32_T      srv:3;
+    UI32_T      ts_sec:18;
+    UI32_T      ts_nsec_hi:6;
+
+    UI32_T      ts_nsec_lo:24;
+    UI32_T      gbl_drop:1;
+    UI32_T      port_drop:1;
+    UI32_T      que_drop:1;
+    UI32_T      rsv2:4;
+    UI32_T      tc_hi:1;
+
+    UI32_T      tc_lo:3;
+    UI32_T      pp_drop_avail:1;
+    UI32_T      ipp_drop:1;
+    UI32_T      epp_drop:1;
+    UI32_T      pp_drop_rsn:12;
+    UI32_T      frm_len:14;
+
+    UI32_T      m:1;
+    UI32_T      tm_drop_rsn:2;
+    UI32_T      t:1;
+    UI32_T      rsv1:2;
+    UI32_T      src_port:12;
+    UI32_T      switch_id:12;
+    UI32_T      sc_hi:2;
+
+    UI32_T      sc_lo:1;
+    UI32_T      dst_idx:15;
+    UI32_T      ts:16;
+}__attribute__ ((packed));
+#elif defined(CLX_EN_LITTLE_ENDIAN)
+struct mod_hdr
+{
+    UI32_T      sw_id;
+
+    UI32_T      ts_nsec_hi:6;
+    UI32_T      ts_sec:18;
+    UI32_T      srv:3;
+    UI32_T      igr_l2_vid:2;
+    UI32_T      decap_act:3;
+
+    UI32_T      tc_hi:1;
+    UI32_T      rsv2:4;
+    UI32_T      que_drop:1;
+    UI32_T      port_drop:1;
+    UI32_T      gbl_drop:1;
+    UI32_T      ts_nsec_lo:24;
+
+    UI32_T      frm_len:14;
+    UI32_T      pp_drop_rsn:12;
+    UI32_T      epp_drop:1;
+    UI32_T      ipp_drop:1;
+    UI32_T      pp_drop_avail:1;
+    UI32_T      tc_lo:3;
+
+    UI32_T      sc_hi:2;
+    UI32_T      switch_id:12;
+    UI32_T      src_port:12;
+    UI32_T      rsv1:2;
+    UI32_T      t:1;
+    UI32_T      tm_drop_rsn:2;
+    UI32_T      m:1;
+
+    UI32_T      ts:16;
+    UI32_T      dst_idx:15;
+    UI32_T      sc_lo:1;
+}__attribute__ ((packed));
+#else
+#error "Host MOD endian is not defined!!\n"
+#endif
+
+typedef struct
+{
+    UI32_T     user_rx_reason;
+    UI8_T      ipp_drop;
+    UI8_T      epp_drop;
+    UI8_T      pp_drop_avail;
+    UI8_T      steer_applied;
+    union
+    {
+        HAL_LIGHTNING_PKT_ITMH_FAB_T  itmh_fab;
+        HAL_LIGHTNING_PKT_ITMH_ETH_T  itmh_eth;
+        HAL_LIGHTNING_PKT_ETMH_FAB_T  etmh_fab;
+        HAL_LIGHTNING_PKT_ETMH_ETH_T  etmh_eth;
+    };
+}DROP_INFO_T;
+
+struct custom_header
+{
+    UI32_T switch_id;
+};
 /*****************************************************************************
  * GLOBAL VARIABLE DECLARATIONS
  *****************************************************************************
@@ -2188,12 +2288,14 @@ static void
 _hal_lightning_pkt_rxCheckReason(
     volatile HAL_LIGHTNING_PKT_RX_GPD_T   *ptr_rx_gpd,
     HAL_LIGHTNING_PKT_NETIF_PROFILE_T     *ptr_profile,
-    BOOL_T                          *ptr_hit_prof)
+    BOOL_T                          *ptr_hit_prof,
+    DROP_INFO_T                           *drop_info)
 {
     HAL_PKT_RX_REASON_BITMAP_T      *ptr_reason_bitmap = &ptr_profile->reason_bitmap;
     UI32_T                          bitval = 0;
     UI32_T                          bitmap = 0x0;
 
+    memset(drop_info, 0, sizeof(DROP_INFO_T));
     if (0 == (ptr_profile->flags & HAL_LIGHTNING_PKT_NETIF_PROFILE_FLAGS_REASON))
     {
         /* It means that reason doesn't metters */
@@ -2206,10 +2308,13 @@ _hal_lightning_pkt_rxCheckReason(
 #define HAL_LIGHTNING_PKT_DI_L3_CPU_MIN       (HAL_EXCPT_CPU_BASE_ID + HAL_EXCPT_CPU_L3_MIN)
 #define HAL_LIGHTNING_PKT_DI_L3_CPU_MAX       (HAL_EXCPT_CPU_BASE_ID + HAL_EXCPT_CPU_L3_MAX)
 
+    drop_info->pp_drop_avail = 1;
+    drop_info->itmh_eth = ptr_rx_gpd->itmh_eth;
+    drop_info->etmh_eth = ptr_rx_gpd->etmh_eth;
     switch (ptr_rx_gpd->itmh_eth.typ)
     {
         case HAL_LIGHTNING_PKT_TMH_TYPE_ITMH_ETH:
-
+            drop_info->steer_applied = ptr_rx_gpd->itmh_eth.steer_applied;
             /* IPP non-L3 exception */
             if (ptr_rx_gpd->itmh_eth.dst_idx >= HAL_LIGHTNING_PKT_DI_NON_L3_CPU_MIN &&
                 ptr_rx_gpd->itmh_eth.dst_idx <= HAL_LIGHTNING_PKT_DI_NON_L3_CPU_MAX)
@@ -2219,6 +2324,7 @@ _hal_lightning_pkt_rxCheckReason(
                 if (0 != (ptr_reason_bitmap->ipp_excpt_bitmap[bitval / 32] & bitmap))
                 {
                     *ptr_hit_prof = TRUE;
+                    drop_info->ipp_drop = 1;
                     break;
                 }
             }
@@ -2231,6 +2337,7 @@ _hal_lightning_pkt_rxCheckReason(
                 if (0 != (ptr_reason_bitmap->ipp_l3_excpt_bitmap[0] & bitmap))
                 {
                     *ptr_hit_prof = TRUE;
+                    drop_info->ipp_drop = 1;
                     break;
                 }
             }
@@ -2240,6 +2347,7 @@ _hal_lightning_pkt_rxCheckReason(
             if (0 != (ptr_reason_bitmap->ipp_copy2cpu_bitmap[0] & bitmap))
             {
                 *ptr_hit_prof = TRUE;
+                drop_info->ipp_drop = 1;
                 break;
             }
 
@@ -2249,16 +2357,18 @@ _hal_lightning_pkt_rxCheckReason(
             if (0 != (ptr_reason_bitmap->ipp_rsn_bitmap[bitval / 32] & bitmap))
             {
                 *ptr_hit_prof = TRUE;
+                drop_info->ipp_drop = 1;
                 break;
             }
             break;
 
         case HAL_LIGHTNING_PKT_TMH_TYPE_ITMH_FAB:
         case HAL_LIGHTNING_PKT_TMH_TYPE_ETMH_FAB:
+            drop_info->pp_drop_avail = 0;
             break;
 
         case HAL_LIGHTNING_PKT_TMH_TYPE_ETMH_ETH:
-
+            drop_info->steer_applied = ptr_rx_gpd->itmh_eth.steer_applied;
             /* EPP exception */
             if (1 == ptr_rx_gpd->etmh_eth.redir)
             {
@@ -2267,6 +2377,7 @@ _hal_lightning_pkt_rxCheckReason(
                 if (0 != (ptr_reason_bitmap->epp_excpt_bitmap[bitval / 32] & bitmap))
                 {
                     *ptr_hit_prof = TRUE;
+                    drop_info->epp_drop = 1;
                     break;
                 }
             }
@@ -2277,12 +2388,14 @@ _hal_lightning_pkt_rxCheckReason(
             if (0 != (ptr_reason_bitmap->epp_copy2cpu_bitmap[0] & bitmap))
             {
                 *ptr_hit_prof = TRUE;
+                drop_info->epp_drop = 1;
                 break;
             }
             break;
 
         default:
             *ptr_hit_prof = FALSE;
+            drop_info->pp_drop_avail = 0;
             break;
     }
 }
@@ -2382,7 +2495,8 @@ static void
 _hal_lightning_pkt_matchUserProfile(
     volatile HAL_LIGHTNING_PKT_RX_GPD_T   *ptr_rx_gpd,
     HAL_LIGHTNING_PKT_PROFILE_NODE_T      *ptr_profile_list,
-    HAL_LIGHTNING_PKT_NETIF_PROFILE_T     **pptr_profile_hit)
+    HAL_LIGHTNING_PKT_NETIF_PROFILE_T     **pptr_profile_hit,
+    DROP_INFO_T                           *drop_info)
 {
     HAL_LIGHTNING_PKT_PROFILE_NODE_T      *ptr_curr_node = ptr_profile_list;
     BOOL_T                          hit;
@@ -2392,7 +2506,7 @@ _hal_lightning_pkt_matchUserProfile(
     while (NULL != ptr_curr_node)
     {
         /* 1st match reason */
-        _hal_lightning_pkt_rxCheckReason(ptr_rx_gpd, ptr_curr_node->ptr_profile, &hit);
+        _hal_lightning_pkt_rxCheckReason(ptr_rx_gpd, ptr_curr_node->ptr_profile, &hit, drop_info);
         if (TRUE == hit)
         {
             HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_PROFILE,
@@ -2419,7 +2533,8 @@ static void
 _hal_lightning_pkt_getPacketDest(
     volatile HAL_LIGHTNING_PKT_RX_GPD_T   *ptr_rx_gpd,
     HAL_LIGHTNING_PKT_DEST_T              *ptr_dest,
-    void                            **pptr_cookie)
+    void                            **pptr_cookie,
+    DROP_INFO_T                     *drop_info)
 {
     UI32_T                          port;
     HAL_LIGHTNING_PKT_PROFILE_NODE_T      *ptr_profile_list;
@@ -2430,7 +2545,8 @@ _hal_lightning_pkt_getPacketDest(
 
     _hal_lightning_pkt_matchUserProfile(ptr_rx_gpd,
                                   ptr_profile_list,
-                                  &ptr_profile_hit);
+                                  &ptr_profile_hit,
+                                  drop_info);
     if (NULL != ptr_profile_hit)
     {
 #if defined(NETIF_EN_NETLINK)
@@ -2451,6 +2567,263 @@ _hal_lightning_pkt_getPacketDest(
     {
         *ptr_dest = HAL_LIGHTNING_PKT_DEST_NETDEV;
     }
+}
+
+static void
+_hal_lightning_pkt_modTmModify(
+    struct sk_buff *skb,
+    const UI32_T switch_id)
+{
+    struct custom_header *new_header;
+
+    skb_pull(skb, ETH_HLEN);
+    if (skb_headroom(skb) >= sizeof(struct custom_header))
+    {
+        skb_push(skb, sizeof(struct custom_header));
+        new_header = (struct custom_header *)skb->data;
+        new_header->switch_id = htonl(switch_id);
+    }
+    else
+    {
+        HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_ERR,
+                    "Modify TM Error!\n");
+    }
+
+    return;
+}
+
+static void
+_hal_lightning_pkt_parseRxDropReason(
+    const UI32_T                    unit,
+    DROP_INFO_T                     *drop_info)
+{
+    UI32_T                          idx = 0;
+    UI32_T                          is_v6 = 0;
+    UI32_T                          is_mc = 0;
+    UI32_T                          entry_num=0;
+    UI32_T                          bitval = 0;
+    UI32_T                          ipp_excpt = 0;
+    UI32_T                          ipp_l3_excpt = 0;
+    UI32_T                          ipp_copy2cpu = 0;
+    UI32_T                          ipp_rsn = 0;
+    UI32_T                          epp_excpt = 0;
+    UI32_T                          epp_copy2cpu = 0;
+
+    switch (drop_info->itmh_eth.typ)
+    {
+        case HAL_LIGHTNING_PKT_TMH_TYPE_ITMH_ETH:
+            /* IPP non-L3 exception */
+            if (drop_info->itmh_eth.dst_idx >= HAL_LIGHTNING_PKT_DI_NON_L3_CPU_MIN &&
+                drop_info->itmh_eth.dst_idx <= HAL_LIGHTNING_PKT_DI_NON_L3_CPU_MAX)
+            {
+                ipp_excpt = drop_info->itmh_eth.dst_idx - HAL_LIGHTNING_PKT_DI_NON_L3_CPU_MIN;
+                drop_info->user_rx_reason = _hal_lightning_pkt_user_reason_to_ipp_excpt[ipp_excpt].user_reason;
+                HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_PROFILE,
+                    "IPP non-L3 exception, user_rx_reason:%u ipp_excpt:%u\n", drop_info->user_rx_reason, ipp_excpt);
+                break;
+            }
+
+            /* IPP L3 exception */
+            if (drop_info->itmh_eth.dst_idx >= HAL_LIGHTNING_PKT_DI_L3_CPU_MIN &&
+                drop_info->itmh_eth.dst_idx <= HAL_LIGHTNING_PKT_DI_L3_CPU_MAX)
+            {
+                ipp_l3_excpt = drop_info->itmh_eth.dst_idx - HAL_LIGHTNING_PKT_DI_L3_CPU_MIN;
+                is_v6 = (ipp_l3_excpt & 0x80) >> 7;
+                is_mc = (ipp_l3_excpt & 0x40) >> 6;
+                entry_num = sizeof(_hal_lightning_pkt_user_reason_to_ipp_l3_excpt)
+                                / sizeof(HAL_LIGHTNING_PKT_REASON_MAP_IPP_L3_EXCPT_T);
+
+                for (idx = 0; idx < entry_num; idx++)
+                {
+                    if (ipp_l3_excpt == (1 << _hal_lightning_pkt_user_reason_to_ipp_l3_excpt[idx].ipp_l3_excpt))
+                    {
+                         if (HAL_LIGHTNING_PKT_IPP_L3_EXCPT_RPF ==
+                                _hal_lightning_pkt_user_reason_to_ipp_l3_excpt[idx].ipp_l3_excpt)
+                        {
+                                drop_info->user_rx_reason = (1 == is_mc)?
+                                    CLX_PKT_RX_REASON_L3MC_RPF_CHECK :
+                                    CLX_PKT_RX_REASON_URPF_CHECK_FAIL;
+                        }
+                        else if (HAL_LIGHTNING_PKT_IPP_L3_EXCPT_SW_FWD ==
+                                _hal_lightning_pkt_user_reason_to_ipp_l3_excpt[idx].ipp_l3_excpt)
+                        {
+                            drop_info->user_rx_reason = (1 == is_v6)?
+                                CLX_PKT_RX_REASON_IPV6_HOP_BY_HOP_EXT_HDR :
+                                CLX_PKT_RX_REASON_IPV4_HDR_OPTION;
+                        }
+                        else
+                        {
+                            drop_info->user_rx_reason = _hal_lightning_pkt_user_reason_to_ipp_l3_excpt[idx].user_reason;
+                        }
+                    }
+                }
+
+                HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_PROFILE,
+                    "IPP L3 exception  user_rx_reason:%u, ipp_l3_excpt:%u\n",drop_info->user_rx_reason, ipp_l3_excpt);
+                break;
+            }
+
+            /* IPP cp_to_cpu_bmap */
+            ipp_copy2cpu = drop_info->itmh_eth.cp_to_cpu_bmap;
+            if (0 != ipp_copy2cpu)
+            {
+                entry_num = sizeof(_hal_lightning_pkt_user_reason_to_ipp_copy2cpu)
+                                / sizeof(HAL_LIGHTNING_PKT_REASON_MAP_IPP_COPY2CPU_T);
+
+                for (idx = 0; idx < entry_num; idx++)
+                {
+                    if (ipp_copy2cpu ==
+                            1 << _hal_lightning_pkt_user_reason_to_ipp_copy2cpu[idx].ipp_copy2cpu)
+                    {
+                        drop_info->user_rx_reason =
+                            _hal_lightning_pkt_user_reason_to_ipp_copy2cpu[idx].user_reason;
+                    }
+                }
+
+                HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_PROFILE,
+                    "IPP cp_to_cpu_bmap  user_rx_reason:%u, ipp_copy2cpu:%u\n", drop_info->user_rx_reason, ipp_copy2cpu);
+                break;
+            }
+
+            /* IPP cp_to_cpu_rsn */
+            bitval = drop_info->itmh_eth.cp_to_cpu_code;
+            ipp_rsn = 1UL << (bitval % 32);
+            if (0 != ipp_rsn)
+            {
+                drop_info->user_rx_reason =
+                    _hal_lightning_pkt_user_reason_to_ipp_rsn[bitval].user_reason;
+
+                HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_PROFILE,
+                    "IPP cp_to_cpu_rsn user_rx_reason:%u, bitval:%u, ipp_rsn:%u\n", drop_info->user_rx_reason, bitval, ipp_rsn);
+                break;
+            }
+            break;
+
+        case HAL_LIGHTNING_PKT_TMH_TYPE_ETMH_ETH:
+            /* EPP exception */
+            if (1 == drop_info->etmh_eth.redir)
+            {
+                epp_excpt = drop_info->etmh_eth.excpt_code_mir_bmap;
+                if (0 != epp_excpt)
+                {
+                    entry_num = sizeof(_hal_lightning_pkt_user_reason_to_epp_excpt)
+                            / sizeof(HAL_LIGHTNING_PKT_REASON_MAP_EPP_EXCPT_T);
+                    epp_excpt = epp_excpt & 0x3F;
+                    for (idx = 0; idx < entry_num; idx++)
+                    {
+                        if (epp_excpt == idx)
+                        {
+                            drop_info->user_rx_reason =
+                                _hal_lightning_pkt_user_reason_to_epp_excpt[idx].user_reason;
+                        }
+                    }
+                    HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_PROFILE,
+                        "EPP exception, user_rx_reason:%u, epp_excpt:%u\n", drop_info->user_rx_reason, epp_excpt);
+                    break;
+                }
+            }
+
+            /* EPP cp_to_cpu_bmap */
+            epp_copy2cpu = ((drop_info->etmh_eth.cp_to_cpu_bmap_w0 << 7) |
+                      (drop_info->etmh_eth.cp_to_cpu_bmap_w1));
+            if (0 != epp_copy2cpu)
+            {
+                entry_num = sizeof(_hal_lightning_pkt_user_reason_to_epp_copy2cpu)
+                                / sizeof(HAL_LIGHTNING_PKT_REASON_MAP_EPP_COPY2CPU_T);
+                for (idx = 0; idx < entry_num; idx++)
+                {
+                    if (epp_copy2cpu ==
+                            1 << _hal_lightning_pkt_user_reason_to_epp_copy2cpu[idx].epp_copy2cpu)
+                    {
+                        drop_info->user_rx_reason = _hal_lightning_pkt_user_reason_to_epp_copy2cpu[idx].user_reason;
+                    }
+                }
+                HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_PROFILE,
+                    "EPP cp_to_cpu_bmap, user_rx_reason:%u, epp_copy2cpu:%u\n", drop_info->user_rx_reason, epp_copy2cpu);
+                break;
+            }
+
+            break;
+        default:
+            break;
+    }
+}
+
+static void
+_hal_lightning_pkt_modHdrInsert(
+    const UI32_T                    unit,
+    struct sk_buff                  *skb,
+    HAL_LIGHTNING_PKT_RX_GPD_T      *rx_gpd,
+    DROP_INFO_T                     drop_info)
+{
+    struct mod_hdr *mod =  NULL;
+    UI32_T size = 0, i = 0;
+    UI8_T *p = NULL;
+    UI32_T  ts_nsec = 0;
+
+    if (skb == NULL || rx_gpd == NULL)
+    {
+        return;
+    }
+
+    mod = (struct mod_hdr *)skb_push(skb, sizeof(struct mod_hdr));
+    mod->ts = ((((UI32_T)rx_gpd->pph_l2.ts_0_7)  << 8) & 0x0000FF00)  |
+                        ((((UI32_T)rx_gpd->pph_l2.ts_8_15) << 0) & 0x000000FF) ;
+    mod->dst_idx = rx_gpd->itmh_eth.dst_idx;
+    mod->sc_hi = 0x0;
+    mod->sc_lo = 0x0;
+    /* switch_id configured as 3 bits plane id and 7 bits chip id, PP drop ignore */
+    mod->switch_id = 0;
+    mod->src_port = rx_gpd->itmh_eth.igr_phy_port;
+    mod->rsv1 = 0;
+    mod->t = 0;
+    mod->tm_drop_rsn = 0;
+    mod->m = 1; //ucast(0), mcast(1)
+    mod->frm_len = rx_gpd->cnsm_buf_len;
+    mod->pp_drop_rsn = drop_info.user_rx_reason;
+    mod->pp_drop_avail = drop_info.pp_drop_avail;
+    mod->ipp_drop = drop_info.ipp_drop;
+    mod->epp_drop = drop_info.epp_drop;
+    mod->tc_hi = (rx_gpd->itmh_eth.tc >> 3) & 0x1;
+    mod->tc_lo = rx_gpd->itmh_eth.tc & 0x7;
+    mod->rsv2 = 0;
+    mod->que_drop = 0;
+    mod->port_drop = 0;
+    mod->gbl_drop = 0;
+    mod->ts_sec = ((rx_gpd->ts_24_31 >> 6) & 0x3) |
+                        ((rx_gpd->ts_32_33 << 2) & 0xC);
+
+    ts_nsec = ((((UI32_T)rx_gpd->pph_l2.ts_0_7)  << 8) & 0x0000FF00)  |
+                        ((((UI32_T)rx_gpd->pph_l2.ts_8_15) << 0) & 0x000000FF)  |
+                        ((((UI32_T)rx_gpd->ts_16_23) << 16)      & 0x00FF0000)  |
+                        ((((UI32_T)rx_gpd->ts_24_31) << 24)      & 0x3F000000);
+    mod->ts_nsec_hi = (ts_nsec >> 24) & 0x3F;
+    mod->ts_nsec_lo = ts_nsec & 0xFFFFFF;
+    mod->srv = rx_gpd->itmh_eth.srv;
+    mod->igr_l2_vid = rx_gpd->pph_l2.vid_1st;
+    mod->decap_act = rx_gpd->pph_l2.decap_act;
+    mod->sw_id = g_switch_id;
+
+    HAL_LIGHTNING_PKT_DBG( HAL_LIGHTNING_PKT_DBG_COMMON,
+        "mod->ts:0x%x, mod->dst_idx:0x%x, mod->switch_id:%u, mod->src_port:0x%x, mod->frm_len:0x%x\n",
+        mod->ts, mod->dst_idx, mod->switch_id, mod->src_port, mod->frm_len);
+    HAL_LIGHTNING_PKT_DBG( HAL_LIGHTNING_PKT_DBG_COMMON,
+        "mod->pp_drop_rsn:%u, mod->pp_drop_avail:0x%x,mod->ipp_drop:0x%x, mod->epp_drop:0x%x mod->tc:0x%x\n",
+        mod->pp_drop_rsn, mod->pp_drop_avail, mod->ipp_drop, mod->epp_drop, mod->tc_hi|mod->tc_lo);
+    HAL_LIGHTNING_PKT_DBG( HAL_LIGHTNING_PKT_DBG_COMMON,
+        "mod->ts_sec:0x%x, ts_nsec:0x%x, mod->srv:0x%x, mod->igr_l2_vid:0x%x, mod->decap_act:0x%x, mod->sw_id:0x%x\n",
+        mod->ts_sec, ts_nsec, mod->srv, mod->igr_l2_vid, mod->decap_act, mod->sw_id);
+
+    /* swap endian every 32 bits */
+    p = (UI8_T *)mod;
+    size = sizeof(struct mod_hdr);
+    for (i = 0; i < size / sizeof(UI32_T); ++i)
+    {
+        *(UI32_T *)p = htonl(*(UI32_T *)p);
+        p += sizeof(UI32_T);
+    }
+
+    return;
 }
 
 /* FUNCTION NAME: _hal_lightning_pkt_rxEnQueue
@@ -2492,6 +2865,8 @@ _hal_lightning_pkt_rxEnQueue(
     static UI8_T stp_mac[ETH_ALEN] = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x00 };
     static UI8_T pvst_mac[ETH_ALEN] = { 0x01, 0x00, 0x0c, 0xcc, 0xcc, 0xcd };
     HAL_LIGHTNING_PKT_NETIF_INTF_T   *ptr_netif = NULL;
+    DROP_INFO_T                     pp_drop_info;
+    HAL_LIGHTNING_PKT_RX_GPD_T      pp_drop_rx_gpd;
 
 #if defined(PERF_EN_TEST)
     /* To verify kernel Rx performance */
@@ -2516,7 +2891,7 @@ _hal_lightning_pkt_rxEnQueue(
     }
 #endif
 
-    _hal_lightning_pkt_getPacketDest(&ptr_sw_gpd->rx_gpd, &dest_type, &ptr_dest);
+    _hal_lightning_pkt_getPacketDest(&ptr_sw_gpd->rx_gpd, &dest_type, &ptr_dest, &pp_drop_info);
 
 #if defined(NETIF_EN_NETLINK)
     if ((HAL_LIGHTNING_PKT_DEST_NETDEV  == dest_type) ||
@@ -2551,6 +2926,7 @@ _hal_lightning_pkt_rxEnQueue(
             ptr_sw_gpd = ptr_sw_gpd->ptr_next;
         }
 
+        memset(&pp_drop_rx_gpd, 0, sizeof(HAL_LIGHTNING_PKT_RX_GPD_T));
         port = ptr_sw_first_gpd->rx_gpd.itmh_eth.igr_phy_port;
         ptr_net_dev = HAL_LIGHTNING_PKT_GET_PORT_NETDEV(port);
         /* if NULL netdev, drop the skb */
@@ -2571,6 +2947,7 @@ _hal_lightning_pkt_rxEnQueue(
         HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_RX,
             "vid_1st=%d vid_2st=%d vlan_push_flag=%d\n",vid_1st,vid_2st,vlan_push_flag);
 
+        memcpy(&pp_drop_rx_gpd, &(ptr_sw_first_gpd->rx_gpd), sizeof(HAL_LIGHTNING_PKT_RX_GPD_T));
         /* if the packet is composed of multiple gpd (skb), need to merge it into a single skb */
         if (NULL != ptr_sw_first_gpd->ptr_next)
         {
@@ -2704,6 +3081,21 @@ _hal_lightning_pkt_rxEnQueue(
                             "hit profile dest=netlink, name=%s, mcgrp=%s\n",
                             ((NETIF_NL_RX_DST_NETLINK_T *)ptr_dest)->name,
                             ((NETIF_NL_RX_DST_NETLINK_T *)ptr_dest)->mc_group_name);
+            if(strncmp(((NETIF_NL_RX_DST_NETLINK_T *)ptr_dest)->name, "mod", NETIF_NL_NETLINK_NAME_LEN) == 0)
+            {
+                if (0 == pp_drop_info.steer_applied && 1 == pp_drop_info.pp_drop_avail)
+                {
+                    /*PP drop pkt process*/
+                    _hal_lightning_pkt_parseRxDropReason(unit, &pp_drop_info);
+                    _hal_lightning_pkt_modHdrInsert(unit, ptr_skb, &pp_drop_rx_gpd, pp_drop_info);
+                }
+                else
+                {
+                    /*TM drop pkt process*/
+                    _hal_lightning_pkt_modTmModify(ptr_skb, g_switch_id);
+                }
+            }
+
             netif_nl_rxSkb(unit, ptr_skb, ptr_dest);
         }
 #endif
@@ -5532,7 +5924,7 @@ hal_lightning_pkt_getNetDev(
 }
 
 CLX_ERROR_NO_T
-_hal_lightning_pkt_isProtocolPkt(struct sk_buff *skb)
+_hal_lightning_pkt_isProtocolPkt(const struct sk_buff *skb)
 {
     struct ethhdr        *ether        = eth_hdr(skb);
     struct iphdr         *ip_header    = ip_hdr(skb);
@@ -6613,6 +7005,22 @@ hal_lightning_pkt_dev_tx(
     return (ret);
 }
 
+CLX_ERROR_NO_T
+hal_lightning_pkt_set_switch_id(
+    const UI32_T                        unit,
+    void                                *ptr_data)
+{
+    int                             rc = CLX_E_OK;
+    HAL_LIGHTNING_PKT_IOCTL_SWITCH_ID_COOKIE_T       *ptr_cookie = ptr_data;
+
+    osal_io_copyFromUser(&g_switch_id, &ptr_cookie->switch_id, sizeof(UI32_T));
+    HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_COMMON,
+                            "u=%u, switch_id=%u\n", unit, g_switch_id);
+    osal_io_copyToUser(&ptr_cookie->rc, &rc, sizeof(CLX_ERROR_NO_T));
+
+    /* return 0 if success */
+    return (rc);
+}
 
 long
 hal_lightning_pkt_dev_ioctl(
@@ -6744,6 +7152,9 @@ hal_lightning_pkt_dev_ioctl(
             ret = _hal_lightning_pkt_getNetlink(unit, (HAL_LIGHTNING_PKT_NL_IOCTL_COOKIE_T *)arg);
             break;
 #endif
+        case HAL_LIGHTNING_PKT_IOCTL_TYPE_SET_SWITCH_ID:
+            ret = hal_lightning_pkt_set_switch_id(unit, (HAL_LIGHTNING_PKT_IOCTL_SWITCH_ID_COOKIE_T *)arg);
+            break;
         default:
             ret = -1;
             break;

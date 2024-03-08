@@ -93,7 +93,7 @@ typedef CLX_ERROR_NO_T
 (*PERF_TX_PREPARE_GPD_T)(
     const UI32_T                unit,
     const CLX_ADDR_T            phy_addr,
-    const UI32_T                len,
+    const struct sk_buff        *ptr_skb,
     const UI32_T                port,
     void                        *ptr_sw_gpd);
 
@@ -220,7 +220,7 @@ CLX_ERROR_NO_T
 hal_perf_pkt_prepareGpd(
     const UI32_T                unit,
     const CLX_ADDR_T            phy_addr,
-    const UI32_T                len,
+    const struct sk_buff        *ptr_skb,
     const UI32_T                port,
     void                        *ptr_sw_gpd)
 {
@@ -228,11 +228,11 @@ hal_perf_pkt_prepareGpd(
 
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id))
     {
-        ret = hal_dawn_pkt_prepareGpd(unit,phy_addr,len,port,(HAL_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd);
+        ret = hal_dawn_pkt_prepareGpd(unit, phy_addr, ptr_skb, port, (HAL_DAWN_PKT_TX_SW_GPD_T*)ptr_sw_gpd);
     }
     else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id))
     {
-        ret = hal_lightning_pkt_prepareGpd(unit,phy_addr,len,port,(HAL_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd);
+        ret = hal_lightning_pkt_prepareGpd(unit, phy_addr, ptr_skb ,port, (HAL_LIGHTNING_PKT_TX_SW_GPD_T*)ptr_sw_gpd);
     }
     else
     {
@@ -491,7 +491,7 @@ _perf_txTask(
                 }
 
                 /* prepare gpd */
-                rc = _perf_tx_perf_cb.prepare_gpd(unit, phy_addr, len, port, ptr_sw_gpd);
+                rc = _perf_tx_perf_cb.prepare_gpd(unit, phy_addr, ptr_skb, port, ptr_sw_gpd);
 
                 /* send gpd */
                 rc = _perf_tx_perf_cb.send_gpd(unit, channel, ptr_sw_gpd);
