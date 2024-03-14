@@ -102,6 +102,7 @@
 #include <linux/list.h>
 #endif
 
+UI32_T clx_dev_tc = 15;
 UI32_T verbosity = (OSAL_DBG_CRIT | OSAL_DBG_ERR | OSAL_DBG_WARN);
 UI32_T vlan_push_flag = 1;
 UI32_T frame_vid = 0;
@@ -2524,6 +2525,9 @@ module_exit(osal_mdc_module_exit);
 
 module_param(intr_mode, uint, S_IRUGO);
 MODULE_PARM_DESC(intr_mode, "0: INTx, 1: MSI, 2: MSIx ");
+
+module_param(clx_dev_tc, uint, S_IRUGO|S_IWUSR);
+MODULE_PARM_DESC(clx_dev_tc, "set tc from 0-15");
 
 module_param(verbosity, uint, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(verbosity,

@@ -16,6 +16,10 @@ override_dh_auto_build:
 	make -C $(MODULE_SRC) all
 
 override_dh_auto_install:
+	dh_installdirs -p$(PACKAGE_NAME) /lib/systemd/system
+	cp $(MODULE_SRC)/service/*.service debian/$(PACKAGE_NAME)/lib/systemd/system/
+	dh_installdirs -p$(PACKAGE_NAME) /etc/init.d
+	cp $(MODULE_SRC)/init.d/* debian/$(PACKAGE_NAME)/etc/init.d/
 	dh_installdirs -p$(PACKAGE_NAME) $(KERNEL_SRC)/extra/
 	cp $(MODULE_SRC)/build/module/*.ko debian/$(PACKAGE_NAME)/$(KERNEL_SRC)/$(INSTALL_MOD_DIR);
 

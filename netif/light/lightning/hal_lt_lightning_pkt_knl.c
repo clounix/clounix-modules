@@ -101,6 +101,7 @@
 /*push vlan to rx enqueue pkt flag*/
 extern UI32_T vlan_push_flag;
 extern UI32_T frame_vid;
+extern UI32_T clx_dev_tc;
 
 extern UI32_T intel_iommu_flag;
 
@@ -4617,7 +4618,7 @@ hal_lt_lightning_pkt_prepareGpd(const UI32_T unit,
     ptr_sw_gpd->tx_gpd.itmh_eth.skip_ipp = 1;
     ptr_sw_gpd->tx_gpd.itmh_eth.skip_epp = 1;
     ptr_sw_gpd->tx_gpd.itmh_eth.color = 0; /* Green                      */
-    ptr_sw_gpd->tx_gpd.itmh_eth.tc = 15;   /* Max tc                     */
+    ptr_sw_gpd->tx_gpd.itmh_eth.tc = clx_dev_tc;   /* Max tc                     */
     ptr_sw_gpd->tx_gpd.itmh_eth.igr_phy_port = 0;
 
     ptr_sw_gpd->tx_gpd.pph_l2.mrk_pcp_val = 7; /* Max pcp                    */
