@@ -1,10 +1,33 @@
 #!/usr/bin/env bash
 
-bldver='1.0'
-
+#2.0 -- cuos.master
+#3.0 -- cuos.202211
 # make sure login docker registry
 #docker login docker.clounix.com with your login password
 #docker login registry.clounix.com with user/Clounix123
+
+# check arguments
+if [ $# -eq 0 ]; then
+  echo "Usage: $0 [cuos.master | cuos.202211] <command>"
+  exit 1
+fi
+
+bldver=$1
+case "$bldver" in
+  "cuos.master")
+    bldver='2.0'
+    ;;
+  "cuos.202211")
+    bldver='3.0'
+    ;;
+  *)
+    echo "Unknown bldver: $bldver"
+    echo "Use default 1.0"
+    bldver='1.0'
+    ;;
+esac
+
+
 
 # check docker image for building
 if [ "$(docker images -q docker.clounix.com/software/platform/tools/nb-knet/build-env:$bldver 2> /dev/null)" == "" ]; then
@@ -30,7 +53,8 @@ fi
 
 knetdesk=knet-build-$USER
 # execute commands 
-if [ $# -ne 0 ]; then
+if [ $# -ne 1 ]; then
+  shift
   echo "$@ ..."
   docker run \
 	  -v `pwd`:`pwd` \
