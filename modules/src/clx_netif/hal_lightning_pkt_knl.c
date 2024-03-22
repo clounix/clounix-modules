@@ -182,7 +182,7 @@ static HAL_LIGHTNING_PKT_INTR_VEC_T           _hal_lightning_pkt_intr_vec[] =
 #define HAL_LIGHTNING_PKT_MAX_PORT_NUM                (HAL_LIGHTNING_PORT_NUM + 1) /* CPU port */
 
 #define HAL_LIGHTNING_PKT_NET_PROFILE_NUM_MAX         (256)
-
+#define HAL_LIGHTNING_PKT_NET_VLAN_LEN                (4)
 static HAL_LIGHTNING_PKT_NETIF_PROFILE_T              *_ptr_hal_lightning_pkt_profile_entry[HAL_LIGHTNING_PKT_NET_PROFILE_NUM_MAX] = {0};
 static HAL_LIGHTNING_PKT_NETIF_PORT_DB_T              _hal_lightning_pkt_port_db[HAL_LIGHTNING_PKT_MAX_PORT_NUM];
 
@@ -383,11 +383,11 @@ struct mod_hdr
     UI32_T      gbl_drop:1;
     UI32_T      port_drop:1;
     UI32_T      que_drop:1;
-    UI32_T      rsv2:4;
+    UI32_T      rsv3:4;
     UI32_T      tc_hi:1;
 
     UI32_T      tc_lo:3;
-    UI32_T      pp_drop_avail:1;
+    UI32_T      rsv2:1;
     UI32_T      ipp_drop:1;
     UI32_T      epp_drop:1;
     UI32_T      pp_drop_rsn:12;
@@ -396,7 +396,8 @@ struct mod_hdr
     UI32_T      m:1;
     UI32_T      tm_drop_rsn:2;
     UI32_T      t:1;
-    UI32_T      rsv1:2;
+    UI32_T      pp_drop_avail:1;
+    UI32_T      rsv1:1;
     UI32_T      src_port:12;
     UI32_T      switch_id:12;
     UI32_T      sc_hi:2;
@@ -417,7 +418,7 @@ struct mod_hdr
     UI32_T      decap_act:3;
 
     UI32_T      tc_hi:1;
-    UI32_T      rsv2:4;
+    UI32_T      rsv3:4;
     UI32_T      que_drop:1;
     UI32_T      port_drop:1;
     UI32_T      gbl_drop:1;
@@ -427,13 +428,14 @@ struct mod_hdr
     UI32_T      pp_drop_rsn:12;
     UI32_T      epp_drop:1;
     UI32_T      ipp_drop:1;
-    UI32_T      pp_drop_avail:1;
+    UI32_T      rsv2:1;
     UI32_T      tc_lo:3;
 
     UI32_T      sc_hi:2;
     UI32_T      switch_id:12;
     UI32_T      src_port:12;
-    UI32_T      rsv1:2;
+    UI32_T      rsv1:1;
+    UI32_T      pp_drop_avail:1;
     UI32_T      t:1;
     UI32_T      tm_drop_rsn:2;
     UI32_T      m:1;
@@ -1736,6 +1738,12 @@ _hal_lightning_pkt_allocRxPayloadBuf(
     ptr_skb = osal_skb_alloc(ptr_rx_cb->buf_len);
     if (NULL != ptr_skb)
     {
+        // reserve for vlan add
+        if(HAL_LIGHTNING_PKT_NET_VLAN_LEN > skb_headroom(ptr_skb))
+        {
+            skb_reserve(ptr_skb, HAL_LIGHTNING_PKT_NET_VLAN_LEN);
+        }
+
         /* map skb to dma */
         phy_addr = osal_skb_mapDma(ptr_skb, DMA_FROM_DEVICE);
         if (0x0 == phy_addr)
@@ -2153,6 +2161,27 @@ _hal_lightning_pkt_freeRxGpdList(
 }
 
 /* ----------------------------------------------------------------------------------- pkt_drv */
+/**
+ * @brief To dump the values of fields for the specified RX GPD.
+ *
+ * @param [in]     ptr_virt_addr    - Pointer for the RX PKT buf address
+ * @param [in]     buf_len          - pkt buf_len
+ */
+void
+_hal_lightning_pkt_print_payload(UI8_T *ptr_virt_addr, UI32_T buf_len)
+{
+    UI32_T i = 0;
+
+    osal_printf("==========================  PKT BUF %p %d ====================== \n",
+                ptr_virt_addr, buf_len);
+    while (i < buf_len) {
+        osal_printf("%02x ", *((UI8_T *)ptr_virt_addr + i));
+        i++;
+        if (i % 8 == 0)
+            osal_printf("\n");
+    }
+}
+
 /* FUNCTION NAME: _hal_lightning_pkt_txEnQueueBulk
  * PURPOSE:
  *      To enqueue numbers of packet in the bulk buffer
@@ -2760,6 +2789,8 @@ _hal_lightning_pkt_modHdrInsert(
     UI32_T size = 0, i = 0;
     UI8_T *p = NULL;
     UI32_T  ts_nsec = 0;
+    UI32_T  port = 0;
+    HAL_LIGHTNING_PKT_NETIF_INTF_T  *ptr_netif = NULL;
 
     if (skb == NULL || rx_gpd == NULL)
     {
@@ -2800,7 +2831,15 @@ _hal_lightning_pkt_modHdrInsert(
     mod->ts_nsec_hi = (ts_nsec >> 24) & 0x3F;
     mod->ts_nsec_lo = ts_nsec & 0xFFFFFF;
     mod->srv = rx_gpd->itmh_eth.srv;
+
+    port = rx_gpd->itmh_eth.igr_phy_port;
+    ptr_netif = HAL_LIGHTNING_PKT_GET_PORT_NETIF(port);
+
     mod->igr_l2_vid = rx_gpd->pph_l2.vid_1st;
+    if(0 == rx_gpd->pph_l2.vid_1st)
+    {
+        mod->igr_l2_vid = ptr_netif->vlan_tag;
+    }
     mod->decap_act = rx_gpd->pph_l2.decap_act;
     mod->sw_id = g_switch_id;
 
@@ -2940,14 +2979,18 @@ _hal_lightning_pkt_rxEnQueue(
             return;
         }
 
+        ptr_netif = HAL_LIGHTNING_PKT_GET_PORT_NETIF(port);
+
         vid_1st = ptr_sw_first_gpd->rx_gpd.pph_l2.vid_1st;
-        vid_2st = ptr_sw_first_gpd->rx_gpd.pph_l2.vid_2nd_w0 << 7 |
-                    ptr_sw_first_gpd->rx_gpd.pph_l2.vid_2nd_w1;
+        vid_1st = (vid_1st == 0) ? ptr_netif->vlan_tag : vid_1st;
+        // vid_2st = ptr_sw_first_gpd->rx_gpd.pph_l2.vid_2nd_w0 << 7 |
+        //             ptr_sw_first_gpd->rx_gpd.pph_l2.vid_2nd_w1;
         //vid_1st = ptr_sw_first_gpd->rx_gpd.etmh_eth.intf_fdid;
         HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_RX,
-            "vid_1st=%d vid_2st=%d vlan_push_flag=%d\n",vid_1st,vid_2st,vlan_push_flag);
+            "vid_1st=%d vid_2st=%d vlan:%d vlan_tag_type=%d\n",ptr_sw_first_gpd->rx_gpd.pph_l2.vid_1st,vid_2st,vid_1st,ptr_netif->vlan_tag_type);
 
         memcpy(&pp_drop_rx_gpd, &(ptr_sw_first_gpd->rx_gpd), sizeof(HAL_LIGHTNING_PKT_RX_GPD_T));
+
         /* if the packet is composed of multiple gpd (skb), need to merge it into a single skb */
         if (NULL != ptr_sw_first_gpd->ptr_next)
         {
@@ -3013,17 +3056,7 @@ _hal_lightning_pkt_rxEnQueue(
                 if(ether_addr_equal(stp_mac, ether->h_dest) ||
                     ether_addr_equal(pvst_mac, ether->h_dest))
                 {
-                    if (ETH_P_8021Q == ntohs(ether->h_proto) || ETH_P_8021AD == ntohs(ether->h_proto))
-                    {
-                        if(HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_STRIP == ptr_netif->vlan_tag_type)
-                    {
-                            skb_push(ptr_skb, ETH_HLEN);
-                            skb_vlan_pop(ptr_skb);
-                        HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_RX,
-                                "u=%u, frame have vlan tag, strip vlan tag\n", unit);
-                    }
-                    }
-                    else if (vlan_push_flag)
+                    if (vlan_push_flag)
                     {
                         if ((0 != frame_vid) && (frame_vid < 4095))
                         {
@@ -3036,6 +3069,16 @@ _hal_lightning_pkt_rxEnQueue(
                             skb_vlan_push(ptr_skb, htons(ETH_P_8021Q), vid_1st);
                             HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_RX,
                                 "u=%u, force add vlan tag, vid_1st=%u\n", unit, vid_1st);
+                        }
+                    }
+                    else if (ETH_P_8021Q == ntohs(ether->h_proto) || ETH_P_8021AD == ntohs(ether->h_proto))
+                    {
+                        if(HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_STRIP == ptr_netif->vlan_tag_type)
+                        {
+                            skb_push(ptr_skb, ETH_HLEN);
+                            skb_vlan_pop(ptr_skb);
+                            HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_RX,
+                                "u=%u, frame have vlan tag, strip vlan tag\n", unit);
                         }
                     }
                     else if(HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_KEEP == ptr_netif->vlan_tag_type)
@@ -3081,6 +3124,7 @@ _hal_lightning_pkt_rxEnQueue(
                             "hit profile dest=netlink, name=%s, mcgrp=%s\n",
                             ((NETIF_NL_RX_DST_NETLINK_T *)ptr_dest)->name,
                             ((NETIF_NL_RX_DST_NETLINK_T *)ptr_dest)->mc_group_name);
+
             if(strncmp(((NETIF_NL_RX_DST_NETLINK_T *)ptr_dest)->name, "mod", NETIF_NL_NETLINK_NAME_LEN) == 0)
             {
                 if (0 == pp_drop_info.steer_applied && 1 == pp_drop_info.pp_drop_avail)
@@ -6679,7 +6723,21 @@ _hal_lightning_pkt_setIntf(
             {
                 HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_INTF, "u=%u, find intf id=%d\n", unit, net_intf.id);
                 _hal_lightning_pkt_traverseProfList(net_intf.id, ptr_port_db->ptr_profile_list);
-                osal_memcpy(&ptr_port_db->meta, &net_intf, sizeof(HAL_LIGHTNING_PKT_NETIF_INTF_T));
+                if(HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_MAC == (HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_MAC & net_intf.flags))
+                {
+                    memcpy(ptr_port_db->ptr_net_dev->dev_addr, net_intf.mac, ptr_port_db->ptr_net_dev->addr_len);
+                    memcpy(ptr_port_db->meta.mac, net_intf.mac, ptr_port_db->ptr_net_dev->addr_len);
+                }
+
+                if(HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_TYPE == (HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_TYPE & net_intf.flags))
+                {
+                    ptr_port_db->meta.vlan_tag_type = net_intf.vlan_tag_type;
+                }
+
+                if(HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG == (HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG & net_intf.flags))
+                {
+                    ptr_port_db->meta.vlan_tag = net_intf.vlan_tag;
+                }
 
                 rc = CLX_E_OK;
                 break;
