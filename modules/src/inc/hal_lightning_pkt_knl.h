@@ -2015,15 +2015,17 @@ typedef struct
 
     /* metadata */
     UI8_T                       mac[6];
+
+#define HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_MAC                  (1UL << 0)
+#define HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_TYPE        (1UL << 1)
+#define HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG             (1UL << 2)
+    UI32_T                      flags;
+
 #define HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_STRIP                  (0)
 #define HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_KEEP                   (1)
 #define HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_ORIGINAL               (2)
     UI8_T                       vlan_tag_type; /* 0:VLAN_TAG_STRIP 1:VLAN_TAG_KEEP 2:VLAN_TAG_ORIGINAL*/
-
-#define HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_MAC        (1UL << 0)
-    UI32_T                      flags;
-
-
+    UI32_T                      vlan_tag;
 } HAL_LIGHTNING_PKT_NETIF_INTF_T;
 
 #if defined(NETIF_EN_NETLINK)
