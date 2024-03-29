@@ -29,7 +29,7 @@
  *  THE TRANSACTION CONTEMPLATED HEREUNDER SHALL BE CONSTRUED IN ACCORDANCE
  *  WITH THE LAWS OF THE PEOPLE'S REPUBLIC OF CHINA, EXCLUDING ITS CONFLICT OF
  *  LAWS PRINCIPLES.  ANY DISPUTES, CONTROVERSIES OR CLAIMS ARISING THEREOF AND
- *  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN HANGZHOU,CHINA UNDER.
+ *  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN SHANGHAI,CHINA UNDER.
  *
  *******************************************************************************/
 
@@ -434,6 +434,9 @@ netif_nl_destroyAllNetlink(const UI32_T unit)
     for (idx = 0; idx < NETIF_NL_FAMILY_NUM_MAX; idx++) {
         if (TRUE == NETIF_NL_IS_FAMILY_ENTRY_VALID(idx)) {
             ptr_nl_family = NETIF_NL_GET_FAMILY_META(idx);
+            OSAL_PRINT(OSAL_DBG_NETLINK,
+                       "[DBG] unregister netlink family, name=%s\n",
+                        ptr_nl_family->name);
             ret = NETIF_NL_UNREGISTER_FAMILY(ptr_nl_family);
             if (0 == ret) {
                 osal_free(ptr_nl_family->mcgrps);

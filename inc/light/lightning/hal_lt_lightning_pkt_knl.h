@@ -29,7 +29,7 @@
  *  THE TRANSACTION CONTEMPLATED HEREUNDER SHALL BE CONSTRUED IN ACCORDANCE
  *  WITH THE LAWS OF THE PEOPLE'S REPUBLIC OF CHINA, EXCLUDING ITS CONFLICT OF
  *  LAWS PRINCIPLES.  ANY DISPUTES, CONTROVERSIES OR CLAIMS ARISING THEREOF AND
- *  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN HANGZHOU,CHINA UNDER.
+ *  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN SHANGHAI,CHINA UNDER.
  *
  *******************************************************************************/
 
@@ -1322,8 +1322,8 @@ typedef struct
 
 typedef struct
 {
-    C8_T name[CLX_NETIF_NAME_LEN];
-    C8_T mc_group_name[CLX_NETIF_NAME_LEN];
+    C8_T name[CLX_NETLINK_NAME_LEN];
+    C8_T mc_group_name[CLX_NETLINK_NAME_LEN];
 } HAL_LT_LIGHTNING_PKT_NETIF_RX_DST_NETLINK_T;
 
 typedef enum {
@@ -1385,7 +1385,7 @@ typedef struct
     UI32_T unit;
     HAL_LT_LIGHTNING_PKT_NETIF_INTF_T net_intf; /* addIntf[In,Out], delIntf[In]              */
     HAL_LT_LIGHTNING_PKT_NETIF_PROFILE_T
-        net_profile;                            /* createProfile[In,Out], destroyProfile[In] */
+    net_profile;                                /* createProfile[In,Out], destroyProfile[In] */
     HAL_LT_LIGHTNING_PKT_NETIF_INTF_CNT_T cnt;
     CLX_ERROR_NO_T rc;
 
@@ -1492,6 +1492,7 @@ hal_lt_lightning_pkt_sendGpd(const UI32_T unit,
  * @brief To de-initialize the Task for packet module.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data    - Pointer of the data cookie
  * @return         CLX_E_OK        - Successfully dinitialize the control block.
  * @return         CLX_E_OTHERS    - Initialize the control block failed.
  */
@@ -1503,6 +1504,7 @@ hal_lt_lightning_pkt_deinitTask(const UI32_T unit, void *ptr_data);
  *        PDMA subsystem.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data    - Pointer of the data cookie
  * @return         CLX_E_OK        - Successfully de-initialize the control blocks.
  * @return         CLX_E_OTHERS    - De-initialize the control blocks failed.
  */
@@ -1514,6 +1516,7 @@ hal_lt_lightning_pkt_deinitPktDrv(const UI32_T unit, void *ptr_data);
  * @brief To initialize the Task for packet module.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data    - Pointer of the data cookie
  * @return         CLX_E_OK        - Successfully dinitialize the control block.
  * @return         CLX_E_OTHERS    - Initialize the control block failed.
  */
@@ -1525,6 +1528,7 @@ hal_lt_lightning_pkt_initTask(const UI32_T unit, void *ptr_data);
  *        PDMA subsystem.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data    - Pointer of the data cookie
  * @return         CLX_E_OK        - Successfully initialize the control blocks.
  * @return         CLX_E_OTHERS    - Initialize the control blocks failed.
  */
@@ -1543,29 +1547,91 @@ hal_lt_lightning_pkt_init(const UI32_T unit);
 
 /*---------------------------------------------------------------------------*/
 /* perf */
+/**
+ * @brief To get the PDMA TX interrupt counters of the target channel.
+ *
+ * @param [in]     unit       - The unit ID
+ * @param [in]     channel    - The target channel
+ * @param [out]    ptr_intr_cnt    - intr cnt
+ * @return         CLX_E_OK    - Successfully get the counters.
+ */
 CLX_ERROR_NO_T
 hal_lt_lightning_pkt_getTxIntrCnt(const UI32_T unit, const UI32_T channel, UI32_T *ptr_intr_cnt);
 
+/**
+ * @brief To get the PDMA RX interrupt counters of the target channel.
+ *
+ * @param [in]     unit       - The unit ID
+ * @param [in]     channel    - The target channel
+ * @param [out]    ptr_intr_cnt    - intr cnt
+ * @return         CLX_E_OK    - Successfully get the counters.
+ */
 CLX_ERROR_NO_T
 hal_lt_lightning_pkt_getRxIntrCnt(const UI32_T unit, const UI32_T channel, UI32_T *ptr_intr_cnt);
 
 /* ioctl */
 #if defined(CLX_EN_NETIF)
+/**
+ * @brief To get the PDMA TX counters of the target channel.
+ *
+ * @param [in]     unit          - The unit ID
+ * @param [in]     ptr_data    - Pointer of the TX cookie
+ * @return         CLX_E_OK    - Successfully get the counters.
+ */
 CLX_ERROR_NO_T
 hal_lt_lightning_pkt_getTxKnlCnt(const UI32_T unit, void *ptr_data);
 
+/**
+ * @brief To get the PDMA RX counters of the target channel.
+ *
+ * @param [in]     unit          - The unit ID
+ * @param [in]     ptr_data    - Pointer of the RX cookie
+ * @return         CLX_E_OK    - Successfully get the counters.
+ */
 CLX_ERROR_NO_T
 hal_lt_lightning_pkt_getRxKnlCnt(const UI32_T unit, void *ptr_data);
 
+/**
+ * @brief To clear the PDMA TX counters of the target channel.
+ *
+ * @param [in]     unit          - The unit ID
+ * @param [in]     ptr_data    - Pointer of the TX cookie
+ * @return         CLX_E_OK    - Successfully clear the counters.
+ */
 CLX_ERROR_NO_T
 hal_lt_lightning_pkt_clearTxKnlCnt(const UI32_T unit, void *ptr_data);
 
+/**
+ * @brief To clear the PDMA RX counters of the target channel.
+ *
+ * @param [in]     unit          - The unit ID
+ * @param [in]     ptr_data    - Pointer of the RX cookie
+ * @return         CLX_E_OK    - Successfully clear the counters.
+ */
 CLX_ERROR_NO_T
 hal_lt_lightning_pkt_clearRxKnlCnt(const UI32_T unit, void *ptr_data);
 
+/**
+ * @brief 1. To stop the Rx channel and deinit the Rx subsystem.
+ *        2. To init the Rx subsystem and start the Rx channel.
+ *        3. To restart the Rx subsystem
+ *
+ * @param [in]     unit          - The unit ID
+ * @param [in]     ptr_data    - Pointer of the RX cookie
+ * @return         CLX_E_OK        - Successfully configure the RX parameters.
+ * @return         CLX_E_OTHERS    - Configure the parameter failed.
+ */
 CLX_ERROR_NO_T
 hal_lt_lightning_pkt_setRxKnlConfig(const UI32_T unit, void *ptr_data);
 
+/**
+ * @brief To get the Rx subsystem configuration.
+ *
+ * @param [in]     unit          - The unit ID
+ * @param [in]     ptr_data    - Pointer of the RX cookie
+ * @return         CLX_E_OK        - Successfully configure the RX parameters.
+ * @return         CLX_E_OTHERS    - Configure the parameter failed.
+ */
 CLX_ERROR_NO_T
 hal_lt_lightning_pkt_getRxKnlConfig(const UI32_T unit, void *ptr_data);
 #endif

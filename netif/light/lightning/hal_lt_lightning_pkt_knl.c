@@ -29,7 +29,7 @@
  *  THE TRANSACTION CONTEMPLATED HEREUNDER SHALL BE CONSTRUED IN ACCORDANCE
  *  WITH THE LAWS OF THE PEOPLE'S REPUBLIC OF CHINA, EXCLUDING ITS CONFLICT OF
  *  LAWS PRINCIPLES.  ANY DISPUTES, CONTROVERSIES OR CLAIMS ARISING THEREOF AND
- *  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN HANGZHOU,CHINA UNDER.
+ *  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN SHANGHAI,CHINA UNDER.
  *
  *******************************************************************************/
 
@@ -101,7 +101,6 @@
 /*push vlan to rx enqueue pkt flag*/
 extern UI32_T vlan_push_flag;
 extern UI32_T frame_vid;
-extern UI32_T clx_dev_tc;
 
 extern UI32_T intel_iommu_flag;
 
@@ -125,7 +124,7 @@ typedef struct
     HAL_LT_LIGHTNING_PKT_NETIF_INTF_T meta;
     struct net_device *ptr_net_dev;
     HAL_LT_LIGHTNING_PKT_PROFILE_NODE_T
-        *ptr_profile_list; /* the profiles binding to this interface */
+    *ptr_profile_list; /* the profiles binding to this interface */
 
 } HAL_LT_LIGHTNING_PKT_NETIF_PORT_DB_T;
 
@@ -993,6 +992,7 @@ _hal_lt_lightning_pkt_clearRxL2IsrStatusReg(
  *
  * @param [in]     unit       - The unit ID
  * @param [in]     channel    - The target channel
+ * @param [out]    ptr_intr_cnt    - intr cnt
  * @return         CLX_E_OK    - Successfully get the counters.
  */
 CLX_ERROR_NO_T
@@ -1007,6 +1007,7 @@ hal_lt_lightning_pkt_getTxIntrCnt(const UI32_T unit, const UI32_T channel, UI32_
  *
  * @param [in]     unit       - The unit ID
  * @param [in]     channel    - The target channel
+ * @param [out]    ptr_intr_cnt    - intr cnt
  * @return         CLX_E_OK    - Successfully get the counters.
  */
 CLX_ERROR_NO_T
@@ -1020,7 +1021,7 @@ hal_lt_lightning_pkt_getRxIntrCnt(const UI32_T unit, const UI32_T channel, UI32_
  * @brief To get the PDMA TX counters of the target channel.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the TX cookie
+ * @param [in]     ptr_data    - Pointer of the TX cookie
  * @return         CLX_E_OK    - Successfully get the counters.
  */
 CLX_ERROR_NO_T
@@ -1037,7 +1038,7 @@ hal_lt_lightning_pkt_getTxKnlCnt(const UI32_T unit, void *ptr_data)
  * @brief To get the PDMA RX counters of the target channel.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the RX cookie
+ * @param [in]     ptr_data    - Pointer of the RX cookie
  * @return         CLX_E_OK    - Successfully get the counters.
  */
 CLX_ERROR_NO_T
@@ -1054,7 +1055,7 @@ hal_lt_lightning_pkt_getRxKnlCnt(const UI32_T unit, void *ptr_data)
  * @brief To clear the PDMA TX counters of the target channel.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the TX cookie
+ * @param [in]     ptr_data    - Pointer of the TX cookie
  * @return         CLX_E_OK    - Successfully clear the counters.
  */
 CLX_ERROR_NO_T
@@ -1070,7 +1071,7 @@ hal_lt_lightning_pkt_clearTxKnlCnt(const UI32_T unit, void *ptr_data)
  * @brief To clear the PDMA RX counters of the target channel.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the RX cookie
+ * @param [in]     ptr_data    - Pointer of the RX cookie
  * @return         CLX_E_OK    - Successfully clear the counters.
  */
 CLX_ERROR_NO_T
@@ -1086,7 +1087,7 @@ hal_lt_lightning_pkt_clearRxKnlCnt(const UI32_T unit, void *ptr_data)
  * @brief To set the port attributes such as status or speeds.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the Port cookie
+ * @param [in]     ptr_data    - Pointer of the Port cookie
  * @return         CLX_E_OK    - Successfully set the attributes.
  */
 CLX_ERROR_NO_T
@@ -1131,7 +1132,7 @@ hal_lt_lightning_pkt_setPortAttr(const UI32_T unit, void *ptr_data)
  * @brief To get the port attributes such as status or speeds.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the Port cookie
+ * @param [in]     ptr_data    - Pointer of the Port cookie
  * @return         CLX_E_OK    - Successfully set the attributes.
  */
 CLX_ERROR_NO_T
@@ -1781,7 +1782,7 @@ _hal_lt_lightning_pkt_txEnQueueBulk(const UI32_T unit, const UI32_T channel, con
  * @brief To dequeue the packets based on the strict algorithm.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the TX cookie
+ * @param [in]     ptr_data    - Pointer of the TX cookie
  * @return         CLX_E_OK    - Successfully dequeue the packets.
  */
 static CLX_ERROR_NO_T
@@ -1843,6 +1844,7 @@ _hal_lt_lightning_pkt_strictTxDeQueue(const UI32_T unit, void *ptr_data)
  *
  * @param [in]     ptr_rx_gpd      - Pointer of the RX GPD
  * @param [in]     ptr_hit_prof    - Pointer of the hit flag
+ * @param [in]     ptr_profile    - Pointer of the proflie list
  * @return         CLX_E_OK    - Successfully dispatch the packets.
  */
 static void
@@ -2289,7 +2291,7 @@ _hal_lt_lightning_pkt_flushRxQueue(const UI32_T unit, HAL_LT_LIGHTNING_PKT_SW_QU
  * @brief To dequeue the packets based on the configured algorithm.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the RX cookie
+ * @param [in]     ptr_data    - Pointer of the RX cookie
  * @return         CLX_E_OK    - Successfully dequeue the packets.
  */
 static CLX_ERROR_NO_T
@@ -2709,7 +2711,7 @@ _hal_lt_lightning_pkt_rxStart(const UI32_T unit)
  *        3. To restart the Rx subsystem
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the RX cookie
+ * @param [in]     ptr_data    - Pointer of the RX cookie
  * @return         CLX_E_OK        - Successfully configure the RX parameters.
  * @return         CLX_E_OTHERS    - Configure the parameter failed.
  */
@@ -2746,7 +2748,7 @@ hal_lt_lightning_pkt_setRxKnlConfig(const UI32_T unit, void *ptr_data)
  * @brief To get the Rx subsystem configuration.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the RX cookie
+ * @param [in]     ptr_data    - Pointer of the RX cookie
  * @return         CLX_E_OK        - Successfully configure the RX parameters.
  * @return         CLX_E_OTHERS    - Configure the parameter failed.
  */
@@ -2766,6 +2768,7 @@ hal_lt_lightning_pkt_getRxKnlConfig(const UI32_T unit, void *ptr_data)
  * @brief To de-initialize the Task for packet module.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data    - Pointer of the data cookie
  * @return         CLX_E_OK        - Successfully dinitialize the control block.
  * @return         CLX_E_OTHERS    - Initialize the control block failed.
  */
@@ -3034,6 +3037,7 @@ _hal_lt_lightning_pkt_deinitL2Isr(const UI32_T unit)
  *        PDMA subsystem.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data    - Pointer of the data cookie
  * @return         CLX_E_OK        - Successfully de-initialize the control blocks.
  * @return         CLX_E_OTHERS    - De-initialize the control blocks failed.
  */
@@ -3792,6 +3796,7 @@ _hal_lt_lightning_pkt_net_dev_tx_callback(const UI32_T unit,
  * @brief To initialize the Task for packet module.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data    - Pointer of the data cookie
  * @return         CLX_E_OK        - Successfully dinitialize the control block.
  * @return         CLX_E_OTHERS    - Initialize the control block failed.
  */
@@ -4486,6 +4491,7 @@ _hal_lt_lightning_pkt_destroyAllProfile(const UI32_T unit)
  *        PDMA subsystem.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data    - Pointer of the data cookie
  * @return         CLX_E_OK        - Successfully initialize the control blocks.
  * @return         CLX_E_OTHERS    - Initialize the control blocks failed.
  */
@@ -4618,7 +4624,7 @@ hal_lt_lightning_pkt_prepareGpd(const UI32_T unit,
     ptr_sw_gpd->tx_gpd.itmh_eth.skip_ipp = 1;
     ptr_sw_gpd->tx_gpd.itmh_eth.skip_epp = 1;
     ptr_sw_gpd->tx_gpd.itmh_eth.color = 0; /* Green                      */
-    ptr_sw_gpd->tx_gpd.itmh_eth.tc = clx_dev_tc;   /* Max tc                     */
+    ptr_sw_gpd->tx_gpd.itmh_eth.tc = 7;    /* Max tc                     */
     ptr_sw_gpd->tx_gpd.itmh_eth.igr_phy_port = 0;
 
     ptr_sw_gpd->tx_gpd.pph_l2.mrk_pcp_val = 7; /* Max pcp                    */

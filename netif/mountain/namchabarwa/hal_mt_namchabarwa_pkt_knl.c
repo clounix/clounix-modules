@@ -29,7 +29,7 @@
  *  THE TRANSACTION CONTEMPLATED HEREUNDER SHALL BE CONSTRUED IN ACCORDANCE
  *  WITH THE LAWS OF THE PEOPLE'S REPUBLIC OF CHINA, EXCLUDING ITS CONFLICT OF
  *  LAWS PRINCIPLES.  ANY DISPUTES, CONTROVERSIES OR CLAIMS ARISING THEREOF AND
- *  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN HANGZHOU,CHINA UNDER.
+ *  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN SHANGHAI,CHINA UNDER.
  *
  *******************************************************************************/
 
@@ -119,7 +119,7 @@ typedef struct
     HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_T meta;
     struct net_device *ptr_net_dev;
     HAL_MT_NAMCHABARWA_PKT_PROFILE_NODE_T
-        *ptr_profile_list; /* the profiles binding to this interface */
+    *ptr_profile_list; /* the profiles binding to this interface */
 
 } HAL_MT_NAMCHABARWA_PKT_NETIF_PORT_DB_T;
 
@@ -198,6 +198,8 @@ static UI32_T _hal_mt_namchabarwa_pkt_slice_port_to_di_db[OSAL_MDC_MAX_CHIPS_PER
 #define HAL_MT_NAMCHABARWA_PKT_SET_PORT_DI(unit, slice, slice_port, di)                \
     _hal_mt_namchabarwa_pkt_slice_port_to_di_db[unit][HAL_MT_NAMCHABARWA_PKT_SRC_PORT( \
         slice, slice_port)] = di
+
+#define HAL_MT_NAMCHABARWA_PKT_GET_PORT_NETIF(port) (&_hal_mt_namchabarwa_pkt_port_db[port].meta)
 
 /*****************************************************************************
  * DATA TYPE DECLARATIONS
@@ -431,10 +433,14 @@ _osal_mdc_dma_intr_callback(void *ptr_cookie)
             while (intr_status != 0) {
                 if (intr_status & (0x1 << channel)) {
                     // Mask all channels that generate normal interrupt.
-                    osal_mdc_writePciReg(unit,
-                                         HAL_MT_NAMCHABARWA_PKT_PDMA_CFG_PDMA2PCIE_INTR_CH0_MASK +
-                                             channel * 0x4,
-                                         &channel_mask, sizeof(UI32_T));
+                    osal_mdc_writePciReg(
+                        unit,
+                        (channel == HAL_MT_NAMCHABARWA_L2_FIFO_CHANNEL ||
+                         channel == HAL_MT_NAMCHABARWA_IOAM_FIFO_CHANNEL) ?
+                            HAL_MT_NAMCHABARWA_PKT_PDMA_CFG_PDMA2PCIE_INTR_CH0_MASK +
+                                (channel - 2) * 0x4 :
+                            HAL_MT_NAMCHABARWA_PKT_PDMA_CFG_PDMA2PCIE_INTR_CH0_MASK + channel * 0x4,
+                        &channel_mask, sizeof(UI32_T));
                     // clear pkt dma channel intr. clear others in user-space.
                     if (channel < vec) {
                         osal_triggerEvent(&_hal_mt_namchabarwa_pkt_intr_vec[channel].intr_event);
@@ -1551,6 +1557,7 @@ _hal_mt_namchabarwa_pkt_freeRxPayloadBufGpd(const UI32_T unit,
     }
 
     ptr_skb = ptr_sw_gpd->ptr_cookie;
+    osal_skb_unmapDma(phy_addr, ptr_skb->len, DMA_FROM_DEVICE);
     osal_skb_free(ptr_skb);
 
     return (rc);
@@ -2324,6 +2331,12 @@ _hal_mt_namchabarwa_pkt_rxEnQueue(const UI32_T unit,
     UI32_T copy_offset;
     void *ptr_dest;
     UI32_T i = 0;
+    UI32_T vid_1st = 0;
+    UI32_T vlan_pop_num = 0;
+    struct ethhdr *ether = NULL;
+    static UI8_T stp_mac[ETH_ALEN] = {0x01, 0x80, 0xc2, 0x00, 0x00, 0x00};
+    static UI8_T pvst_mac[ETH_ALEN] = {0x01, 0x00, 0x0c, 0xcc, 0xcc, 0xcd};
+    HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_T *ptr_netif = NULL;
 
     /* To verify kernel Rx performance */
     if (CLX_E_OK == perf_rxTest()) {
@@ -2413,7 +2426,17 @@ _hal_mt_namchabarwa_pkt_rxEnQueue(const UI32_T unit,
                 return;
             }
         }
-        ptr_net_dev = HAL_MT_NAMCHABARWA_PKT_GET_PORT_NETDEV(port);
+
+        ptr_netif = HAL_MT_NAMCHABARWA_PKT_GET_PORT_NETIF(port);
+
+        // parse vlan && vlan_pop_num
+        if (HAL_MT_NAMCHABARWA_PKT_PPH_TYPE_L2 == ptr_sw_first_gpd->ptr_pph_l2->fwd_op) {
+            vid_1st = ptr_sw_first_gpd->ptr_pph_l2->src_vlan;
+            vlan_pop_num = ptr_sw_first_gpd->ptr_pph_l2->igr_vid_pop_num;
+        } else {
+            vid_1st = ptr_sw_first_gpd->ptr_pph_l2->src_bdi;
+            vlan_pop_num = 1;
+        }
 
         /* if the packet is composed of multiple gpd (skb), need to merge it into a single skb */
         if (NULL != ptr_sw_first_gpd->ptr_next) {
@@ -2448,6 +2471,7 @@ _hal_mt_namchabarwa_pkt_rxEnQueue(const UI32_T unit,
         }
 
         /* if NULL netdev, drop the skb */
+        ptr_net_dev = HAL_MT_NAMCHABARWA_PKT_GET_PORT_NETDEV(port);
         if (NULL == ptr_net_dev) {
             ptr_rx_cb->cnt.channel[channel].netdev_miss++;
             osal_skb_free(ptr_skb);
@@ -2472,6 +2496,40 @@ _hal_mt_namchabarwa_pkt_rxEnQueue(const UI32_T unit,
         if (dest_type == HAL_MT_NAMCHABARWA_PKT_DEST_NETDEV) {
             /* skip ethernet header only for Linux net interface*/
             ptr_skb->protocol = eth_type_trans(ptr_skb, ptr_net_dev);
+            ether = eth_hdr(ptr_skb);
+            if (skb_mac_header_was_set(ptr_skb)) {
+                if (ether_addr_equal(stp_mac, ether->h_dest) ||
+                    ether_addr_equal(pvst_mac, ether->h_dest)) {
+                    if (ETH_P_8021Q == ntohs(ether->h_proto) ||
+                        ETH_P_8021AD == ntohs(ether->h_proto)) {
+                        OSAL_PRINT((OSAL_DBG_INFO | OSAL_DBG_RX),
+                                   "u=%u, frame already have vlan tag, no need insert\n", unit);
+                    } else {
+                        skb_vlan_push(ptr_skb, htons(ETH_P_8021Q), vid_1st);
+                        OSAL_PRINT((OSAL_DBG_INFO | OSAL_DBG_RX),
+                                   "u=%u, force add vlan tag, vid_1st=%u\n", unit, vid_1st);
+                    }
+                } else {
+                    if (ETH_P_8021Q == ntohs(ether->h_proto) ||
+                        ETH_P_8021AD == ntohs(ether->h_proto)) {
+                        if (HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_FLAGS_VLAN_TAG_STRIP ==
+                            ptr_netif->vlan_tag_type) {
+                            skb_push(ptr_skb, ETH_HLEN);
+                            while (vlan_pop_num) {
+                                skb_vlan_pop(ptr_skb);
+                                vlan_pop_num--;
+                            }
+                            OSAL_PRINT((OSAL_DBG_INFO | OSAL_DBG_RX),
+                                       "u=%u, frame have vlan tag, strip all vlan tag\n", unit);
+                        }
+                    } else if (HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_FLAGS_VLAN_TAG_KEEP ==
+                               ptr_netif->vlan_tag_type) {
+                        skb_vlan_push(ptr_skb, htons(ETH_P_8021Q), vid_1st);
+                        OSAL_PRINT((OSAL_DBG_INFO | OSAL_DBG_RX),
+                                   "u=%u, keep vlan tag, vid_1st=%u\n", unit, vid_1st);
+                    }
+                }
+            }
             osal_skb_recv(ptr_skb);
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0)
             ptr_net_dev->last_rx = jiffies;
@@ -3271,6 +3329,8 @@ hal_mt_namchabarwa_pkt_deinitPktDrv(const UI32_T unit, void *ptr_data)
         rc = _hal_mt_namchabarwa_pkt_deinitPktCb(unit);
     }
 
+    netif_nl_destroyAllNetlink(unit);
+
     ptr_cb->init_flag &= (~HAL_MT_NAMCHABARWA_PKT_INIT_DRV);
 
     OSAL_PRINT(OSAL_DBG_COMMON, "u=%u, pkt drv deinit done, init flag=0x%x\n", unit,
@@ -3636,6 +3696,8 @@ _hal_mt_namchabarwa_pkt_handleRxDoneTask(void *ptr_argv)
 
                 /*unmask abnormal intr*/
                 _hal_mt_namchabarwa_pkt_unmaskRxPdmaAbnormalIntrReg(unit, channel);
+                _hal_mt_namchabarwa_pkt_clearIntr(unit, channel);
+                _hal_mt_namchabarwa_pkt_unmaskIntr(unit, channel);
                 break;
             }
 
@@ -4455,8 +4517,8 @@ hal_mt_namchabarwa_pkt_initPktDrvCallback(const UI32_T unit, void *ptr_data)
     HAL_MT_NAMCHABARWA_PKT_IOCTL_RX_COOKIE_T *ptr_cookie = ptr_data;
     HAL_MT_NAMCHABARWA_PKT_IOCTL_RX_COOKIE_T ioctl_data;
     HAL_MT_NAMCHABARWA_PKT_IOCTL_CHANNEL_RING_T
-        channel_ring[HAL_MT_NAMCHABARWA_PKT_RX_CHANNEL_LAST +
-                     HAL_MT_NAMCHABARWA_PKT_TX_CHANNEL_LAST] = {0};
+    channel_ring[HAL_MT_NAMCHABARWA_PKT_RX_CHANNEL_LAST + HAL_MT_NAMCHABARWA_PKT_TX_CHANNEL_LAST] =
+        {0};
     CLX_ADDR_T phy_addr = 0;
 
     osal_io_copyFromUser(&ioctl_data, ptr_cookie, sizeof(HAL_MT_NAMCHABARWA_PKT_IOCTL_RX_COOKIE_T));
@@ -5128,6 +5190,49 @@ _hal_mt_namchabarwa_pkt_getIntf(const UI32_T unit, void *ptr_data)
     return (CLX_E_OK);
 }
 
+static CLX_ERROR_NO_T
+_hal_mt_namchabarwa_pkt_setIntf(const UI32_T unit, void *ptr_data)
+{
+    HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_T net_intf = {0};
+    HAL_MT_NAMCHABARWA_PKT_NETIF_PORT_DB_T *ptr_port_db;
+    UI32_T port = 0;
+    CLX_ERROR_NO_T rc = CLX_E_ENTRY_NOT_FOUND;
+    HAL_MT_NAMCHABARWA_PKT_IOCTL_NETIF_COOKIE_T *ptr_cookie = ptr_data;
+
+    osal_io_copyFromUser(&net_intf, &ptr_cookie->net_intf,
+                         sizeof(HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_T));
+
+    for (port = 0; port < HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM; port++) {
+        ptr_port_db = HAL_MT_NAMCHABARWA_PKT_GET_PORT_DB(port);
+        if (NULL != ptr_port_db->ptr_net_dev) /* valid intf */
+        {
+            if (ptr_port_db->meta.id == net_intf.id) {
+                OSAL_PRINT(OSAL_DBG_INTF, "u=%u, find intf id=%d\n", unit, net_intf.id);
+                _hal_mt_namchabarwa_pkt_traverseProfList(net_intf.id,
+                                                         ptr_port_db->ptr_profile_list);
+                if (HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_FLAGS_MAC ==
+                    (HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_FLAGS_MAC & net_intf.flags)) {
+                    memcpy(ptr_port_db->ptr_net_dev->dev_addr, net_intf.mac,
+                           ptr_port_db->ptr_net_dev->addr_len);
+                    memcpy(ptr_port_db->meta.mac, net_intf.mac, ptr_port_db->ptr_net_dev->addr_len);
+                }
+
+                if (HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_FLAGS_VLAN_TAG_TYPE ==
+                    (HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_FLAGS_VLAN_TAG_TYPE & net_intf.flags)) {
+                    ptr_port_db->meta.vlan_tag_type = net_intf.vlan_tag_type;
+                }
+
+                rc = CLX_E_OK;
+                break;
+            }
+        }
+    }
+
+    osal_io_copyToUser(&ptr_cookie->rc, &rc, sizeof(CLX_ERROR_NO_T));
+
+    return (CLX_E_OK);
+}
+
 static HAL_MT_NAMCHABARWA_PKT_NETIF_PROFILE_T *
 _hal_mt_namchabarwa_pkt_getProfEntry(const UI32_T id)
 {
@@ -5425,6 +5530,8 @@ hal_mt_namchabarwa_pkt_dev_ioctl(const UI32_T unit)
                                     _hal_mt_namchabarwa_pkt_destroyIntf);
     _osal_mdc_registerIoctlCallback(unit, OSAL_MDC_IOCTL_TYPE_NETIF_GET_INTF,
                                     _hal_mt_namchabarwa_pkt_getIntf);
+    _osal_mdc_registerIoctlCallback(unit, OSAL_MDC_IOCTL_TYPE_NETIF_SET_INTF,
+                                    _hal_mt_namchabarwa_pkt_setIntf);
     _osal_mdc_registerIoctlCallback(unit, OSAL_MDC_IOCTL_TYPE_NETIF_CREATE_PROFILE,
                                     _hal_mt_namchabarwa_pkt_createProfile);
     _osal_mdc_registerIoctlCallback(unit, OSAL_MDC_IOCTL_TYPE_NETIF_DESTROY_PROFILE,
