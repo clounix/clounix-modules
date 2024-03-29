@@ -3058,6 +3058,13 @@ _hal_lightning_pkt_rxEnQueue(
                 {
                     if (vlan_push_flag)
                     {
+                        if (ETH_P_8021Q == ntohs(ether->h_proto) || ETH_P_8021AD == ntohs(ether->h_proto))
+                        {
+                            HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_RX,
+                                    "u=%u, frame already have vlan tag, no need insert\n", unit);
+                        }
+                        else
+                        {
                         if ((0 != frame_vid) && (frame_vid < 4095))
                         {
                             skb_vlan_push(ptr_skb, htons(ETH_P_8021Q), frame_vid);
@@ -3071,21 +3078,6 @@ _hal_lightning_pkt_rxEnQueue(
                                 "u=%u, force add vlan tag, vid_1st=%u\n", unit, vid_1st);
                         }
                     }
-                    else if (ETH_P_8021Q == ntohs(ether->h_proto) || ETH_P_8021AD == ntohs(ether->h_proto))
-                    {
-                        if(HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_STRIP == ptr_netif->vlan_tag_type)
-                        {
-                            skb_push(ptr_skb, ETH_HLEN);
-                            skb_vlan_pop(ptr_skb);
-                            HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_RX,
-                                "u=%u, frame have vlan tag, strip vlan tag\n", unit);
-                        }
-                    }
-                    else if(HAL_LIGHTNING_PKT_NETIF_INTF_FLAGS_VLAN_TAG_KEEP == ptr_netif->vlan_tag_type)
-                    {
-                        skb_vlan_push(ptr_skb, htons(ETH_P_8021Q), vid_1st);
-                        HAL_LIGHTNING_PKT_DBG(HAL_LIGHTNING_PKT_DBG_RX,
-                                "u=%u, keep vlan tag, vid_1st=%u\n", unit, vid_1st);
                 }
             }
                 else
