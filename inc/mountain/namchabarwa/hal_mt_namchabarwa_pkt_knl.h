@@ -29,7 +29,7 @@
  *  THE TRANSACTION CONTEMPLATED HEREUNDER SHALL BE CONSTRUED IN ACCORDANCE
  *  WITH THE LAWS OF THE PEOPLE'S REPUBLIC OF CHINA, EXCLUDING ITS CONFLICT OF
  *  LAWS PRINCIPLES.  ANY DISPUTES, CONTROVERSIES OR CLAIMS ARISING THEREOF AND
- *  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN HANGZHOU,CHINA UNDER.
+ *  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN SHANGHAI,CHINA UNDER.
  *
  *******************************************************************************/
 
@@ -138,6 +138,9 @@
 #define HAL_MT_NAMCHABARWA_PKT_GET_PDMA_WORD_TCH_REG(__tbl__, __channel__) \
     ((__tbl__) + (0x4 * (__channel__ + 4)))
 
+#define HAL_MT_NAMCHABARWA_L2_FIFO_CHANNEL   18
+#define HAL_MT_NAMCHABARWA_IOAM_FIFO_CHANNEL 19
+
 /*enable pdma channel*/
 #define HAL_MT_NAMCHABARWA_PKT_PDMA_ENABLE_CHANNEL  0x1
 #define HAL_MT_NAMCHABARWA_PKT_PDMA_DISABLE_CHANNEL 0x0
@@ -218,9 +221,10 @@ typedef enum {
 #define HAL_MT_NAMCHABARWA_PKT_CRCC_SUM_BY_SW (1) /* calculated by SW */
 
 /* DESCRIPTOR INTERRUPT */
-#define HAL_MT_NAMCHABARWA_PKT_DESC_NO_INTR  (0) /* trigger interrupt each GPD */
-#define HAL_MT_NAMCHABARWA_PKT_DESC_HAS_INTR (1) /* trigger interrupt when ch=0, default setting \
-                                                  */
+#define HAL_MT_NAMCHABARWA_PKT_DESC_NO_INTR (0) /* trigger interrupt each GPD */
+#define HAL_MT_NAMCHABARWA_PKT_DESC_HAS_INTR                                                    \
+    (1)                                         /* trigger interrupt when ch=0, default setting \
+                                                 */
 
 /* GPD */
 #define HAL_MT_NAMCHABARWA_PKT_RX_GPD_NUM (1024)
@@ -312,7 +316,7 @@ typedef struct
     UI32_T igr_acl_label_hi : 10; /*Reload as IOAM 10b flow id.*/
     UI32_T skip_epp : 1; /*skip EPP if destination is to the CPU port. Keep original packet format*/
     UI32_T
-        src_idx : 14;    /*"0 - 4K: system wide physical port/lag
+    src_idx : 14;        /*"0 - 4K: system wide physical port/lag
                              4K - 20K: system wide single IP/LSP tunnel index to reach remote peer"*/
     UI32_T dst_idx_lo : 7; /*"UC_PORT: 0~2k-1
                                 UC_LAG: 3.5k~4k-1
@@ -404,7 +408,7 @@ typedef struct
     UI32_T igr_acl_label_hi : 10; /*Reload as IOAM 10b flow id.*/
     UI32_T skip_epp : 1; /*skip EPP if destination is to the CPU port. Keep original packet format*/
     UI32_T
-        src_idx : 14;    /*"0 - 4K: system wide physical port/lag
+    src_idx : 14;        /*"0 - 4K: system wide physical port/lag
                              4K - 20K: system wide single IP/LSP tunnel index to reach remote peer"*/
     UI32_T dst_idx_lo : 7; /*"UC_PORT: 0~2k-1
                                 UC_LAG: 3.5k~4k-1
@@ -508,7 +512,7 @@ typedef struct
     UI32_T igr_acl_label_hi : 10; /*Reload as IOAM 10b flow id.*/
     UI32_T skip_epp : 1; /*skip EPP if destination is to the CPU port. Keep original packet format*/
     UI32_T
-        src_idx : 14;    /*"0 - 4K: system wide physical port/lag
+    src_idx : 14;        /*"0 - 4K: system wide physical port/lag
                              4K - 20K: system wide single IP/LSP tunnel index to reach remote peer"*/
     UI32_T dst_idx_lo : 7; /*"UC_PORT: 0~2k-1
                                 UC_LAG: 3.5k~4k-1
@@ -587,7 +591,7 @@ typedef struct
                               MC_L2BD: 12k~28k-1
                               MC_L3MEL: 28k~36k-1"*/
     UI32_T
-        src_idx : 14;     /*"0 - 4K: system wide physical port/lag
+    src_idx : 14;         /*"0 - 4K: system wide physical port/lag
                               4K - 20K: system wide single IP/LSP tunnel index to reach remote peer"*/
     UI32_T skip_epp : 1; /*skip EPP if destination is to the CPU port. Keep original packet format*/
     UI32_T igr_acl_label : 16;  /*Reload as IOAM 10b flow id.*/
@@ -655,7 +659,7 @@ typedef struct
                               MC_L2BD: 12k~28k-1
                               MC_L3MEL: 28k~36k-1"*/
     UI32_T
-        src_idx : 14;     /*"0 - 4K: system wide physical port/lag
+    src_idx : 14;         /*"0 - 4K: system wide physical port/lag
                               4K - 20K: system wide single IP/LSP tunnel index to reach remote peer"*/
     UI32_T skip_epp : 1; /*skip EPP if destination is to the CPU port. Keep original packet format*/
     UI32_T igr_acl_label : 16;  /*Reload as IOAM 10b flow id.*/
@@ -728,7 +732,7 @@ typedef struct
                               MC_L2BD: 12k~28k-1
                               MC_L3MEL: 28k~36k-1"*/
     UI32_T
-        src_idx : 14;     /*"0 - 4K: system wide physical port/lag
+    src_idx : 14;         /*"0 - 4K: system wide physical port/lag
                               4K - 20K: system wide single IP/LSP tunnel index to reach remote peer"*/
     UI32_T skip_epp : 1; /*skip EPP if destination is to the CPU port. Keep original packet format*/
     UI32_T igr_acl_label : 16;  /*Reload as IOAM 10b flow id.*/
@@ -1240,15 +1244,22 @@ typedef struct
     /* metadata */
     UI8_T mac[6];
 
-#define HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_FLAGS_MAC (1UL << 0)
+#define HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_FLAGS_MAC           (1UL << 0)
+#define HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_FLAGS_VLAN_TAG_TYPE (1UL << 1)
+#define HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_FLAGS_VLAN_TAG      (1UL << 2)
     UI32_T flags;
+
+#define HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_FLAGS_VLAN_TAG_STRIP    (0)
+#define HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_FLAGS_VLAN_TAG_KEEP     (1)
+#define HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_FLAGS_VLAN_TAG_ORIGINAL (2)
+    UI8_T vlan_tag_type; /* 0:VLAN_TAG_STRIP 1:VLAN_TAG_KEEP 2:VLAN_TAG_ORIGINAL*/
 
 } HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_T;
 
 typedef struct
 {
-    C8_T name[CLX_NETIF_NAME_LEN];
-    C8_T mc_group_name[CLX_NETIF_NAME_LEN];
+    C8_T name[CLX_NETLINK_NAME_LEN];
+    C8_T mc_group_name[CLX_NETLINK_NAME_LEN];
 } HAL_MT_NAMCHABARWA_PKT_NETIF_RX_DST_NETLINK_T;
 
 typedef enum {
@@ -1314,7 +1325,7 @@ typedef struct
     UI32_T unit;
     HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_T net_intf; /* addIntf[In,Out], delIntf[In]              */
     HAL_MT_NAMCHABARWA_PKT_NETIF_PROFILE_T
-        net_profile;                              /* createProfile[In,Out], destroyProfile[In] */
+    net_profile;                                  /* createProfile[In,Out], destroyProfile[In] */
     HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_CNT_T cnt;
     CLX_ERROR_NO_T rc;
 

@@ -29,7 +29,7 @@
  *  THE TRANSACTION CONTEMPLATED HEREUNDER SHALL BE CONSTRUED IN ACCORDANCE
  *  WITH THE LAWS OF THE PEOPLE'S REPUBLIC OF CHINA, EXCLUDING ITS CONFLICT OF
  *  LAWS PRINCIPLES.  ANY DISPUTES, CONTROVERSIES OR CLAIMS ARISING THEREOF AND
- *  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN HANGZHOU,CHINA UNDER.
+ *  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN SHANGHAI,CHINA UNDER.
  *
  *******************************************************************************/
 
@@ -58,7 +58,6 @@
 #include <linux/dma-mapping.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
-#include <linux/sched/signal.h>
 
 #include <clx_error.h>
 #include <clx_types.h>
@@ -102,7 +101,6 @@
 #include <linux/list.h>
 #endif
 
-UI32_T clx_dev_tc = 15;
 UI32_T verbosity = (OSAL_DBG_CRIT | OSAL_DBG_ERR | OSAL_DBG_WARN);
 UI32_T vlan_push_flag = 1;
 UI32_T frame_vid = 0;
@@ -497,7 +495,15 @@ _netif_knl_initDevOps(const UI16_T dev_id, NETIF_KNL_DEV_OPS_T *ptr_ops)
 #else
         OSAL_PRINT(OSAL_DBG_COMMON, "namchabarwa detected, but ops not support\n");
 #endif
-    } else {
+    } else if (NETIF_KNL_DEVICE_IS_KAWAGARBO(dev_id)) {
+#if defined(CLX_EN_KAWAGARBO)
+        OSAL_PRINT(OSAL_DBG_COMMON, "Kawagarbo ops not hooked\n");
+#else
+        OSAL_PRINT(OSAL_DBG_COMMON, "Kawagarbo detected, but ops not support\n");
+#endif
+    }
+    else
+    {
         OSAL_PRINT(OSAL_DBG_COMMON, "unknown chip family, dev_id=0x%x\n", dev_id);
         rc = CLX_E_OTHERS;
     }
@@ -671,19 +677,26 @@ _osal_mdc_probePciCallback(struct pci_dev *pdev, const struct pci_device_id *id)
     _ptr_osal_mdc_dev->access.write_callback = osal_mdc_writePciReg;
 #endif
     if (NETIF_KNL_DEVICE_IS_LIGHTNING(device_id) || NETIF_KNL_DEVICE_IS_DAWN(device_id)) {
-        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32))) {
+        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(48))) {
             OSAL_PRINT(OSAL_DBG_ERR, "dma_set_mask_and_coherent failed");
         }
         _osal_mdc_cb.dev[_osal_mdc_cb.dev_num].mmio_bar = OSAL_MDC_PCI_BAR0_OFFSET;
         _osal_mdc_cb.dev[_osal_mdc_cb.dev_num].msi_cnt = 1;
     } else if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(device_id)) {
-        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32))) {
+        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(48))) {
             OSAL_PRINT(OSAL_DBG_ERR, "dma_set_mask_and_coherent failed");
         }
         _osal_mdc_cb.dev[_osal_mdc_cb.dev_num].mmio_bar = OSAL_MDC_PCI_BAR2_OFFSET;
         _osal_mdc_cb.dev[_osal_mdc_cb.dev_num].msi_cnt = 21;
+    } else if (NETIF_KNL_DEVICE_IS_KAWAGARBO(device_id)) {
+        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(48))) {
+            OSAL_PRINT(OSAL_DBG_ERR, "dma_set_mask_and_coherent failed");
+        }
+        _osal_mdc_cb.dev[_osal_mdc_cb.dev_num].mmio_bar = OSAL_MDC_PCI_BAR0_OFFSET;
+        _osal_mdc_cb.dev[_osal_mdc_cb.dev_num].msi_cnt = 21;
     } else {
         OSAL_PRINT(OSAL_DBG_ERR, "wrong device id:%x\n", device_id);
+
         return rc;
     }
 
@@ -742,9 +755,6 @@ static struct pci_device_id _osal_mdc_id_table[] = {
     {PCI_DEVICE(HAL_CLX_VENDOR_ID, PCI_ANY_ID)},
     {PCI_DEVICE(HAL_CL_VENDOR_ID, PCI_ANY_ID)},
     {PCI_DEVICE(HAL_PCIE_VENDOR_ID, PCI_ANY_ID)},
-    {PCI_DEVICE(HAL_CLX_EDK_VENDOR_ID, PCI_ANY_ID)},
-    {PCI_DEVICE(HAL_CLX_EDK_VENDOR_ID_2, PCI_ANY_ID)},
-    {PCI_DEVICE(HAL_CLX_EDK_VENDOR_ID_3, PCI_ANY_ID)},
 };
 
 static struct pci_driver _osal_mdc_pci_driver = {
@@ -2525,9 +2535,6 @@ module_exit(osal_mdc_module_exit);
 
 module_param(intr_mode, uint, S_IRUGO);
 MODULE_PARM_DESC(intr_mode, "0: INTx, 1: MSI, 2: MSIx ");
-
-module_param(clx_dev_tc, uint, S_IRUGO|S_IWUSR);
-MODULE_PARM_DESC(clx_dev_tc, "set tc from 0-15");
 
 module_param(verbosity, uint, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(verbosity,

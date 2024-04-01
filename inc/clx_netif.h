@@ -29,7 +29,7 @@
  *  THE TRANSACTION CONTEMPLATED HEREUNDER SHALL BE CONSTRUED IN ACCORDANCE
  *  WITH THE LAWS OF THE PEOPLE'S REPUBLIC OF CHINA, EXCLUDING ITS CONFLICT OF
  *  LAWS PRINCIPLES.  ANY DISPUTES, CONTROVERSIES OR CLAIMS ARISING THEREOF AND
- *  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN HANGZHOU,CHINA UNDER.
+ *  RELATED THERETO SHALL BE SETTLED BY LAWSUIT IN SHANGHAI,CHINA UNDER.
  *
  *******************************************************************************/
 
@@ -46,6 +46,7 @@
 #include <clx_pkt.h>
 
 #define CLX_NETIF_NAME_LEN            (32)
+#define CLX_NETLINK_NAME_LEN          (16)
 #define CLX_NETIF_PROFILE_NUM_MAX     (256)
 #define CLX_NETIF_PROFILE_PATTERN_NUM (4)
 #define CLX_NETIF_PROFILE_PATTERN_LEN (8)
@@ -70,15 +71,23 @@ typedef struct
     /* metadata */
     CLX_MAC_T mac;
 
-#define CLX_NETIF_INTF_FLAGS_MAC (1UL << 0)
+#define CLX_NETIF_INTF_FLAGS_MAC           (1UL << 0)
+#define CLX_NETIF_INTF_FLAGS_VLAN_TAG_TYPE (1UL << 1)
+#define CLX_NETIF_INTF_FLAGS_VLAN_TAG      (1UL << 2)
     UI32_T flags;
+
+#define CLX_NETIF_INTF_FLAGS_VLAN_TAG_STRIP    (0)
+#define CLX_NETIF_INTF_FLAGS_VLAN_TAG_KEEP     (1)
+#define CLX_NETIF_INTF_FLAGS_VLAN_TAG_ORIGINAL (2)
+    UI8_T vlan_tag_type; /* 0:VLAN_TAG_STRIP 1:VLAN_TAG_KEEP 2:VLAN_TAG_ORIGINAL*/
+    // UI32_T                      vlan_tag;   [LT need]
 
 } CLX_NETIF_INTF_T;
 
 typedef struct
 {
-    C8_T name[CLX_NETIF_NAME_LEN];
-    C8_T mc_group_name[CLX_NETIF_NAME_LEN];
+    C8_T name[CLX_NETLINK_NAME_LEN];
+    C8_T mc_group_name[CLX_NETLINK_NAME_LEN];
 } CLX_NETIF_RX_DST_NETLINK_T;
 
 typedef enum {
@@ -131,8 +140,8 @@ clx_netif_createIntf(const UI32_T unit, CLX_NETIF_INTF_T *ptr_net_intf, UI32_T *
 /**
  * @brief This API is used to destroy the Network Interface for Linux TCP/IP stack.
  *
- * @param [in]     unit    - The unit ID
- * @param [in]     id      - The Network Interface ID
+ * @param [in]     unit       - The unit ID
+ * @param [in]     intf_id    - The Network Interface ID
  * @return         CLX_E_OK        - Operation is successful.
  * @return         CLX_E_OTHERS    - Fail
  */
@@ -191,8 +200,8 @@ clx_netif_createProfile(const UI32_T unit,
 /**
  * @brief This API is used to destroy the Network Profile for Rx packets to User Process.
  *
- * @param [in]     unit    - The unit ID
- * @param [in]     id      - The Network Profile ID
+ * @param [in]     unit          - The unit ID
+ * @param [in]     profile_id    - The Network Profile ID
  * @return         CLX_E_OK        - Operation is successful.
  * @return         CLX_E_OTHERS    - Fail
  */
@@ -206,6 +215,7 @@ typedef enum {
     CLX_NETIF_INTF_PROPERTY_ADMIN_STATE,
     CLX_NETIF_INTF_PROPERTY_PDMA_RX_CNT,
     CLX_NETIF_INTF_PROPERTY_RX_RCH_STATUS,
+    CLX_NETIF_INTF_PROPERTY_VLAN_TAG,
     CLX_NETIF_INTF_PROPERTY_LAST
 } CLX_NETIF_INTF_PROPERTY_T;
 
@@ -248,14 +258,14 @@ clx_netif_getIntfProperty(const UI32_T unit,
 
 typedef struct
 {
-    C8_T name[CLX_NETIF_NAME_LEN];
+    C8_T name[CLX_NETLINK_NAME_LEN];
 
 } CLX_NETIF_NETLINK_MC_GROUP_T;
 
 typedef struct
 {
     UI32_T id;
-    C8_T name[CLX_NETIF_NAME_LEN];
+    C8_T name[CLX_NETLINK_NAME_LEN];
     CLX_NETIF_NETLINK_MC_GROUP_T mc_group[CLX_NETIF_NETLINK_MC_GROUP_NUM_MAX];
     UI32_T mc_group_num;
 
