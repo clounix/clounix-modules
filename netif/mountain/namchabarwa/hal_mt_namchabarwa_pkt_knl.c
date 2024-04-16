@@ -2489,7 +2489,7 @@ _hal_mt_namchabarwa_pkt_rxEnQueue(const UI32_T unit,
         skb_pull(ptr_skb, HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ);
 
         /* strip CRC padded by asic for the last gpd segment */
-        ptr_skb->len = len - ETH_FCS_LEN;
+        ptr_skb->len = total_len - ETH_FCS_LEN;
         skb_set_tail_pointer(ptr_skb, ptr_skb->len);
 
         /* send to linux */
