@@ -940,6 +940,7 @@ _hal_lt_dawn_pkt_clearRxL2IsrStatusReg(const UI32_T unit,
  *
  * @param [in]     unit       - The unit ID
  * @param [in]     channel    - The target channel
+ * @param [out]    ptr_intr_cnt - The pointer to the interrupt counter
  * @return         CLX_E_OK    - Successfully get the counters.
  */
 CLX_ERROR_NO_T
@@ -954,6 +955,7 @@ hal_lt_dawn_pkt_getTxIntrCnt(const UI32_T unit, const UI32_T channel, UI32_T *pt
  *
  * @param [in]     unit       - The unit ID
  * @param [in]     channel    - The target channel
+ * @param [out]    ptr_intr_cnt - The pointer to the interrupt counter
  * @return         CLX_E_OK    - Successfully get the counters.
  */
 CLX_ERROR_NO_T
@@ -967,7 +969,7 @@ hal_lt_dawn_pkt_getRxIntrCnt(const UI32_T unit, const UI32_T channel, UI32_T *pt
  * @brief To get the PDMA TX counters of the target channel.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the TX cookie
+ * @param [in]     ptr_data    - Pointer of the TX cookie
  * @return         CLX_E_OK    - Successfully get the counters.
  */
 CLX_ERROR_NO_T
@@ -984,7 +986,7 @@ hal_lt_dawn_pkt_getTxKnlCnt(const UI32_T unit, void *ptr_data)
  * @brief To get the PDMA RX counters of the target channel.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the RX cookie
+ * @param [in]     ptr_data    - Pointer of the RX cookie
  * @return         CLX_E_OK    - Successfully get the counters.
  */
 CLX_ERROR_NO_T
@@ -1001,7 +1003,7 @@ hal_lt_dawn_pkt_getRxKnlCnt(const UI32_T unit, void *ptr_data)
  * @brief To clear the PDMA TX counters of the target channel.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the TX cookie
+ * @param [in]     ptr_data    - Pointer of the TX cookie
  * @return         CLX_E_OK    - Successfully clear the counters.
  */
 CLX_ERROR_NO_T
@@ -1017,7 +1019,7 @@ hal_lt_dawn_pkt_clearTxKnlCnt(const UI32_T unit, void *ptr_data)
  * @brief To clear the PDMA RX counters of the target channel.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the RX cookie
+ * @param [in]     ptr_data    - Pointer of the RX cookie
  * @return         CLX_E_OK    - Successfully clear the counters.
  */
 CLX_ERROR_NO_T
@@ -1033,7 +1035,7 @@ hal_lt_dawn_pkt_clearRxKnlCnt(const UI32_T unit, void *ptr_data)
  * @brief To set the port attributes such as status or speeds.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the Port cookie
+ * @param [in]     ptr_data    - Pointer of the Port cookie
  * @return         CLX_E_OK    - Successfully set the attributes.
  */
 CLX_ERROR_NO_T
@@ -1670,7 +1672,7 @@ _hal_lt_dawn_pkt_txEnQueueBulk(const UI32_T unit, const UI32_T channel, const UI
  * @brief To dequeue the packets based on the strict algorithm.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the TX cookie
+ * @param [in]     ptr_data    - Pointer of the TX cookie
  * @return         CLX_E_OK    - Successfully dequeue the packets.
  */
 static CLX_ERROR_NO_T
@@ -1730,6 +1732,7 @@ _hal_lt_dawn_pkt_strictTxDeQueue(const UI32_T unit, void *ptr_data)
  *
  * @param [in]     ptr_rx_gpd      - Pointer of the RX GPD
  * @param [in]     ptr_hit_prof    - Pointer of the hit flag
+ * @param [in]     ptr_profile     - Pointer of the profile
  * @return         CLX_E_OK    - Successfully dispatch the packets.
  */
 static void
@@ -2135,7 +2138,7 @@ _hal_lt_dawn_pkt_flushRxQueue(const UI32_T unit, HAL_LT_DAWN_PKT_SW_QUEUE_T *ptr
  * @brief To dequeue the packets based on the configured algorithm.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the RX cookie
+ * @param [in,out] ptr_data      - Pointer of the RX data
  * @return         CLX_E_OK    - Successfully dequeue the packets.
  */
 static CLX_ERROR_NO_T
@@ -2556,7 +2559,7 @@ _hal_lt_dawn_pkt_rxStart(const UI32_T unit)
  *        3. To restart the Rx subsystem
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the RX cookie
+ * @param [in]     ptr_data      - Pointer of the RX cookie
  * @return         CLX_E_OK        - Successfully configure the RX parameters.
  * @return         CLX_E_OTHERS    - Configure the parameter failed.
  */
@@ -2592,7 +2595,7 @@ hal_lt_dawn_pkt_setRxKnlConfig(const UI32_T unit, void *ptr_data)
  * @brief To get the Rx subsystem configuration.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the RX cookie
+ * @param [in]     ptr_data    - Pointer of the RX cookie
  * @return         CLX_E_OK        - Successfully configure the RX parameters.
  * @return         CLX_E_OTHERS    - Configure the parameter failed.
  */
@@ -2612,6 +2615,7 @@ hal_lt_dawn_pkt_getRxKnlConfig(const UI32_T unit, void *ptr_data)
  * @brief To de-initialize the Task for packet module.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data    - Pointer of the data
  * @return         CLX_E_OK        - Successfully dinitialize the control block.
  * @return         CLX_E_OTHERS    - Initialize the control block failed.
  */
@@ -2873,6 +2877,7 @@ _hal_lt_dawn_pkt_deinitL2Isr(const UI32_T unit)
  *        PDMA subsystem.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data - The pointer to the data
  * @return         CLX_E_OK        - Successfully de-initialize the control blocks.
  * @return         CLX_E_OTHERS    - De-initialize the control blocks failed.
  */
@@ -3621,6 +3626,7 @@ _hal_lt_dawn_pkt_net_dev_tx_callback(const UI32_T unit,
  * @brief To initialize the Task for packet module.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data - The data pointer
  * @return         CLX_E_OK        - Successfully dinitialize the control block.
  * @return         CLX_E_OTHERS    - Initialize the control block failed.
  */
@@ -4299,6 +4305,7 @@ _hal_lt_dawn_pkt_destroyAllProfile(const UI32_T unit)
  *        PDMA subsystem.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data - The pointer to the data
  * @return         CLX_E_OK        - Successfully initialize the control blocks.
  * @return         CLX_E_OTHERS    - Initialize the control blocks failed.
  */

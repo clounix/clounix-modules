@@ -931,8 +931,8 @@ typedef enum {
 } HAL_LT_DAWN_PKT_L2_ISR_T;
 
 typedef enum {
-    HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_HWO_ERROR = (0x1UL << 0),     /* Tx GPD.hwo = 0     */
-    HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR = (0x1UL << 1),   /* Tx GPD.chksm is error   */
+    HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_HWO_ERROR = (0x1UL << 0),   /* Tx GPD.hwo = 0     */
+    HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR = (0x1UL << 1), /* Tx GPD.chksm is error   */
     HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_NO_OVFL_ERROR = (0x1UL << 2), /* S/W push too much GPD */
     HAL_LT_DAWN_PKT_TX_CHANNEL_L2_ISR_GPD_DMA_READ_ERROR =
         (0x1UL << 3), /* AXI Rd Error when do GPD read          */
@@ -1400,6 +1400,7 @@ hal_lt_dawn_pkt_sendGpd(const UI32_T unit,
  * @brief To de-initialize the Task for packet module.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data    - Pointer of the data
  * @return         CLX_E_OK        - Successfully dinitialize the control block.
  * @return         CLX_E_OTHERS    - Initialize the control block failed.
  */
@@ -1411,6 +1412,7 @@ hal_lt_dawn_pkt_deinitTask(const UI32_T unit, void *ptr_data);
  *        PDMA subsystem.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data - The pointer to the data
  * @return         CLX_E_OK        - Successfully de-initialize the control blocks.
  * @return         CLX_E_OTHERS    - De-initialize the control blocks failed.
  */
@@ -1422,6 +1424,7 @@ hal_lt_dawn_pkt_deinitPktDrv(const UI32_T unit, void *ptr_data);
  * @brief To initialize the Task for packet module.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data - The data pointer
  * @return         CLX_E_OK        - Successfully dinitialize the control block.
  * @return         CLX_E_OTHERS    - Initialize the control block failed.
  */
@@ -1433,6 +1436,7 @@ hal_lt_dawn_pkt_initTask(const UI32_T unit, void *ptr_data);
  *        PDMA subsystem.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data - The pointer to the data
  * @return         CLX_E_OK        - Successfully initialize the control blocks.
  * @return         CLX_E_OTHERS    - Initialize the control blocks failed.
  */

@@ -80,7 +80,7 @@ typedef struct
 #define CLX_NETIF_INTF_FLAGS_VLAN_TAG_KEEP     (1)
 #define CLX_NETIF_INTF_FLAGS_VLAN_TAG_ORIGINAL (2)
     UI8_T vlan_tag_type; /* 0:VLAN_TAG_STRIP 1:VLAN_TAG_KEEP 2:VLAN_TAG_ORIGINAL*/
-    // UI32_T                      vlan_tag;   [LT need]
+    UI32_T vlan_tag;     /* lightning support */
 
 } CLX_NETIF_INTF_T;
 
