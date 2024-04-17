@@ -1464,7 +1464,8 @@ hal_mt_namchabarwa_pkt_invokeRxUsrCallback(const UI32_T unit,
 /**
  * @brief To de-initialize the Task for packet module.
  *
- * @param [in]     unit    - The unit ID
+ * @param [in]     unit         - The unit ID
+ * @param [in]     ptr_data     - The pointer of data
  * @return         CLX_E_OK        - Successfully dinitialize the control block.
  * @return         CLX_E_OTHERS    - Initialize the control block failed.
  */
@@ -1476,6 +1477,7 @@ hal_mt_namchabarwa_pkt_deinitTask(const UI32_T unit, void *ptr_data);
  *        PDMA subsystem.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data     - The pointer of data
  * @return         CLX_E_OK        - Successfully de-initialize the control blocks.
  * @return         CLX_E_OTHERS    - De-initialize the control blocks failed.
  */
@@ -1486,7 +1488,8 @@ hal_mt_namchabarwa_pkt_deinitPktDrv(const UI32_T unit, void *ptr_data);
 /**
  * @brief To initialize the Task for packet module.
  *
- * @param [in]     unit    - The unit ID
+ * @param [in]     unit         - The unit ID
+ * @param [in]     ptr_data     - The pointer of data
  * @return         CLX_E_OK        - Successfully dinitialize the control block.
  * @return         CLX_E_OTHERS    - Initialize the control block failed.
  */
@@ -1497,7 +1500,8 @@ hal_mt_namchabarwa_pkt_initTask(const UI32_T unit, void *ptr_data);
  * @brief To invoke the functions to initialize the control block for each
  *        PDMA subsystem.
  *
- * @param [in]     unit    - The unit ID
+ * @param [in]     unit            - The unit ID
+ * @param [in]     ptr_data     - The pointer of data
  * @return         CLX_E_OK        - Successfully initialize the control blocks.
  * @return         CLX_E_OTHERS    - Initialize the control blocks failed.
  */
@@ -1519,23 +1523,67 @@ hal_mt_namchabarwa_pkt_exit(const UI32_T unit);
 
 /*---------------------------------------------------------------------------*/
 /* perf */
+/**
+ * @brief To get the PDMA TX interrupt counters of the target channel.
+ *
+ * @param [in]     unit         - The unit ID
+ * @param [in]     channel      - The target channel
+ * @param [out]    ptr_intr_cnt - The Pointer of intr cnt
+ * @return         CLX_E_OK    - Successfully get the counters.
+ */
 CLX_ERROR_NO_T
 hal_mt_namchabarwa_pkt_getTxIntrCnt(const UI32_T unit, const UI32_T channel, UI32_T *ptr_intr_cnt);
 
+/**
+ * @brief To get the PDMA RX interrupt counters of the target channel.
+ *
+ * @param [in]     unit         - The unit ID
+ * @param [in]     channel      - The target channel
+ * @param [out]    ptr_intr_cnt - The Pointer of intr cnt
+ * @return         CLX_E_OK    - Successfully get the counters.
+ */
 CLX_ERROR_NO_T
 hal_mt_namchabarwa_pkt_getRxIntrCnt(const UI32_T unit, const UI32_T channel, UI32_T *ptr_intr_cnt);
 
 /* ioctl */
 #if defined(CLX_EN_NETIF)
+/**
+ * @brief To get the PDMA TX counters of the target channel.
+ *
+ * @param [in]     unit          - The unit ID
+ * @param [out]    ptr_data      - Pointer of the data
+ * @return         CLX_E_OK    - Successfully get the counters.
+ */
 CLX_ERROR_NO_T
 hal_mt_namchabarwa_pkt_getTxKnlCnt(const UI32_T unit, void *ptr_data);
 
+/**
+ * @brief To get the PDMA RX counters of the target channel.
+ *
+ * @param [in]     unit          - The unit ID
+ * @param [out]    ptr_data      - Pointer of the data
+ * @return         CLX_E_OK    - Successfully get the counters.
+ */
 CLX_ERROR_NO_T
 hal_mt_namchabarwa_pkt_getRxKnlCnt(const UI32_T unit, void *ptr_data);
 
+/**
+ * @brief To clear the PDMA TX counters of the target channel.
+ *
+ * @param [in]     unit          - The unit ID
+ * @param [out]    ptr_data      - Pointer of the data
+ * @return         CLX_E_OK    - Successfully clear the counters.
+ */
 CLX_ERROR_NO_T
 hal_mt_namchabarwa_pkt_clearTxKnlCnt(const UI32_T unit, void *ptr_data);
 
+/**
+ * @brief To clear the PDMA RX counters of the target channel.
+ *
+ * @param [in]     unit          - The unit ID
+ * @param [out]    ptr_data      - Pointer of the data
+ * @return         CLX_E_OK    - Successfully clear the counters.
+ */
 CLX_ERROR_NO_T
 hal_mt_namchabarwa_pkt_clearRxKnlCnt(const UI32_T unit, void *ptr_data);
 

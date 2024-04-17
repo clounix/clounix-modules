@@ -1802,7 +1802,9 @@ _hal_lt_lightning_pkt_strictTxDeQueue(const UI32_T unit, void *ptr_data)
     if (0 == que_cnt) {
         osal_waitEvent(&ptr_tx_cb->sync_sema);
         if (FALSE == ptr_tx_cb->running) {
-            return (CLX_E_OTHERS); /* deinit */
+            rc = CLX_E_OTHERS;
+            osal_io_copyToUser(&ptr_cookie->rc, &rc, sizeof(CLX_ERROR_NO_T));
+            return (CLX_E_OK); /* deinit */
         }
 
         ptr_tx_cb->cnt.wait_event++;

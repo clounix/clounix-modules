@@ -501,9 +501,7 @@ _netif_knl_initDevOps(const UI16_T dev_id, NETIF_KNL_DEV_OPS_T *ptr_ops)
 #else
         OSAL_PRINT(OSAL_DBG_COMMON, "Kawagarbo detected, but ops not support\n");
 #endif
-    }
-    else
-    {
+    } else {
         OSAL_PRINT(OSAL_DBG_COMMON, "unknown chip family, dev_id=0x%x\n", dev_id);
         rc = CLX_E_OTHERS;
     }
@@ -2330,11 +2328,6 @@ _osal_mdc_registerIoctlCallback(const UI32_T unit,
         ptr_cb = &_osal_mdc_cb._osal_mdc_ioctl_cb;
     } else {
         ptr_cb = &_osal_mdc_cb.dev[unit]._osal_mdc_dev_ioctl_cb;
-    }
-
-    if (NULL != ptr_cb->callback[type]) {
-        OSAL_PRINT(OSAL_DBG_ERR, "register ioctl callback failed, type=%d exist\n", type);
-        return CLX_E_OTHERS;
     }
 
     ptr_cb->callback[type] = func;

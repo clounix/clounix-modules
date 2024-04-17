@@ -541,6 +541,7 @@ _hal_mt_namchabarwa_pkt_unmaskIntr(const UI32_T unit, const UI32_T channel)
  *
  * @param [in]     unit       - The unit ID
  * @param [in]     channel    - The target RX channel
+ * @param [in]     work_idx   - work index
  * @return         CLX_E_OK        - Successfully configure the register.
  * @return         CLX_E_OTHERS    - Configure the register failed.
  */
@@ -608,6 +609,7 @@ _hal_mt_namchabarwa_pkt_getRxPopIdx(const UI32_T unit,
  *
  * @param [in]     unit       - The unit ID
  * @param [in]     channel    - The target TX channel
+ * @param [in]     work_idx   - work index
  * @return         CLX_E_OK        - Successfully configure the register.
  * @return         CLX_E_OTHERS    - Configure the register failed.
  */
@@ -1022,8 +1024,9 @@ _hal_mt_namchabarwa_pkt_setRxGpdStartAddrReg(const UI32_T unit,
 /**
  * @brief To get the PDMA TX interrupt counters of the target channel.
  *
- * @param [in]     unit       - The unit ID
- * @param [in]     channel    - The target channel
+ * @param [in]     unit         - The unit ID
+ * @param [in]     channel      - The target channel
+ * @param [out]    ptr_intr_cnt - The Pointer of intr cnt
  * @return         CLX_E_OK    - Successfully get the counters.
  */
 CLX_ERROR_NO_T
@@ -1036,8 +1039,9 @@ hal_mt_namchabarwa_pkt_getTxIntrCnt(const UI32_T unit, const UI32_T channel, UI3
 /**
  * @brief To get the PDMA RX interrupt counters of the target channel.
  *
- * @param [in]     unit       - The unit ID
- * @param [in]     channel    - The target channel
+ * @param [in]     unit         - The unit ID
+ * @param [in]     channel      - The target channel
+ * @param [out]    ptr_intr_cnt - The Pointer of intr cnt
  * @return         CLX_E_OK    - Successfully get the counters.
  */
 CLX_ERROR_NO_T
@@ -1051,7 +1055,7 @@ hal_mt_namchabarwa_pkt_getRxIntrCnt(const UI32_T unit, const UI32_T channel, UI3
  * @brief To get the PDMA TX counters of the target channel.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the TX cookie
+ * @param [out]    ptr_data      - Pointer of the data
  * @return         CLX_E_OK    - Successfully get the counters.
  */
 CLX_ERROR_NO_T
@@ -1069,7 +1073,7 @@ hal_mt_namchabarwa_pkt_getTxKnlCnt(const UI32_T unit, void *ptr_data)
  * @brief To get the PDMA RX counters of the target channel.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the RX cookie
+ * @param [out]    ptr_data      - Pointer of the data
  * @return         CLX_E_OK    - Successfully get the counters.
  */
 CLX_ERROR_NO_T
@@ -1087,7 +1091,7 @@ hal_mt_namchabarwa_pkt_getRxKnlCnt(const UI32_T unit, void *ptr_data)
  * @brief To clear the PDMA TX counters of the target channel.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the TX cookie
+ * @param [out]    ptr_data      - Pointer of the data
  * @return         CLX_E_OK    - Successfully clear the counters.
  */
 CLX_ERROR_NO_T
@@ -1117,7 +1121,7 @@ hal_mt_namchabarwa_pkt_clearTxKnlCnt(const UI32_T unit, void *ptr_data)
  * @brief To clear the PDMA RX counters of the target channel.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the RX cookie
+ * @param [out]    ptr_data      - Pointer of the data
  * @return         CLX_E_OK    - Successfully clear the counters.
  */
 CLX_ERROR_NO_T
@@ -1146,7 +1150,7 @@ hal_mt_namchabarwa_pkt_clearRxKnlCnt(const UI32_T unit, void *ptr_data)
  * @brief To set the port attributes such as status or speeds.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the Port cookie
+ * @param [in]     ptr_data      - Pointer of the data
  * @return         CLX_E_OK    - Successfully set the attributes.
  */
 CLX_ERROR_NO_T
@@ -1191,7 +1195,7 @@ hal_mt_namchabarwa_pkt_setPortAttr(const UI32_T unit, void *ptr_data)
  * @brief To get the port attributes such as status or speeds.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the Port cookie
+ * @param [out]    ptr_data      - Pointer of the data
  * @return         CLX_E_OK    - Successfully set the attributes.
  */
 CLX_ERROR_NO_T
@@ -1903,7 +1907,7 @@ _hal_mt_namchabarwa_pkt_txEnQueueBulk(const UI32_T unit, const UI32_T channel, c
  * @brief To dequeue the packets based on the strict algorithm.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the TX cookie
+ * @param [in]     ptr_data      - Pointer of the data
  * @return         CLX_E_OK    - Successfully dequeue the packets.
  */
 static CLX_ERROR_NO_T
@@ -1923,7 +1927,9 @@ _hal_mt_namchabarwa_pkt_strictTxDeQueue(const UI32_T unit, void *ptr_data)
     if (0 == que_cnt) {
         osal_waitEvent(&ptr_tx_cb->sync_sema);
         if (FALSE == ptr_tx_cb->running) {
-            return (CLX_E_OTHERS); /* deinit */
+            rc = CLX_E_OTHERS;
+            osal_io_copyToUser(&ptr_cookie->rc, &rc, sizeof(CLX_ERROR_NO_T));
+            return (CLX_E_OK); /* deinit */
         }
 
         ptr_tx_cb->cnt.wait_event++;
@@ -1963,8 +1969,10 @@ _hal_mt_namchabarwa_pkt_strictTxDeQueue(const UI32_T unit, void *ptr_data)
  *
  * Reference to pkt_srv.
  *
- * @param [in]     ptr_rx_gpd      - Pointer of the RX GPD
+ * @param [in]     ptr_sw_gpd      - Pointer of the SW GPD list
+ * @param [in]     ptr_profile     - Pointer of the RX Profile
  * @param [in]     ptr_hit_prof    - Pointer of the hit flag
+ * @param [in]     ptr_profile     - Pointer of the profile
  * @return         CLX_E_OK    - Successfully dispatch the packets.
  */
 static void
@@ -2172,7 +2180,7 @@ _hal_mt_namchabarwa_pkt_print_payload(UI8_T *ptr_virt_addr, UI32_T buf_len)
  * @brief To dump the values of fields for the specified RX GPD.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_rx_gpd    - Pointer for the RX GPD
+ * @param [in]     ptr_gpd       - Pointer for the GPD
  * @return         CLX_E_OK    - Successfully show the RX GPD content.
  */
 static CLX_ERROR_NO_T
@@ -2582,7 +2590,7 @@ _hal_mt_namchabarwa_pkt_flushRxQueue(const UI32_T unit, HAL_MT_NAMCHABARWA_PKT_S
  * @brief To dequeue the packets based on the configured algorithm.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the RX cookie
+ * @param [in]     ptr_data      - Pointer of the data
  * @return         CLX_E_OK    - Successfully dequeue the packets.
  */
 static CLX_ERROR_NO_T
@@ -3007,7 +3015,7 @@ _hal_mt_namchabarwa_pkt_rxStart(const UI32_T unit)
  *        3. To restart the Rx subsystem
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the RX cookie
+ * @param [in]     ptr_data      - Pointer of the data
  * @return         CLX_E_OK        - Successfully configure the RX parameters.
  * @return         CLX_E_OTHERS    - Configure the parameter failed.
  */
@@ -3045,7 +3053,7 @@ hal_mt_namchabarwa_pkt_setRxKnlConfig(const UI32_T unit, void *ptr_data)
  * @brief To get the Rx subsystem configuration.
  *
  * @param [in]     unit          - The unit ID
- * @param [in]     ptr_cookie    - Pointer of the RX cookie
+ * @param [out]     ptr_data      - Pointer of the data
  * @return         CLX_E_OK        - Successfully configure the RX parameters.
  * @return         CLX_E_OTHERS    - Configure the parameter failed.
  */
@@ -3064,7 +3072,8 @@ hal_mt_namchabarwa_pkt_getRxKnlConfig(const UI32_T unit, void *ptr_data)
 /**
  * @brief To de-initialize the Task for packet module.
  *
- * @param [in]     unit    - The unit ID
+ * @param [in]     unit         - The unit ID
+ * @param [in]     ptr_data     - The pointer of data
  * @return         CLX_E_OK        - Successfully dinitialize the control block.
  * @return         CLX_E_OTHERS    - Initialize the control block failed.
  */
@@ -3302,6 +3311,7 @@ _hal_mt_namchabarwa_pkt_deinitL1Isr(const UI32_T unit)
  *        PDMA subsystem.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data     - The pointer of data
  * @return         CLX_E_OK        - Successfully de-initialize the control blocks.
  * @return         CLX_E_OTHERS    - De-initialize the control blocks failed.
  */
@@ -3835,7 +3845,8 @@ _hal_mt_namchabarwa_pkt_net_dev_tx_callback(const UI32_T unit,
 /**
  * @brief To initialize the Task for packet module.
  *
- * @param [in]     unit    - The unit ID
+ * @param [in]     unit         - The unit ID
+ * @param [in]     ptr_data     - The pointer of data
  * @return         CLX_E_OK        - Successfully dinitialize the control block.
  * @return         CLX_E_OTHERS    - Initialize the control block failed.
  */
@@ -4504,6 +4515,7 @@ _hal_mt_namchabarwa_pkt_destroyAllProfile(const UI32_T unit)
  *        PDMA subsystem.
  *
  * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data     - The pointer of data
  * @return         CLX_E_OK        - Successfully .
  * @return         CLX_E_OTHERS    - failed.
  */
@@ -4568,7 +4580,8 @@ hal_mt_namchabarwa_pkt_initPktDrvCallback(const UI32_T unit, void *ptr_data)
  * @brief To invoke the functions to initialize the control block for each
  *        PDMA subsystem.
  *
- * @param [in]     unit    - The unit ID
+ * @param [in]     unit            - The unit ID
+ * @param [in]     ptr_data     - The pointer of data
  * @return         CLX_E_OK        - Successfully initialize the control blocks.
  * @return         CLX_E_OTHERS    - Initialize the control blocks failed.
  */
