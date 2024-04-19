@@ -1173,7 +1173,8 @@ hal_mt_namchabarwa_pkt_setPortAttr(const UI32_T unit, void *ptr_data)
     if (HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM > port) {
         ptr_net_dev = HAL_MT_NAMCHABARWA_PKT_GET_PORT_NETDEV(port);
     } else {
-        OSAL_PRINT(OSAL_DBG_ERR, "u=%u, port=%u is outof range[0-128]\n", unit, port);
+        OSAL_PRINT(OSAL_DBG_ERR, "u=%u, port=%u is outof range[0-%d]\n", unit, port,
+                   HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM);
         return (CLX_E_BAD_PARAMETER);
     }
 
@@ -1208,20 +1209,27 @@ hal_mt_namchabarwa_pkt_getPortAttr(const UI32_T unit, void *ptr_data)
     UI32_T status;
     UI32_T speed;
 
-    port = ptr_cookie->port;
-    // TODO_FIXME_PORT
-    // ptr_net_dev = HAL_NETIF_MT_NAMCHABARWA_PKT_GET_PORT_NETDEV(unit,port);
-    if ((NULL == ptr_net_dev) || (port >= HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM)) {
+    osal_io_copyFromUser(&port, &ptr_cookie->port, sizeof(UI32_T));
+    if (HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM > port) {
+        ptr_net_dev = HAL_MT_NAMCHABARWA_PKT_GET_PORT_NETDEV(port);
+    } else {
+        OSAL_PRINT(OSAL_DBG_ERR, "u=%u, port=%u is outof range[0-%d]\n", unit, port,
+                   HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM);
+        return (CLX_E_BAD_PARAMETER);
+    }
+
+    if (NULL == ptr_net_dev) {
         OSAL_PRINT(OSAL_DBG_ERR, "%s(%d): Failed to get netdev, port %d\n", __FUNCTION__, __LINE__,
                    port);
-        return -1;
+        return (CLX_E_BAD_PARAMETER);
     }
     status = netif_carrier_ok(ptr_net_dev);
 
     ptr_priv = netdev_priv(ptr_net_dev);
     speed = ptr_priv->speed;
-    ptr_cookie->status = status;
-    ptr_cookie->speed = speed;
+    osal_io_copyToUser(&ptr_cookie->status, &status, sizeof(UI32_T));
+    osal_io_copyToUser(&ptr_cookie->speed, &speed, sizeof(UI32_T));
+
     return (CLX_E_OK);
 }
 
@@ -2497,7 +2505,7 @@ _hal_mt_namchabarwa_pkt_rxEnQueue(const UI32_T unit,
         skb_pull(ptr_skb, HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ);
 
         /* strip CRC padded by asic for the last gpd segment */
-        ptr_skb->len = total_len - ETH_FCS_LEN;
+        ptr_skb->len -= ETH_FCS_LEN;
         skb_set_tail_pointer(ptr_skb, ptr_skb->len);
 
         /* send to linux */
@@ -2544,7 +2552,7 @@ _hal_mt_namchabarwa_pkt_rxEnQueue(const UI32_T unit,
 #endif
             ptr_priv = netdev_priv(ptr_net_dev);
             ptr_priv->stats.rx_packets++;
-            ptr_priv->stats.rx_bytes += total_len;
+            ptr_priv->stats.rx_bytes += total_len - HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ;
         } else {
             OSAL_PRINT(OSAL_DBG_PROFILE, "hit profile dest=netlink, name=%s, mcgrp=%s\n",
                        ((NETIF_NL_RX_DST_NETLINK_T *)ptr_dest)->name,
