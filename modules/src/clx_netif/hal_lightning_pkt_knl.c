@@ -3039,7 +3039,7 @@ _hal_lightning_pkt_rxEnQueue(
         ptr_skb->ip_summed = CHECKSUM_UNNECESSARY; /* skip checksum */
 
         /* strip CRC padded by asic for the last gpd segment */
-        ptr_skb->len = len - ETH_FCS_LEN;
+        ptr_skb->len = total_len - ETH_FCS_LEN;
         skb_set_tail_pointer(ptr_skb, ptr_skb->len);
 
         /* send to linux */
