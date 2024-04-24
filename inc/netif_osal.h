@@ -114,8 +114,7 @@
 #define OSAL_USEC_PER_TICK (OSAL_US_PER_SECOND / HZ)
 
 /* ----------------------------------------------------------------------------------- struct */
-typedef struct linux_thread_s
-{
+typedef struct linux_thread_s {
     char name[OSAL_THREAD_NAME_LEN + 1];
     struct task_struct *ptr_task;
     unsigned int is_stop;
@@ -124,35 +123,30 @@ typedef struct linux_thread_s
 
 } linux_thread_t;
 
-typedef struct
-{
+typedef struct {
     char name[OSAL_SEMA_NAME_LEN + 1];
     struct semaphore lock;
 
 } linux_sema_t;
 
-typedef struct
-{
+typedef struct {
     char name[OSAL_EVENT_NAME_LEN + 1];
     wait_queue_head_t wait_que;
     unsigned int condition;
 
 } linux_event_t;
 
-typedef struct
-{
+typedef struct {
     char name[OSAL_SPIN_NAME_LEN + 1];
     spinlock_t spinlock;
 
 } linux_isrlock_t;
 
-typedef struct
-{
+typedef struct {
     void *ptr_data;
 } linux_queue_entry_t;
 
-typedef struct
-{
+typedef struct {
     char name[OSAL_QUEUE_NAME_LEN + 1];
     int head;                       /* index of the queue head entry can be read  */
     int tail;                       /* index of the queue tail entry can be write */
@@ -163,8 +157,7 @@ typedef struct
 
 } linux_queue_t;
 
-typedef struct
-{
+typedef struct {
     unsigned int size;
     dma_addr_t phy_addr;
     char data[0];

@@ -99,8 +99,7 @@ typedef enum {
 
 } PERF_DIR_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T unit;
     UI32_T channel;
     UI32_T len;
@@ -110,8 +109,7 @@ typedef struct
 
 } PERF_COOKIE_T;
 
-typedef struct
-{
+typedef struct {
     /* netif-only */
     PERF_COOKIE_T tx_cookie[PERF_TX_CHANNEL_NUM_MAX];
 
@@ -133,8 +131,7 @@ typedef struct
 
 } PERF_TX_PERF_CB_T;
 
-typedef struct
-{
+typedef struct {
     /* netif-only */
     BOOL_T rx_test;
 

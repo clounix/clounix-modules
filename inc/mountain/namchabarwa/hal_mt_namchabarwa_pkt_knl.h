@@ -222,9 +222,8 @@ typedef enum {
 
 /* DESCRIPTOR INTERRUPT */
 #define HAL_MT_NAMCHABARWA_PKT_DESC_NO_INTR (0) /* trigger interrupt each GPD */
-#define HAL_MT_NAMCHABARWA_PKT_DESC_HAS_INTR                                                    \
-    (1)                                         /* trigger interrupt when ch=0, default setting \
-                                                 */
+/* trigger interrupt when ch=0, default setting */
+#define HAL_MT_NAMCHABARWA_PKT_DESC_HAS_INTR (1)
 
 /* GPD */
 #define HAL_MT_NAMCHABARWA_PKT_RX_GPD_NUM (1024)
@@ -296,8 +295,7 @@ typedef enum {
 
 #pragma pack(1)
 #if defined(CLX_EN_HOST_32_BIT_LITTLE_ENDIAN) || defined(CLX_EN_HOST_64_BIT_LITTLE_ENDIAN)
-typedef struct
-{
+typedef struct {
     // 32
     UI32_T dst_idx_hi : 9; /*"UC_PORT: 0~2k-1
                             UC_LAG: 3.5k~4k-1
@@ -388,8 +386,7 @@ typedef struct
 
 } HAL_MT_NAMCHABARWA_PKT_PPH_L2_T;
 
-typedef struct
-{
+typedef struct {
     // 32
     UI32_T dst_idx_hi : 9; /*"UC_PORT: 0~2k-1
                             UC_LAG: 3.5k~4k-1
@@ -492,8 +489,7 @@ typedef struct
 
 typedef HAL_MT_NAMCHABARWA_PKT_PPH_L3UC_T HAL_MT_NAMCHABARWA_PKT_PPH_L3MC_T;
 
-typedef struct
-{
+typedef struct {
     // 32
     UI32_T dst_idx_hi : 9; /*"UC_PORT: 0~2k-1
                             UC_LAG: 3.5k~4k-1
@@ -576,8 +572,7 @@ typedef struct
 } HAL_MT_NAMCHABARWA_PKT_PPH_L25_T;
 #endif
 #if defined(CLX_EN_HOST_32_BIT_BIG_ENDIAN) || defined(CLX_EN_HOST_64_BIT_BIG_ENDIAN)
-typedef struct
-{
+typedef struct {
     UI32_T fwd_op : 2;    /*tenant packet forwarding operation
                               0: L2
                               1: L2.5 MPLS
@@ -644,8 +639,7 @@ typedef struct
 
 } HAL_MT_NAMCHABARWA_PKT_PPH_L2_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T fwd_op : 2;    /*tenant packet forwarding operation
                               0: L2
                               1: L2.5 MPLS
@@ -717,8 +711,7 @@ typedef struct
 
 typedef HAL_MT_NAMCHABARWA_PKT_PPH_L3UC_T HAL_MT_NAMCHABARWA_PKT_PPH_L3MC_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T fwd_op : 2;    /*tenant packet forwarding operation
                               0: L2
                               1: L2.5 MPLS
@@ -943,8 +936,7 @@ typedef struct
 0x10 ----------------|------------------------------------------------|
 
 */
-typedef struct
-{
+typedef struct {
     UI64_T s_addr_lo : 32;
     UI64_T s_addr_hi : 16;
     UI64_T size : 16;
@@ -984,13 +976,11 @@ typedef void (*HAL_MT_NAMCHABARWA_PKT_TX_FUNC_T)(
     const void *ptr_sw_gpd, /* SW-GPD to be processed  */
     void *ptr_coockie);     /* Private data of SDK     */
 
-typedef struct HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_S
-{
+typedef struct HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_S {
     HAL_MT_NAMCHABARWA_PKT_TX_FUNC_T callback; /* (unit, ptr_sw_gpd, ptr_cookie) */
     void *ptr_cookie;                          /* Pointer of CLX_PKT_TX_PKT_T    */
     HAL_MT_NAMCHABARWA_PKT_TX_GPD_T tx_gpd;
-    union
-    {
+    union {
         HAL_MT_NAMCHABARWA_PKT_PPH_L2_T *ptr_pph_l2;
         HAL_MT_NAMCHABARWA_PKT_PPH_L3UC_T *ptr_pph_l3uc;
         HAL_MT_NAMCHABARWA_PKT_PPH_L3MC_T *ptr_pph_l3mc;
@@ -1005,8 +995,7 @@ typedef struct HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_S
 
 } HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T send_ok;
     UI32_T gpd_empty;
     UI32_T poll_timeout;
@@ -1033,8 +1022,7 @@ typedef struct
 
 } HAL_MT_NAMCHABARWA_PKT_TX_CHANNEL_CNT_T;
 
-typedef struct
-{
+typedef struct {
     HAL_MT_NAMCHABARWA_PKT_TX_CHANNEL_CNT_T channel[HAL_MT_NAMCHABARWA_PKT_TX_CHANNEL_LAST];
     UI32_T invoke_gpd_callback;
     UI32_T no_memory;
@@ -1085,12 +1073,10 @@ typedef enum {
 #define HAL_MT_NAMCHABARWA_PKT_PDMA_P2H_RX_FIFO3_OVF (1 << 13)
 #define HAL_MT_NAMCHABARWA_PKT_PDMA_P2E_RX_FIFO_OVF  (1 << 14)
 
-typedef struct HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_S
-{
+typedef struct HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_S {
     BOOL_T rx_complete; /* FALSE when PDMA error occurs */
     HAL_MT_NAMCHABARWA_PKT_RX_GPD_T rx_gpd;
-    union
-    {
+    union {
         HAL_MT_NAMCHABARWA_PKT_PPH_L2_T *ptr_pph_l2;
         HAL_MT_NAMCHABARWA_PKT_PPH_L3UC_T *ptr_pph_l3uc;
         HAL_MT_NAMCHABARWA_PKT_PPH_L3MC_T *ptr_pph_l3mc;
@@ -1104,8 +1090,7 @@ typedef struct HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_S
 
 } HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T;
 
-typedef struct
-{
+typedef struct {
     /* queue */
     UI32_T enque_ok;
     UI32_T enque_retry;
@@ -1138,8 +1123,7 @@ typedef struct
 
 } HAL_MT_NAMCHABARWA_PKT_RX_CHANNEL_CNT_T;
 
-typedef struct
-{
+typedef struct {
     HAL_MT_NAMCHABARWA_PKT_RX_CHANNEL_CNT_T channel[HAL_MT_NAMCHABARWA_PKT_RX_CHANNEL_LAST];
     UI32_T invoke_gpd_callback;
     UI32_T no_memory;
@@ -1151,11 +1135,9 @@ typedef struct
 
 /* ----------------------------------------------------------------------------------- Reg */
 #if defined(CLX_EN_LITTLE_ENDIAN)
-typedef union
-{
+typedef union {
     UI32_T reg;
-    struct
-    {
+    struct {
         UI32_T rch_start : 1;
         UI32_T rch_resume : 1;
         UI32_T rch_stop : 1;
@@ -1166,11 +1148,9 @@ typedef union
     } field;
 } HAL_MT_NAMCHABARWA_PKT_RCH_CMD_REG_T;
 
-typedef union
-{
+typedef union {
     UI32_T reg;
-    struct
-    {
+    struct {
         UI32_T tch_start : 1;
         UI32_T tch_resume : 1;
         UI32_T tch_stop : 1;
@@ -1182,11 +1162,9 @@ typedef union
 } HAL_MT_NAMCHABARWA_PKT_TCH_CMD_REG_T;
 
 #elif defined(CLX_EN_BIG_ENDIAN)
-typedef union
-{
+typedef union {
     UI32_T reg;
-    struct
-    {
+    struct {
         UI32_T rch_gpd_add_no_hi : 8;
         UI32_T rch_gpd_add_no_lo : 8;
         UI32_T : 8;
@@ -1197,11 +1175,9 @@ typedef union
     } field;
 } HAL_MT_NAMCHABARWA_PKT_RCH_CMD_REG_T;
 
-typedef union
-{
+typedef union {
     UI32_T reg;
-    struct
-    {
+    struct {
         UI32_T tch_gpd_add_no_hi : 8;
         UI32_T tch_gpd_add_no_lo : 8;
         UI32_T : 8;
@@ -1223,8 +1199,7 @@ typedef union
  * clx_netif -> hal_mt_namchabarwa_pkt_drv -> hal_mt_namchabarwa_pkt_knl
  */
 
-typedef struct
-{
+typedef struct {
     UI32_T tx_pkt;
     UI32_T tx_queue_full;
     UI32_T tx_error;
@@ -1232,8 +1207,7 @@ typedef struct
 
 } HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_CNT_T;
 
-typedef struct
-{
+typedef struct {
     /* unique key */
     UI32_T id;
     C8_T name[CLX_NETIF_NAME_LEN];
@@ -1256,8 +1230,7 @@ typedef struct
 
 } HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_T;
 
-typedef struct
-{
+typedef struct {
     C8_T name[CLX_NETLINK_NAME_LEN];
     C8_T mc_group_name[CLX_NETLINK_NAME_LEN];
 } HAL_MT_NAMCHABARWA_PKT_NETIF_RX_DST_NETLINK_T;
@@ -1272,8 +1245,7 @@ typedef enum {
 #define HAL_PKT_PP_BITMAP_SIZE (CLX_BITMAP_SIZE(HAL_PKT_PP_NUM))
 typedef UI32_T HAL_MT_PKT_PP_REASON_BITMAP_T[HAL_PKT_PP_BITMAP_SIZE];
 
-typedef struct
-{
+typedef struct {
     /* unique key */
     UI32_T id;
     C8_T name[CLX_NETIF_NAME_LEN];
@@ -1310,8 +1282,7 @@ typedef enum {
 
 } HAL_MT_NAMCHABARWA_PKT_IOCTL_RX_TYPE_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T unit;
     UI32_T channel;
     HAL_MT_NAMCHABARWA_PKT_RX_CNT_T rx_cnt;
@@ -1320,8 +1291,7 @@ typedef struct
 
 } HAL_MT_NAMCHABARWA_PKT_IOCTL_CH_CNT_COOKIE_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T unit;
     HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_T net_intf; /* addIntf[In,Out], delIntf[In]              */
     HAL_MT_NAMCHABARWA_PKT_NETIF_PROFILE_T
@@ -1331,8 +1301,7 @@ typedef struct
 
 } HAL_MT_NAMCHABARWA_PKT_IOCTL_NETIF_COOKIE_T;
 
-typedef struct
-{
+typedef struct {
     CLX_ADDR_T callback; /* (unit, ptr_sw_gpd, ptr_cookie) */
     CLX_ADDR_T cookie;   /* Pointer of CLX_PKT_TX_PKT_T    */
     UI32_T channel;
@@ -1342,8 +1311,7 @@ typedef struct
 
 } HAL_MT_NAMCHABARWA_PKT_IOCTL_TX_GPD_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T unit;
     UI32_T channel;              /* sendGpd[In]      */
     CLX_ADDR_T ioctl_gpd_addr;   /* sendGpd[In]      */
@@ -1351,22 +1319,19 @@ typedef struct
     CLX_ERROR_NO_T rc;
 } HAL_MT_NAMCHABARWA_PKT_IOCTL_TX_COOKIE_T;
 
-typedef struct
-{
+typedef struct {
     BOOL_T rx_complete;      /* FALSE when PDMA error occurs                 */
     CLX_ADDR_T hw_gpd_addr;  /* Pointer to HW GPD in user's SW GPD struct    */
     CLX_ADDR_T dma_buf_addr; /* Pointer to DMA buffer allocated by the user (virtual) */
 
 } HAL_MT_NAMCHABARWA_PKT_IOCTL_RX_GPD_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T channel;      /* initPktDrv[Out]      */
     CLX_ADDR_T phy_addr; /* initPktDrv[Out] DMA ring base phy addr*/
 } HAL_MT_NAMCHABARWA_PKT_IOCTL_CHANNEL_RING_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T unit;
     UI32_T channel;                                 /* getRxCnt[In], clearRxInt[In]     */
     CLX_ADDR_T ioctl_gpd_addr;                      /* waitRxFree[Out]                  */
@@ -1375,16 +1340,14 @@ typedef struct
     CLX_ERROR_NO_T rc;
 } HAL_MT_NAMCHABARWA_PKT_IOCTL_RX_COOKIE_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T port;
     UI32_T status;
     UI32_T speed;
 
 } HAL_MT_NAMCHABARWA_PKT_IOCTL_PORT_COOKIE_T;
 
-typedef struct
-{
+typedef struct {
     /* intf property */
     UI32_T intf_id;
     CLX_NETIF_INTF_PROPERTY_T property;

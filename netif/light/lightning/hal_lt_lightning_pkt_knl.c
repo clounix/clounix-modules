@@ -104,23 +104,20 @@ extern UI32_T frame_vid;
 
 extern UI32_T intel_iommu_flag;
 
-typedef struct
-{
+typedef struct {
     UI32_T intr_reg;
     CLX_SEMAPHORE_ID_T intr_event;
     UI32_T intr_cnt;
 
 } HAL_LT_LIGHTNING_PKT_INTR_VEC_T;
 
-typedef struct HAL_LT_LIGHTNING_PKT_PROFILE_NODE_S
-{
+typedef struct HAL_LT_LIGHTNING_PKT_PROFILE_NODE_S {
     HAL_LT_LIGHTNING_PKT_NETIF_PROFILE_T *ptr_profile;
     struct HAL_LT_LIGHTNING_PKT_PROFILE_NODE_S *ptr_next_node;
 
 } HAL_LT_LIGHTNING_PKT_PROFILE_NODE_T;
 
-typedef struct
-{
+typedef struct {
     HAL_LT_LIGHTNING_PKT_NETIF_INTF_T meta;
     struct net_device *ptr_net_dev;
     HAL_LT_LIGHTNING_PKT_PROFILE_NODE_T
@@ -195,15 +192,13 @@ static HAL_LT_LIGHTNING_PKT_NETIF_PORT_DB_T
  */
 /* ----------------------------------------------------------------------------------- General
  * structure */
-typedef struct
-{
+typedef struct {
     UI32_T unit;
     UI32_T channel;
 
 } HAL_LT_LIGHTNING_PKT_ISR_COOKIE_T;
 
-typedef struct
-{
+typedef struct {
     CLX_HUGE_T que_id;
     CLX_SEMAPHORE_ID_T sema;
     UI32_T len;    /* Software CPU queue maximum length.        */
@@ -211,8 +206,7 @@ typedef struct
 
 } HAL_LT_LIGHTNING_PKT_SW_QUEUE_T;
 
-typedef struct
-{
+typedef struct {
     /* handleErrorTask */
     CLX_THREAD_ID_T err_task_id;
 
@@ -231,8 +225,7 @@ typedef struct
 
 /* ----------------------------------------------------------------------------------- TX structure
  */
-typedef struct
-{
+typedef struct {
     /* CLX_SEMAPHORE_ID_T           sema; */
 
     /* since the Tx GPD ring may be accessed by multiple process including
@@ -262,8 +255,7 @@ typedef struct
 
 } HAL_LT_LIGHTNING_PKT_TX_PDMA_T;
 
-typedef struct
-{
+typedef struct {
     HAL_LT_LIGHTNING_PKT_TX_WAIT_T wait_mode;
     HAL_LT_LIGHTNING_PKT_TX_PDMA_T pdma[HAL_LT_LIGHTNING_PKT_TX_CHANNEL_LAST];
     HAL_LT_LIGHTNING_PKT_TX_CNT_T cnt;
@@ -287,8 +279,7 @@ typedef struct
 
 /* ----------------------------------------------------------------------------------- RX structure
  */
-typedef struct
-{
+typedef struct {
     CLX_SEMAPHORE_ID_T sema;
     UI32_T cur_idx; /* SW free index */
     UI32_T gpd_num;
@@ -300,8 +291,7 @@ typedef struct
     CLX_ADDR_T bus_addr;
 } HAL_LT_LIGHTNING_PKT_RX_PDMA_T;
 
-typedef struct
-{
+typedef struct {
     /* Rx system configuration */
     UI32_T buf_len;
 
@@ -327,8 +317,7 @@ typedef struct
 
 /* ----------------------------------------------------------------------------------- Network
  * Device */
-struct net_device_priv
-{
+struct net_device_priv {
     struct net_device *ptr_net_dev;
     struct net_device_stats stats;
     UI32_T unit;

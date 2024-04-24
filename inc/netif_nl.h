@@ -54,22 +54,19 @@ typedef enum {
 } NETIF_NL_INTF_PROPERTY_T;
 
 /* must be the same with CLX_NETIF_RX_DST_NETLINK_T */
-typedef struct
-{
+typedef struct {
     C8_T name[NETIF_NL_NETLINK_NAME_LEN];
     C8_T mc_group_name[NETIF_NL_NETLINK_NAME_LEN];
 } NETIF_NL_RX_DST_NETLINK_T;
 
 /* must be the same with CLX_NETIF_NETLINK_MC_GROUP_T */
-typedef struct
-{
+typedef struct {
     C8_T name[NETIF_NL_NETLINK_NAME_LEN];
 
 } NETIF_NL_NETLINK_MC_GROUP_T;
 
 /* must be the same with CLX_NETIF_NETLINK_T */
-typedef struct
-{
+typedef struct {
     UI32_T id;
     C8_T name[NETIF_NL_NETLINK_NAME_LEN];
     NETIF_NL_NETLINK_MC_GROUP_T mc_group[NETIF_NL_NETLINK_MC_GROUP_NUM];

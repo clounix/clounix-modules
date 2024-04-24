@@ -2491,8 +2491,8 @@ _hal_mt_namchabarwa_pkt_rxEnQueue(const UI32_T unit,
         if (NULL == ptr_net_dev) {
             ptr_rx_cb->cnt.channel[channel].netdev_miss++;
             osal_skb_free(ptr_skb);
-            OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX), "u=%u, rxch=%u, find netdev failed\n", unit,
-                       channel);
+            OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX), "u=%u, rxch=%u, port=%u find netdev failed\n", unit,
+                       channel,port);
             return;
         }
 
@@ -4836,6 +4836,10 @@ _hal_mt_namchabarwa_pkt_net_dev_tx(struct sk_buff *ptr_skb, struct net_device *p
     }
 
     ptr_virt_addr = (void *)ptr_skb->data;
+
+    // should clear, or maybe cannot send to port
+    osal_memset(ptr_virt_addr, 0x0, HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ);
+
     // must prepare pph before mapdma
     hal_mt_namchabarwa_pkt_preparePPh(
         unit, ptr_priv->port,

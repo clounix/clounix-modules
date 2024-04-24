@@ -141,22 +141,19 @@ typedef CLX_ERROR_NO_T (*NETIF_KNL_DEV_INIT_T)(const UI32_T unit);
 
 typedef CLX_ERROR_NO_T (*NETIF_KNL_DEV_EXIT_T)(const UI32_T unit);
 
-typedef struct
-{
+typedef struct {
     NETIF_KNL_DEV_IOCTL_FUNC_T ioctl;
     NETIF_KNL_DEV_INIT_T init;
     NETIF_KNL_DEV_EXIT_T exit;
 } NETIF_KNL_DEV_OPS_T;
 
-typedef struct
-{
+typedef struct {
     UI16_T dev_id;
     NETIF_KNL_DEV_OPS_T ops;
 
 } NETIF_KNL_CB_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T unit;
     struct pci_dev *ptr_pci_dev;
     UI32_T *ptr_mmio_virt_addr;
@@ -170,8 +167,7 @@ typedef struct
 
 } OSAL_MDC_DEV_T;
 
-typedef struct
-{
+typedef struct {
     OSAL_MDC_DEV_T dev[OSAL_MDC_MAX_CHIPS_PER_SYSTEM];
     UI32_T dev_num;
     OSAL_MDC_DMA_INFO_T dma_info;
@@ -180,8 +176,7 @@ typedef struct
 
 #if defined(CLX_LINUX_USER_MODE)
 #if !defined(CLX_EN_DMA_RESERVED)
-typedef struct
-{
+typedef struct {
     CLX_ADDR_T phy_addr;
     UI32_T size;
     struct list_head list;
