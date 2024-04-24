@@ -141,22 +141,19 @@ static C8_T *_ptr_netif_nl_default_mc_group_name[NETIF_NL_DEFAULT_MC_GROUP_NUM] 
     "default",
 };
 
-typedef struct
-{
+typedef struct {
     NETIF_NL_FAMILY_T meta;
     BOOL_T valid;
 
 } NETIF_NL_FAMILY_ENTRY_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T igr_sample_rate;
     UI32_T egr_sample_rate;
     UI32_T trunc_size;
 } NETIF_NL_INTF_ENTRY_T;
 
-typedef struct
-{
+typedef struct {
     NETIF_NL_FAMILY_ENTRY_T fam_entry[NETIF_NL_FAMILY_NUM_MAX];
     NETIF_NL_INTF_ENTRY_T intf_entry[NETIF_NL_INTF_NUM_MAX]; /* sorted in intf_id */
     UI32_T seq_num;
@@ -165,8 +162,7 @@ typedef struct
 static NETIF_NL_CB_T _netif_nl_cb;
 
 /* should extract to common */
-struct net_device_priv
-{
+struct net_device_priv {
     struct net_device *ptr_net_dev;
     struct net_device_stats stats;
     UI32_T unit;
@@ -434,9 +430,8 @@ netif_nl_destroyAllNetlink(const UI32_T unit)
     for (idx = 0; idx < NETIF_NL_FAMILY_NUM_MAX; idx++) {
         if (TRUE == NETIF_NL_IS_FAMILY_ENTRY_VALID(idx)) {
             ptr_nl_family = NETIF_NL_GET_FAMILY_META(idx);
-            OSAL_PRINT(OSAL_DBG_NETLINK,
-                       "[DBG] unregister netlink family, name=%s\n",
-                        ptr_nl_family->name);
+            OSAL_PRINT(OSAL_DBG_NETLINK, "[DBG] unregister netlink family, name=%s\n",
+                       ptr_nl_family->name);
             ret = NETIF_NL_UNREGISTER_FAMILY(ptr_nl_family);
             if (0 == ret) {
                 osal_free(ptr_nl_family->mcgrps);

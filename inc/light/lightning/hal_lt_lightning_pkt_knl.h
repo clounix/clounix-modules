@@ -206,8 +206,7 @@ typedef enum {
 /* GPD and Packet Strucutre Definition */
 #if defined(CLX_EN_BIG_ENDIAN)
 
-typedef struct
-{
+typedef struct {
     /* CLX DWORD 0 */
     UI32_T typ : 2;
     UI32_T tc : 4;
@@ -243,8 +242,7 @@ typedef struct
     UI32_T exp_dscp_mrkd : 1;
 } HAL_LT_LIGHTNING_PKT_ITMH_FAB_T;
 
-typedef struct
-{
+typedef struct {
     /* CLX DWORD 0 */
     UI32_T typ : 2;
     UI32_T tc : 4;
@@ -284,8 +282,7 @@ typedef struct
     UI32_T cp_to_cpu_bmap : 16;
 } HAL_LT_LIGHTNING_PKT_ITMH_ETH_T;
 
-typedef struct
-{
+typedef struct {
     /* CLX DWORD 0 */
     UI32_T typ : 2;
     UI32_T tc : 4;
@@ -322,8 +319,7 @@ typedef struct
     UI32_T exp_dscp_mrkd : 1;
 } HAL_LT_LIGHTNING_PKT_ETMH_FAB_T;
 
-typedef struct
-{
+typedef struct {
     /* CLX DWORD 0 */
     UI32_T typ : 2;
     UI32_T tc : 4;
@@ -364,8 +360,7 @@ typedef struct
     UI32_T exp_dscp_mrkd : 1;
 } HAL_LT_LIGHTNING_PKT_ETMH_ETH_T;
 
-typedef struct
-{
+typedef struct {
     /* CLX DWORD 0 */
     UI32_T decap_act : 3;
     UI32_T igr_l2_vid_num : 2;
@@ -399,8 +394,7 @@ typedef struct
     UI32_T ts_8_15 : 8;
 } HAL_LT_LIGHTNING_PKT_PPH_L2_T;
 
-typedef struct
-{
+typedef struct {
     /* CLX DWORD 0 */
     UI32_T decap_act : 3;
     UI32_T igr_l2_vid_num : 2;
@@ -436,8 +430,7 @@ typedef struct
     UI32_T ts_8_15 : 8;
 } HAL_LT_LIGHTNING_PKT_PPH_L3UC_T;
 
-typedef struct
-{
+typedef struct {
     /* CLX DWORD 0 */
     UI32_T decap_act : 3;
     UI32_T igr_l2_vid_num : 2;
@@ -475,8 +468,7 @@ typedef struct
     UI32_T ts_8_15 : 8;
 } HAL_LT_LIGHTNING_PKT_PPH_L3MC_T;
 
-typedef struct
-{
+typedef struct {
     /* CLX DWORD 0 */
     UI32_T decap_act : 3;
     UI32_T igr_l2_vid_num : 2;
@@ -512,8 +504,7 @@ typedef struct
 
 #elif defined(CLX_EN_LITTLE_ENDIAN)
 
-typedef struct
-{
+typedef struct {
     /* CLX DWORD 0 */
     UI32_T hsh_val_w0 : 8;
     UI32_T igr_phy_port : 12;
@@ -549,8 +540,7 @@ typedef struct
     UI32_T : 20;
 } HAL_LT_LIGHTNING_PKT_ITMH_FAB_T;
 
-typedef struct
-{
+typedef struct {
     /* CLX DWORD 0 */
     UI32_T hsh_val_w0 : 8;
     UI32_T igr_phy_port : 12;
@@ -590,8 +580,7 @@ typedef struct
     UI32_T nvo3_src_supp_tag_w1 : 4;
 } HAL_LT_LIGHTNING_PKT_ITMH_ETH_T;
 
-typedef struct
-{
+typedef struct {
     /* CLX DWORD 0 */
     UI32_T hsh_val_w0 : 8;
     UI32_T igr_phy_port : 12;
@@ -628,8 +617,7 @@ typedef struct
     UI32_T : 20;
 } HAL_LT_LIGHTNING_PKT_ETMH_FAB_T;
 
-typedef struct
-{
+typedef struct {
     /* CLX DWORD 0 */
     UI32_T hsh_val_w0 : 8;
     UI32_T igr_phy_port : 12;
@@ -670,8 +658,7 @@ typedef struct
     UI32_T mc_vid_1st_w1 : 3;
 } HAL_LT_LIGHTNING_PKT_ETMH_ETH_T;
 
-typedef struct
-{
+typedef struct {
     /* CLX DWORD 0 */
     UI32_T hit_idx_w0 : 12;
     UI32_T mpls_pw_cw_vld : 1;
@@ -705,8 +692,7 @@ typedef struct
     UI32_T rewr_idx_1_w1 : 11;
 } HAL_LT_LIGHTNING_PKT_PPH_L2_T;
 
-typedef struct
-{
+typedef struct {
     /* CLX DWORD 0 */
     UI32_T hit_idx_w0 : 12;
     UI32_T mpls_pw_cw_vld : 1;
@@ -742,8 +728,7 @@ typedef struct
     UI32_T rewr_idx_1_w1 : 11;
 } HAL_LT_LIGHTNING_PKT_PPH_L3UC_T;
 
-typedef struct
-{
+typedef struct {
     /* CLX DWORD 0 */
     UI32_T hit_idx_w0 : 12;
     UI32_T mpls_pw_cw_vld : 1;
@@ -781,8 +766,7 @@ typedef struct
     UI32_T rewr_idx_1_w1 : 11;
 } HAL_LT_LIGHTNING_PKT_PPH_L3MC_T;
 
-typedef struct
-{
+typedef struct {
     /* CLX DWORD 0 */
     UI32_T hit_idx_w0 : 12;
     UI32_T : 1;
@@ -823,8 +807,7 @@ typedef struct
 #if defined(CLX_EN_BIG_ENDIAN)
 
 /* RX GPD STRUCTURE */
-typedef struct
-{
+typedef struct {
     UI32_T data_buf_addr_lo;
     UI32_T data_buf_addr_hi;
     UI32_T chksum : 16;
@@ -833,15 +816,13 @@ typedef struct
     UI32_T avbl_buf_len : 14;
     UI32_T : 32;
 
-    union
-    {
+    union {
         HAL_LT_LIGHTNING_PKT_ITMH_FAB_T itmh_fab;
         HAL_LT_LIGHTNING_PKT_ITMH_ETH_T itmh_eth;
         HAL_LT_LIGHTNING_PKT_ETMH_FAB_T etmh_fab;
         HAL_LT_LIGHTNING_PKT_ETMH_ETH_T etmh_eth;
     };
-    union
-    {
+    union {
         HAL_LT_LIGHTNING_PKT_PPH_L2_T pph_l2;
         HAL_LT_LIGHTNING_PKT_PPH_L3UC_T pph_l3uc;
         HAL_LT_LIGHTNING_PKT_PPH_L3MC_T pph_l3mc;
@@ -866,8 +847,7 @@ typedef struct
 } HAL_LT_LIGHTNING_PKT_RX_GPD_T;
 
 /* TX GPD STRUCTURE */
-typedef struct
-{
+typedef struct {
     UI32_T data_buf_addr_lo;
     UI32_T data_buf_addr_hi;
     UI32_T chksum : 16;
@@ -876,15 +856,13 @@ typedef struct
     UI32_T data_buf_size : 14;
     UI32_T : 32;
 
-    union
-    {
+    union {
         HAL_LT_LIGHTNING_PKT_ITMH_FAB_T itmh_fab;
         HAL_LT_LIGHTNING_PKT_ITMH_ETH_T itmh_eth;
         HAL_LT_LIGHTNING_PKT_ETMH_FAB_T etmh_fab;
         HAL_LT_LIGHTNING_PKT_ETMH_ETH_T etmh_eth;
     };
-    union
-    {
+    union {
         HAL_LT_LIGHTNING_PKT_PPH_L2_T pph_l2;
         HAL_LT_LIGHTNING_PKT_PPH_L3UC_T pph_l3uc;
         HAL_LT_LIGHTNING_PKT_PPH_L3MC_T pph_l3mc;
@@ -911,8 +889,7 @@ typedef struct
 #elif defined(CLX_EN_LITTLE_ENDIAN)
 
 /* RX GPD STRUCTURE */
-typedef struct
-{
+typedef struct {
     UI32_T data_buf_addr_lo;
     UI32_T data_buf_addr_hi;
     UI32_T avbl_buf_len : 14;
@@ -921,15 +898,13 @@ typedef struct
     UI32_T chksum : 16;
     UI32_T : 32;
 
-    union
-    {
+    union {
         HAL_LT_LIGHTNING_PKT_ITMH_FAB_T itmh_fab;
         HAL_LT_LIGHTNING_PKT_ITMH_ETH_T itmh_eth;
         HAL_LT_LIGHTNING_PKT_ETMH_FAB_T etmh_fab;
         HAL_LT_LIGHTNING_PKT_ETMH_ETH_T etmh_eth;
     };
-    union
-    {
+    union {
         HAL_LT_LIGHTNING_PKT_PPH_L2_T pph_l2;
         HAL_LT_LIGHTNING_PKT_PPH_L3UC_T pph_l3uc;
         HAL_LT_LIGHTNING_PKT_PPH_L3MC_T pph_l3mc;
@@ -954,8 +929,7 @@ typedef struct
 } HAL_LT_LIGHTNING_PKT_RX_GPD_T;
 
 /* TX GPD STRUCTURE */
-typedef struct
-{
+typedef struct {
     UI32_T data_buf_addr_lo;
     UI32_T data_buf_addr_hi;
     UI32_T data_buf_size : 14;
@@ -964,15 +938,13 @@ typedef struct
     UI32_T chksum : 16;
     UI32_T : 32;
 
-    union
-    {
+    union {
         HAL_LT_LIGHTNING_PKT_ITMH_FAB_T itmh_fab;
         HAL_LT_LIGHTNING_PKT_ITMH_ETH_T itmh_eth;
         HAL_LT_LIGHTNING_PKT_ETMH_FAB_T etmh_fab;
         HAL_LT_LIGHTNING_PKT_ETMH_ETH_T etmh_eth;
     };
-    union
-    {
+    union {
         HAL_LT_LIGHTNING_PKT_PPH_L2_T pph_l2;
         HAL_LT_LIGHTNING_PKT_PPH_L3UC_T pph_l3uc;
         HAL_LT_LIGHTNING_PKT_PPH_L3MC_T pph_l3mc;
@@ -1001,11 +973,9 @@ typedef struct
 
 /* ----------------------------------------------------------------------------------- Reg */
 #if defined(CLX_EN_LITTLE_ENDIAN)
-typedef union
-{
+typedef union {
     UI32_T reg;
-    struct
-    {
+    struct {
         UI32_T tch_start : 1;
         UI32_T tch_resume : 1;
         UI32_T tch_stop : 1;
@@ -1016,11 +986,9 @@ typedef union
     } field;
 } HAL_LT_LIGHTNING_PKT_TCH_CMD_REG_T;
 
-typedef union
-{
+typedef union {
     UI32_T reg;
-    struct
-    {
+    struct {
         UI32_T rch_start : 1;
         UI32_T rch_resume : 1;
         UI32_T rch_stop : 1;
@@ -1032,11 +1000,9 @@ typedef union
 } HAL_LT_LIGHTNING_PKT_RCH_CMD_REG_T;
 
 #elif defined(CLX_EN_BIG_ENDIAN)
-typedef union
-{
+typedef union {
     UI32_T reg;
-    struct
-    {
+    struct {
         UI32_T tch_gpd_add_no_hi : 8;
         UI32_T tch_gpd_add_no_lo : 8;
         UI32_T : 8;
@@ -1047,11 +1013,9 @@ typedef union
     } field;
 } HAL_LT_LIGHTNING_PKT_TCH_CMD_REG_T;
 
-typedef union
-{
+typedef union {
     UI32_T reg;
-    struct
-    {
+    struct {
         UI32_T rch_gpd_add_no_hi : 8;
         UI32_T rch_gpd_add_no_lo : 8;
         UI32_T : 8;
@@ -1082,49 +1046,49 @@ typedef enum {
 
 typedef enum {
     HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_HWO_ERROR = (0x1UL << 0), /* Tx GPD.hwo = 0 */
-    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR =
-        (0x1UL << 1), /* Tx GPD.chksm is error                  */
-    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_NO_OVFL_ERROR =
-        (0x1UL << 2), /* S/W push too much GPD                  */
-    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_DMA_READ_ERROR =
-        (0x1UL << 3), /* AXI Rd Error when do GPD read          */
-    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_BUF_SIZE_ERROR =
-        (0x1UL << 4), /* Tx GPD.data_buf_size = 0               */
+    /* Tx GPD.chksm is error                  */
+    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR = (0x1UL << 1),
+    /* S/W push too much GPD                  */
+    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_NO_OVFL_ERROR = (0x1UL << 2),
+    /* AXI Rd Error when do GPD read          */
+    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_DMA_READ_ERROR = (0x1UL << 3),
+    /* Tx GPD.data_buf_size = 0               */
+    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_BUF_SIZE_ERROR = (0x1UL << 4),
     HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_RUNT_ERROR = (0x1UL << 5), /* Tx GPD.pkt_len < 64 */
     HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_OVSZ_ERROR = (0x1UL << 6), /* Tx GPD.pkt_len = 9217 */
-    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_LEN_MISMATCH_ERROR =
-        (0x1UL << 7),  /* Tx GPD.pkt_len != sum of data_buf_size */
-    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_PKTPL_DMA_READ_ERROR =
-        (0x1UL << 8),  /* AXI Rd Error when do Payload read      */
-    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_COS_ERROR =
-        (0x1UL << 9),  /* Tx GPD.cos is not match cos_to_tch_map */
-    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_GT255_ERROR =
-        (0x1UL << 10), /* Multi-GPD packet's GPD# > 255          */
+    /* Tx GPD.pkt_len != sum of data_buf_size */
+    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_LEN_MISMATCH_ERROR = (0x1UL << 7),
+    /* AXI Rd Error when do Payload read      */
+    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_PKTPL_DMA_READ_ERROR = (0x1UL << 8),
+    /* Tx GPD.cos is not match cos_to_tch_map */
+    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_COS_ERROR = (0x1UL << 9),
+    /* Multi-GPD packet's GPD# > 255          */
+    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_GPD_GT255_ERROR = (0x1UL << 10),
     HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_PFC = (0x1UL << 11), /* */
-    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_CREDIT_UDFL_ERROR =
-        (0x1UL << 12), /* Credit Underflow (count down to 0)     */
-    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_DMA_WRITE_ERROR =
-        (0x1UL << 13), /* AXI Wr Error (GPD Write-Back)          */
+    /* Credit Underflow (count down to 0)     */
+    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_CREDIT_UDFL_ERROR = (0x1UL << 12),
+    /* AXI Wr Error (GPD Write-Back)          */
+    HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_DMA_WRITE_ERROR = (0x1UL << 13),
     HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_STOP_CMD_CPLT = (0x1UL << 14)
 
 } HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_T;
 
 typedef enum {
-    HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_LOW =
-        (0x1UL << 0), /* Rx GPD.avbl_gpd_num < threshold        */
-    HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_EMPTY =
-        (0x1UL << 1), /* Rx GPD.avbl_gpd_num = 0                */
+    /* Rx GPD.avbl_gpd_num < threshold        */
+    HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_LOW = (0x1UL << 0),
+    /* Rx GPD.avbl_gpd_num = 0                */
+    HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_EMPTY = (0x1UL << 1),
     HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_AVAIL_GPD_ERROR = (0x1UL << 2), /* Rx GPD.hwo = 0 */
-    HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR =
-        (0x1UL << 3), /* Rx GPD.chksm is error                  */
-    HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_DMA_READ_ERROR =
-        (0x1UL << 4), /* DMAR error occurs in PCIE              */
-    HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_DMA_WRITE_ERROR =
-        (0x1UL << 5), /* DMAW error occurs in PCIE              */
-    HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_STOP_CMD_CPLT =
-        (0x1UL << 6), /* Stop Completion Acknowledge            */
-    HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_GPD_GT255_ERROR =
-        (0x1UL << 7), /* Multi-GPD packet's GPD# > 255          */
+    /* Rx GPD.chksm is error                  */
+    HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_GPD_CHKSM_ERROR = (0x1UL << 3),
+    /* DMAR error occurs in PCIE              */
+    HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_DMA_READ_ERROR = (0x1UL << 4),
+    /* DMAW error occurs in PCIE              */
+    HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_DMA_WRITE_ERROR = (0x1UL << 5),
+    /* Stop Completion Acknowledge            */
+    HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_STOP_CMD_CPLT = (0x1UL << 6),
+    /* Multi-GPD packet's GPD# > 255          */
+    HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_GPD_GT255_ERROR = (0x1UL << 7),
     HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_TOD_UNINIT = (0x1UL << 8),     /* */
     HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_PKT_ERROR_DROP = (0x1UL << 9), /* */
     HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_UDSZ_DROP = (0x1UL << 10),     /* */
@@ -1148,8 +1112,7 @@ typedef void (*HAL_LT_LIGHTNING_PKT_TX_FUNC_T)(const UI32_T unit,
                                                const void *ptr_sw_gpd, /* SW-GPD to be processed  */
                                                void *ptr_coockie);     /* Private data of SDK     */
 
-typedef struct HAL_LT_LIGHTNING_PKT_TX_SW_GPD_S
-{
+typedef struct HAL_LT_LIGHTNING_PKT_TX_SW_GPD_S {
     HAL_LT_LIGHTNING_PKT_TX_FUNC_T callback; /* (unit, ptr_sw_gpd, ptr_cookie) */
     void *ptr_cookie;                        /* Pointer of CLX_PKT_TX_PKT_T    */
     HAL_LT_LIGHTNING_PKT_TX_GPD_T tx_gpd;
@@ -1162,8 +1125,7 @@ typedef struct HAL_LT_LIGHTNING_PKT_TX_SW_GPD_S
 
 } HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T send_ok;
     UI32_T gpd_empty;
     UI32_T poll_timeout;
@@ -1201,8 +1163,7 @@ typedef struct
 
 } HAL_LT_LIGHTNING_PKT_TX_CHANNEL_CNT_T;
 
-typedef struct
-{
+typedef struct {
     HAL_LT_LIGHTNING_PKT_TX_CHANNEL_CNT_T channel[HAL_LT_LIGHTNING_PKT_TX_CHANNEL_LAST];
     UI32_T invoke_gpd_callback;
     UI32_T no_memory;
@@ -1225,8 +1186,7 @@ typedef enum {
     HAL_LT_LIGHTNING_PKT_RX_CHANNEL_LAST
 } HAL_LT_LIGHTNING_PKT_RX_CHANNEL_T;
 
-typedef struct HAL_LT_LIGHTNING_PKT_RX_SW_GPD_S
-{
+typedef struct HAL_LT_LIGHTNING_PKT_RX_SW_GPD_S {
     BOOL_T rx_complete; /* FALSE when PDMA error occurs */
     HAL_LT_LIGHTNING_PKT_RX_GPD_T rx_gpd;
     struct HAL_LT_LIGHTNING_PKT_RX_SW_GPD_S *ptr_next;
@@ -1237,8 +1197,7 @@ typedef struct HAL_LT_LIGHTNING_PKT_RX_SW_GPD_S
 
 } HAL_LT_LIGHTNING_PKT_RX_SW_GPD_T;
 
-typedef struct
-{
+typedef struct {
     /* queue */
     UI32_T enque_ok;
     UI32_T enque_retry;
@@ -1278,8 +1237,7 @@ typedef struct
 
 } HAL_LT_LIGHTNING_PKT_RX_CHANNEL_CNT_T;
 
-typedef struct
-{
+typedef struct {
     HAL_LT_LIGHTNING_PKT_RX_CHANNEL_CNT_T channel[HAL_LT_LIGHTNING_PKT_RX_CHANNEL_LAST];
     UI32_T invoke_gpd_callback;
     UI32_T no_memory;
@@ -1296,8 +1254,7 @@ typedef struct
  * clx_netif -> hal_lt_lightning_pkt_drv -> hal_lt_lightning_pkt_knl
  */
 
-typedef struct
-{
+typedef struct {
     UI32_T tx_pkt;
     UI32_T tx_queue_full;
     UI32_T tx_error;
@@ -1305,8 +1262,7 @@ typedef struct
 
 } HAL_LT_LIGHTNING_PKT_NETIF_INTF_CNT_T;
 
-typedef struct
-{
+typedef struct {
     /* unique key */
     UI32_T id;
     C8_T name[CLX_NETIF_NAME_LEN];
@@ -1320,8 +1276,7 @@ typedef struct
 
 } HAL_LT_LIGHTNING_PKT_NETIF_INTF_T;
 
-typedef struct
-{
+typedef struct {
     C8_T name[CLX_NETLINK_NAME_LEN];
     C8_T mc_group_name[CLX_NETLINK_NAME_LEN];
 } HAL_LT_LIGHTNING_PKT_NETIF_RX_DST_NETLINK_T;
@@ -1332,8 +1287,7 @@ typedef enum {
     HAL_LT_LIGHTNING_PKT_NETIF_RX_DST_LAST
 } HAL_LT_LIGHTNING_PKT_NETIF_RX_DST_TYPE_T;
 
-typedef struct
-{
+typedef struct {
     /* unique key */
     UI32_T id;
     C8_T name[CLX_NETIF_NAME_LEN];
@@ -1370,8 +1324,7 @@ typedef enum {
 
 } HAL_LT_LIGHTNING_PKT_IOCTL_RX_TYPE_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T unit;
     UI32_T channel;
     HAL_LT_LIGHTNING_PKT_RX_CNT_T rx_cnt;
@@ -1380,8 +1333,7 @@ typedef struct
 
 } HAL_LT_LIGHTNING_PKT_IOCTL_CH_CNT_COOKIE_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T unit;
     HAL_LT_LIGHTNING_PKT_NETIF_INTF_T net_intf; /* addIntf[In,Out], delIntf[In]              */
     HAL_LT_LIGHTNING_PKT_NETIF_PROFILE_T
@@ -1391,8 +1343,7 @@ typedef struct
 
 } HAL_LT_LIGHTNING_PKT_IOCTL_NETIF_COOKIE_T;
 
-typedef struct
-{
+typedef struct {
     CLX_ADDR_T callback; /* (unit, ptr_sw_gpd, ptr_cookie) */
     CLX_ADDR_T cookie;   /* Pointer of CLX_PKT_TX_PKT_T    */
     UI32_T channel;
@@ -1402,8 +1353,7 @@ typedef struct
 
 } HAL_LT_LIGHTNING_PKT_IOCTL_TX_GPD_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T unit;
     UI32_T channel;              /* sendGpd[In]      */
     CLX_ADDR_T ioctl_gpd_addr;   /* sendGpd[In]      */
@@ -1412,16 +1362,14 @@ typedef struct
 
 } HAL_LT_LIGHTNING_PKT_IOCTL_TX_COOKIE_T;
 
-typedef struct
-{
+typedef struct {
     BOOL_T rx_complete;      /* FALSE when PDMA error occurs                 */
     CLX_ADDR_T hw_gpd_addr;  /* Pointer to HW GPD in user's SW GPD struct    */
     CLX_ADDR_T dma_buf_addr; /* Pointer to DMA buffer allocated by the user (virtual) */
 
 } HAL_LT_LIGHTNING_PKT_IOCTL_RX_GPD_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T unit;
     UI32_T channel;                               /* getRxCnt[In], clearRxInt[In]     */
     CLX_ADDR_T ioctl_gpd_addr;                    /* waitRxFree[Out]                  */
@@ -1431,16 +1379,14 @@ typedef struct
 
 } HAL_LT_LIGHTNING_PKT_IOCTL_RX_COOKIE_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T port;
     UI32_T status;
     UI32_T speed;
 
 } HAL_LT_LIGHTNING_PKT_IOCTL_PORT_COOKIE_T;
 
-typedef struct
-{
+typedef struct {
     /* intf property */
     UI32_T intf_id;
     CLX_NETIF_INTF_PROPERTY_T property;

@@ -135,15 +135,13 @@ typedef enum {
     CLX_VM_TAG_TYPE_LAST
 } CLX_VM_TAG_TYPE_T;
 
-typedef union CLX_IP_U
-{
+typedef union CLX_IP_U {
     CLX_IPV4_T ipv4_addr;
     CLX_IPV6_T ipv6_addr;
 
 } CLX_IP_T;
 
-typedef struct CLX_IP_ADDR_S
-{
+typedef struct CLX_IP_ADDR_S {
     CLX_IP_T ip_addr;
     CLX_IP_T ip_mask;
     BOOL_T ipv4;
@@ -199,8 +197,7 @@ typedef enum {
 } CLX_TUNNEL_TYPE_T;
 
 /* tunnel key */
-typedef struct CLX_TUNNEL_KEY_S
-{
+typedef struct CLX_TUNNEL_KEY_S {
     CLX_IP_ADDR_T src_ip; /* key: The outer source IP address used by tunnel encapsulation. */
     CLX_IP_ADDR_T dst_ip; /* key: The outer destination IP address used by tunnel encapsulation.
                            * For automatic tunnel, this is not required. If not specified,
@@ -297,8 +294,7 @@ typedef enum {
     CLX_VLAN_TAG_LAST
 } CLX_VLAN_TAG_T;
 
-typedef struct CLX_BUM_INFO_S
-{
+typedef struct CLX_BUM_INFO_S {
     UI32_T mcast_id;
     UI32_T group_label; /* l2 da group label */
     UI32_T vid;         /* used when FLAGS_ADD_VID is set */
@@ -335,8 +331,7 @@ typedef enum {
     CLX_BULK_OP_MODE_LAST
 } CLX_BULK_OP_MODE_T;
 
-typedef struct CLX_RANGE_INFO_S
-{
+typedef struct CLX_RANGE_INFO_S {
     UI32_T min_id;
     UI32_T max_id;
     UI32_T max_member_cnt;
@@ -345,8 +340,7 @@ typedef struct CLX_RANGE_INFO_S
     UI32_T flags;
 } CLX_RANGE_INFO_T;
 
-typedef struct CLX_FDL_INFO_S
-{
+typedef struct CLX_FDL_INFO_S {
     UI32_T probability /* percentage from 0~100 */;
     UI32_T threshold; /* range 0 ~ (2^20)-1 */
 } CLX_FDL_INFO_T;

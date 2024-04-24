@@ -110,16 +110,14 @@ extern UI32_T verbosity;
 /* linked list node */
 #if defined(CLX_LINUX_KERNEL_MODE)
 
-typedef struct OSAL_MDC_LIST_NODE_S
-{
+typedef struct OSAL_MDC_LIST_NODE_S {
     void *ptr_data;                        /* node data                   */
     struct OSAL_MDC_LIST_NODE_S *ptr_next; /* point to next link node     */
     struct OSAL_MDC_LIST_NODE_S *ptr_prev; /* point to previous link node */
 } OSAL_MDC_LIST_NODE_T;
 
 /* linked list head */
-typedef struct OSAL_MDC_LIST_S
-{
+typedef struct OSAL_MDC_LIST_S {
     OSAL_MDC_LIST_NODE_T *ptr_head_node; /* linked list head node   */
     OSAL_MDC_LIST_NODE_T *ptr_tail_node; /* linked list tail node   */
     UI32_T capacity;                     /* max count of nodes in list
@@ -131,8 +129,7 @@ typedef struct OSAL_MDC_LIST_S
 
 #endif /* End of defined(CLX_LINUX_KERNEL_MODE) */
 
-typedef struct
-{
+typedef struct {
     CLX_ADDR_T phy_addr;
     void *ptr_virt_addr;
     CLX_ADDR_T size;
@@ -144,8 +141,7 @@ typedef struct
 
 } OSAL_MDC_DMA_NODE_T;
 
-typedef struct
-{
+typedef struct {
 #if defined(CLX_EN_DMA_RESERVED)
     void *ptr_rsrv_virt_addr;
     CLX_ADDR_T rsrv_phy_addr;
@@ -171,8 +167,7 @@ typedef struct
 #if defined(CLX_LINUX_USER_MODE)
 
 /* Data type of IOCTL argument for DMA management */
-typedef struct
-{
+typedef struct {
 #if defined(CLX_EN_DMA_RESERVED)
     CLX_ADDR_T rsrv_dma_phy_addr; /* information of reserved memory */
     CLX_ADDR_T rsrv_dma_size;
@@ -185,8 +180,7 @@ typedef struct
 
 /* Data type of IOCTL argument for device initialization */
 #pragma pack(push, 1)
-typedef struct
-{
+typedef struct {
     AML_DEV_ID_T id[OSAL_MDC_MAX_CHIPS_PER_SYSTEM];
     CLX_ADDR_T pci_mmio_phy_start[OSAL_MDC_MAX_CHIPS_PER_SYSTEM];
     CLX_ADDR_T pci_mmio_size[OSAL_MDC_MAX_CHIPS_PER_SYSTEM];
@@ -245,19 +239,16 @@ typedef enum {
     OSAL_MDC_IOCTL_TYPE_LAST
 
 } OSAL_MDC_IOCTL_TYPE_T;
-typedef union
-{
+typedef union {
     UI32_T value;
 #if defined(CLX_EN_BIG_ENDIAN)
-    struct
-    {
+    struct {
         UI32_T rsvd : 16;
         UI32_T type : 10; /* Maximum 1024 IOCTL types         */
         UI32_T unit : 6;  /* Maximum unit number is 64.       */
     } field;
 #elif defined(CLX_EN_LITTLE_ENDIAN)
-    struct
-    {
+    struct {
         UI32_T unit : 6;  /* Maximum unit number is 64.       */
         UI32_T type : 10; /* Maximum 1024 IOCTL types         */
         UI32_T rsvd : 16;
@@ -274,8 +265,7 @@ _osal_mdc_registerIoctlCallback(const UI32_T unit,
                                 const OSAL_MDC_IOCTL_TYPE_T type,
                                 const OSAL_MDC_IOCTL_CALLBACK_FUNC_T func);
 
-typedef struct
-{
+typedef struct {
     OSAL_MDC_IOCTL_CALLBACK_FUNC_T callback[OSAL_MDC_IOCTL_TYPE_LAST];
 
 } OSAL_MDC_IOCTL_CB_T;

@@ -52,8 +52,7 @@
 #define CLX_NETIF_PROFILE_PATTERN_LEN (8)
 
 /* ----------------------------------------------------------------------------------- struct */
-typedef struct
-{
+typedef struct {
     UI32_T tx_pkt;
     UI32_T tx_queue_full;
     UI32_T tx_error;
@@ -61,8 +60,7 @@ typedef struct
 
 } CLX_NETIF_INTF_CNT_T;
 
-typedef struct
-{
+typedef struct {
     /* unique key */
     UI32_T id;
     C8_T name[CLX_NETIF_NAME_LEN];
@@ -84,8 +82,7 @@ typedef struct
 
 } CLX_NETIF_INTF_T;
 
-typedef struct
-{
+typedef struct {
     C8_T name[CLX_NETLINK_NAME_LEN];
     C8_T mc_group_name[CLX_NETLINK_NAME_LEN];
 } CLX_NETIF_RX_DST_NETLINK_T;
@@ -96,8 +93,7 @@ typedef enum {
     CLX_NETIF_RX_DST_LAST
 } CLX_NETIF_RX_DST_TYPE_T;
 
-typedef struct
-{
+typedef struct {
     /* unique key */
     UI32_T id;
     C8_T name[CLX_NETIF_NAME_LEN];
@@ -258,14 +254,12 @@ clx_netif_getIntfProperty(const UI32_T unit,
 #define CLX_NETIF_NETLINK_NUM_MAX          (256)
 #define CLX_NETIF_NETLINK_MC_GROUP_NUM_MAX (32)
 
-typedef struct
-{
+typedef struct {
     C8_T name[CLX_NETLINK_NAME_LEN];
 
 } CLX_NETIF_NETLINK_MC_GROUP_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T id;
     C8_T name[CLX_NETLINK_NAME_LEN];
     CLX_NETIF_NETLINK_MC_GROUP_T mc_group[CLX_NETIF_NETLINK_MC_GROUP_NUM_MAX];

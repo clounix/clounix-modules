@@ -80,37 +80,32 @@ typedef CLX_ERROR_NO_T (*AML_DEV_WRITE_FUNC_T)(const UI32_T unit,
 typedef CLX_ERROR_NO_T (*AML_DEV_ISR_FUNC_T)(void *ptr_data);
 
 /* To mask the chip interrupt in kernel interrupt routine. */
-typedef struct
-{
+typedef struct {
     UI32_T mask_addr;
     UI32_T mask_val;
 
 } AML_DEV_ISR_DATA_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T unit;
     UI32_T msi;
     UI32_T valid;
 } AML_DEV_MSI_DATA_T;
 
 /* To read or write the HW-intf registers. */
-typedef struct
-{
+typedef struct {
     AML_DEV_READ_FUNC_T read_callback;
     AML_DEV_WRITE_FUNC_T write_callback;
 
 } AML_DEV_ACCESS_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T vendor;
     UI32_T device;
     UI32_T revision;
 } AML_DEV_ID_T;
 
-typedef struct
-{
+typedef struct {
     AML_HW_IF_T if_type;
     AML_DEV_ID_T id;
     AML_DEV_ACCESS_T access;

@@ -95,13 +95,11 @@ typedef char C8_T;
 typedef int64_t I64_T;
 typedef uint64_t UI64_T;
 #else
-typedef struct
-{
+typedef struct {
     I32_T i64[2];
 } I64_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T ui64[2];
 } UI64_T;
 #endif

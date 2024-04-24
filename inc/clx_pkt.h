@@ -68,8 +68,7 @@ typedef enum {
 } CLX_PKT_SDN_PORT_TYPE_T;
 
 /* SDN-Specific Port Structure */
-typedef struct CLX_PKT_SDN_PORT_S
-{
+typedef struct CLX_PKT_SDN_PORT_S {
     CLX_PKT_SDN_PORT_TYPE_T port_type; /* SDN specific port type */
     UI32_T port_no;                    /* Port number, including physical port, lag port,
                                         * tunnel port, and reserved port
@@ -78,8 +77,7 @@ typedef struct CLX_PKT_SDN_PORT_S
 } CLX_PKT_SDN_PORT_T;
 
 /* SDN-Specific Tunnel Structure */
-typedef struct CLX_PKT_SDN_TUNNEL_S
-{
+typedef struct CLX_PKT_SDN_TUNNEL_S {
     CLX_TUNNEL_TYPE_T tunnel_type; /* Tunnel types which are defined in clx_types.h */
     UI32_T tunnel_no;              /* Tunnel number.
                                     * For IP tunnel, don't care.
@@ -146,8 +144,8 @@ typedef enum {
     CLX_PKT_RX_REASON_BFD_CTRL_PKT,       /* BFD control packet to CPU.       */
     CLX_PKT_RX_REASON_INVALID_BFD_PKT,    /* Invalid BFD control packet to CPU.    */
     CLX_PKT_RX_REASON_SA_LEARN_FAIL,      /* Add to l2fdb fail to CPU.      */
-    CLX_PKT_RX_REASON_TUNNEL_ECN_CU,   /* The current unused ECN combination defined in RFC6040.   */
-    CLX_PKT_RX_REASON_FCOE_CLASS_2_F,  /* Copy FCoE Class 2 packet to cpu when packet is dropped.  */
+    CLX_PKT_RX_REASON_TUNNEL_ECN_CU,  /* The current unused ECN combination defined in RFC6040.   */
+    CLX_PKT_RX_REASON_FCOE_CLASS_2_F, /* Copy FCoE Class 2 packet to cpu when packet is dropped.  */
     CLX_PKT_RX_REASON_URPF_CHECK_FAIL, /* L3 URPF check fail to CPU. */
     CLX_PKT_RX_REASON_L3_LKP_MISS,     /* L3 lookup miss to CPU.     */
     CLX_PKT_RX_REASON_ICMP_REDIRECT,   /* The same L3 interface for ingress and egress to CPU.   */
@@ -175,7 +173,7 @@ typedef enum {
     CLX_PKT_RX_REASON_VXLAN_ROUTER_ALERT,   /* VXLAN packet with router alert to CPU.   */
     CLX_PKT_RX_REASON_NVGRE_ROUTER_ALERT,   /* NVGRE packet with router alert to CPU.   */
     /* 32 */
-    CLX_PKT_RX_REASON_EX_PMOD_LIMIT,        /* Packet modification is excess PMOD's limitation.        */
+    CLX_PKT_RX_REASON_EX_PMOD_LIMIT, /* Packet modification is excess PMOD's limitation.        */
     CLX_PKT_RX_REASON_L3MC_SPT_READY_UNSET, /* L3MC to CPU to trigger setting Shortest Path Tree
                                                ready bit.       */
     CLX_PKT_RX_REASON_IGR_MTU_FAIL,         /* Ingress MTU check fail to CPU.         */
@@ -229,12 +227,12 @@ typedef enum {
     CLX_PKT_RX_REASON_FCOE_LKP_MISS,     /* FCoE DID lookup failed, bank error or entry miss.     */
     CLX_PKT_RX_REASON_FCOE_ZONING_FAIL,  /* FCoE zoning check failed to CPU.  */
     /* 80 */
-    CLX_PKT_RX_REASON_MPLS_CTRL_PKT,     /* MPLS control packets to CPU.     */
-    CLX_PKT_RX_REASON_MPLS_INVALID_PKT,  /* MPLS packet is illegal from RFC.  */
-    CLX_PKT_RX_REASON_MPLS_LKP_MISS,     /* MPLS lookup failed with the bank error or entry miss.     */
-    CLX_PKT_RX_REASON_MPLS_UHP_P2P_MISS, /* MPLS UHP packet p2p miss */
-    CLX_PKT_RX_REASON_MPLS_UHP_TTL_0,    /* MPLS UHP packet TTL is 0.    */
-    CLX_PKT_RX_REASON_MPLS_UHP_TTL_1,    /* MPLS UHP packet TTL is 1.    */
+    CLX_PKT_RX_REASON_MPLS_CTRL_PKT,    /* MPLS control packets to CPU.     */
+    CLX_PKT_RX_REASON_MPLS_INVALID_PKT, /* MPLS packet is illegal from RFC.  */
+    CLX_PKT_RX_REASON_MPLS_LKP_MISS, /* MPLS lookup failed with the bank error or entry miss.     */
+    CLX_PKT_RX_REASON_MPLS_UHP_P2P_MISS,           /* MPLS UHP packet p2p miss */
+    CLX_PKT_RX_REASON_MPLS_UHP_TTL_0,              /* MPLS UHP packet TTL is 0.    */
+    CLX_PKT_RX_REASON_MPLS_UHP_TTL_1,              /* MPLS UHP packet TTL is 1.    */
     CLX_PKT_RX_REASON_MPLS_TRANSIT_TTL_0,          /* MPLS transit packet TTL is 0.          */
     CLX_PKT_RX_REASON_MPLS_TRANSIT_TTL_1,          /* MPLS transit packet TTL is 1.          */
     CLX_PKT_RX_REASON_MPLS_TERM_TTL_0,             /* MPLS term packet TTL is 0.             */
@@ -355,8 +353,8 @@ typedef enum {
     CLX_PKT_RX_REASON_DECAP_NSH_TTL_1,        /* NSH TLL 1 error, CL8600 only.        */
     CLX_PKT_RX_REASON_TRANSIT_NSH_TTL_1,      /* NSH TLL 1 error, CL8600 only.      */
     /* 176 */
-    CLX_PKT_RX_REASON_PORT_MTR_DROP,              /* Meter over rate drop, CL8600 only.              */
-    CLX_PKT_RX_REASON_WECMP,                      /* WECMP config error, CL8600 only.                      */
+    CLX_PKT_RX_REASON_PORT_MTR_DROP, /* Meter over rate drop, CL8600 only.              */
+    CLX_PKT_RX_REASON_WECMP,         /* WECMP config error, CL8600 only.                      */
     CLX_PKT_RX_REASON_IOAM_NODE_LEN_INVALID_IPV6, /* IOAM over IPv6 node len not align, CL8600 only.
                                                    */
     CLX_PKT_RX_REASON_IOAM_NODE_LEN_INVALID_GRE,  /* IOAM over GRE node len not align, CL8600 only.
@@ -365,18 +363,18 @@ typedef enum {
                                                    */
     CLX_PKT_RX_REASON_TUNNEL_MGO_HIT,  /* IP tunnel (*, G) lookup hit copy to CPU, CL8600 only.  */
     CLX_PKT_RX_REASON_TUNNEL_MSGO_HIT, /* IP tunnel (S, G) lookup hit copy to CPU, CL8600 only. */
-    CLX_PKT_RX_REASON_TUNNEL_SPT_RDY_UNSET,  /* IP tunnel (S, G) ready, notify to update spt ready
-                                                bit,  CL8600 only.  */
-    CLX_PKT_RX_REASON_TUNNEL_INVALID_SA,     /* Tunnel header SMAC invalid to CPU, CL8600 only.     */
+    CLX_PKT_RX_REASON_TUNNEL_SPT_RDY_UNSET, /* IP tunnel (S, G) ready, notify to update spt ready
+                                               bit,  CL8600 only.  */
+    CLX_PKT_RX_REASON_TUNNEL_INVALID_SA, /* Tunnel header SMAC invalid to CPU, CL8600 only.     */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_TTL_0, /* IP tunnel packet outer TTL is 0 to CPU, CL8600 only.
                                               */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_TTL_1, /* IP tunnel packet outer TTL is 1 to CPU, CL8600 only.
                                               */
     CLX_PKT_RX_REASON_IP_TUNNEL_IP_HDR_ERR,  /* IP tunnel pacet IP invalid to CPU, CL8600 only.  */
-    CLX_PKT_RX_REASON_TUNNEL_UNK_PLD,        /* IP tunnel unknown payload to CPU, CL8600 only.        */
-    CLX_PKT_RX_REASON_TUNNEL_SPTO_BLOCK,     /* Underlay STP block packets to CPU, CL8600 only.     */
-    CLX_PKT_RX_REASON_MPLS_RMAC_MISS,        /* MPLS packtes DMAC not match to CPU, CL8600 only.        */
-    CLX_PKT_RX_REASON_TUNNEL_MGO_MISS,       /* IP tunnel (*, G) lookup miss to CPU, CL8600 only.       */
+    CLX_PKT_RX_REASON_TUNNEL_UNK_PLD,    /* IP tunnel unknown payload to CPU, CL8600 only.        */
+    CLX_PKT_RX_REASON_TUNNEL_SPTO_BLOCK, /* Underlay STP block packets to CPU, CL8600 only.     */
+    CLX_PKT_RX_REASON_MPLS_RMAC_MISS,  /* MPLS packtes DMAC not match to CPU, CL8600 only.        */
+    CLX_PKT_RX_REASON_TUNNEL_MGO_MISS, /* IP tunnel (*, G) lookup miss to CPU, CL8600 only.       */
     /* 192 */
     CLX_PKT_RX_REASON_TUNNEL_MSGO_MISS, /* IP tunnel (S, G) lookup miss to CPU, CL8600 only. */
     CLX_PKT_RX_REASON_MPLS_LSP_MISS, /* MPLS packets LSP label lookup miss to CPU, CL8600 only. */
@@ -408,8 +406,8 @@ typedef enum {
     CLX_PKT_RX_REASON_SRH_ERR,        /* SRH is illegal from RFC, CL8600 only.        */
     CLX_PKT_RX_REASON_SRV6_FUNC_REDIRECT_TO_CPU, /* SRv6 packets function match to CPU, CL8600 only.
                                                   */
-    CLX_PKT_RX_REASON_SRV6_FLAVOR_ERR,    /* SRv6 packets flavor invalid to CPU, CL8600 only.    */
-    CLX_PKT_RX_REASON_SRH_SL0_USP,        /* SRv6 USP flavor and SL is 0 to CPU, CL8600 only.        */
+    CLX_PKT_RX_REASON_SRV6_FLAVOR_ERR, /* SRv6 packets flavor invalid to CPU, CL8600 only.    */
+    CLX_PKT_RX_REASON_SRH_SL0_USP,     /* SRv6 USP flavor and SL is 0 to CPU, CL8600 only.        */
     CLX_PKT_RX_REASON_SRH_SL0_USP_NO_SRH, /* SRv6 USP flavor and packets has no SRH, CL8600 only. */
     CLX_PKT_RX_REASON_SRH_SL0_USP_TWO_SRH, /* SRv6 USP flavor and packets has two SRH, CL8600 only.
                                             */
@@ -422,12 +420,12 @@ typedef enum {
                                                     CL8600 only.        */
     CLX_PKT_RX_REASON_B6_INSERT_RCV_DIP_UNMATCH, /* SRv6 packets B6.Insert when DIP not match SRH
                                                     current SID, CL8600 only. */
-    CLX_PKT_RX_REASON_SRV6_UNK_BEHAVIOR,   /* SRv6 endpoint behavior invalid to CPU, CL8600 only.   */
-    CLX_PKT_RX_REASON_AUTO_TUNNEL_IP_MISS, /* 6to4 tunnel outer IPv4 and inner IPv6 are unmatched,
-                                              CL8600 only.  */
+    CLX_PKT_RX_REASON_SRV6_UNK_BEHAVIOR, /* SRv6 endpoint behavior invalid to CPU, CL8600 only.   */
+    CLX_PKT_RX_REASON_AUTO_TUNNEL_IP_MISS,   /* 6to4 tunnel outer IPv4 and inner IPv6 are unmatched,
+                                                CL8600 only.  */
     CLX_PKT_RX_REASON_ISATAP_TUNNEL_IP_MISS, /* ISATAP tunnel outer IPv4 and inner IPv6 are
                                                 unmatched, CL8600 only.*/
-    CLX_PKT_RX_REASON_MPLS_DECAP_BOS,        /* No bottom of the labels stack, CL8600 only.        */
+    CLX_PKT_RX_REASON_MPLS_DECAP_BOS, /* No bottom of the labels stack, CL8600 only.        */
     /* 224 */
     CLX_PKT_RX_REASON_MPLS_PW_CW,    /* Common PWCW packets, CL8600 only.    */
     CLX_PKT_RX_REASON_MPLS_PW_ACH,   /* ACH packets, CL8600 only.   */
@@ -437,8 +435,8 @@ typedef enum {
     CLX_PKT_RX_REASON_IGMP_SNOOPING, /* IGMP snooping packets, CL8600 only. */
     CLX_PKT_RX_REASON_MLD_SNOOPING,  /* MLD snooping packets, CL8600 only.  */
     CLX_PKT_RX_REASON_TUNNEL_ECN,    /* Used Ecn map of tunnel decap: ECT(1) (!), CL8600 only.    */
-    CLX_PKT_RX_REASON_TUNNEL_ECN_2,  /* Used Ecn map of tunnel decap: Not-ECT (!!!), CL8600 only.  */
-    CLX_PKT_RX_REASON_TUNNEL_ECN_3,  /* Used Ecn map of tunnel decap: drop (!!!), CL8600 only.  */
+    CLX_PKT_RX_REASON_TUNNEL_ECN_2, /* Used Ecn map of tunnel decap: Not-ECT (!!!), CL8600 only.  */
+    CLX_PKT_RX_REASON_TUNNEL_ECN_3, /* Used Ecn map of tunnel decap: drop (!!!), CL8600 only.  */
     CLX_PKT_RX_REASON_MPLS_TRANSIT_LBL_MISS, /* MPLS transit label not hit, CL8600 only. */
     CLX_PKT_RX_REASON_L2_SA_MISS_1,          /* L2 source address miss, CL8600 only.          */
     CLX_PKT_RX_REASON_INT_SRC_RCV_INT_ENCAP, /* INT sourrc receive igr with INT encap, CL8600 only.
@@ -447,13 +445,13 @@ typedef enum {
     CLX_PKT_RX_REASON_UC_SPLITHORIZON_CHECK, /* Tunnel farward to tunnel by L2UC, CL8600 only. */
     CLX_PKT_RX_REASON_IP_TTL_0,              /* Ip header TTL is 0, CL8600 only.              */
     /* 240 */
-    CLX_PKT_RX_REASON_IP_TTL_1,                   /* Ip header TTL is 0, CL8600 only.                   */
+    CLX_PKT_RX_REASON_IP_TTL_1, /* Ip header TTL is 0, CL8600 only.                   */
     CLX_PKT_RX_REASON_TELM_OVER_UNSUPPORTED_TYPE, /* Source role ingress is not valid L4
                                                      type(TCP/UDP/GRE), and tnl_idx is 0, CL8600
                                                      only.                                     */
-    CLX_PKT_RX_REASON_EVPN_ESI_FILTER,            /* EVPN esi filter to CPU, CL8600 only.            */
-    CLX_PKT_RX_REASON_EVPN_DF_FILTER,             /* EVPN DF filter to CPU, CL8600 only.             */
-    CLX_PKT_RX_REASON_VLAN_HSH_MISS, /* Hash search for  VLAN editing failed, CL8600 only. */
+    CLX_PKT_RX_REASON_EVPN_ESI_FILTER, /* EVPN esi filter to CPU, CL8600 only.            */
+    CLX_PKT_RX_REASON_EVPN_DF_FILTER,  /* EVPN DF filter to CPU, CL8600 only.             */
+    CLX_PKT_RX_REASON_VLAN_HSH_MISS,   /* Hash search for  VLAN editing failed, CL8600 only. */
     CLX_PKT_RX_REASON_IGR_NOT_PVLAN_PORT_PORT, /* Inbound port is a non PVLAN port, CL8600 only. */
     CLX_PKT_RX_REASON_EGR_PVLAN_PORT_TYPE_CHECK, /* Check PVLAN role on outbound port, CL8600 only.
                                                   */
@@ -483,15 +481,15 @@ typedef enum {
     CLX_PKT_RX_REASON_L3MC_RPF_CHECK_DROP,  /* L3 RPF check fail drop, CL8600 only.  */
     CLX_PKT_RX_REASON_PORT_HIGH_LATENCY,    /* Port high latency packet, CL8600 only.    */
     CLX_PKT_RX_REASON_ACL_DROP,             /* ACL drop, CL8600 only.             */
-    CLX_PKT_RX_REASON_IGR_BDI_SPT,          /* Ingress bridge domain spanning tree, CL8600 only.          */
-    CLX_PKT_RX_REASON_EGR_BDI_SPT,          /* Egress bridge domain spanning tree, CL8600 only.          */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_0,  /* ctrl2cpu reason for entry 0, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_1,  /* ctrl2cpu reason for entry 1, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_2,  /* ctrl2cpu reason for entry 2, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_3,  /* ctrl2cpu reason for entry 3, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_4,  /* ctrl2cpu reason for entry 4, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_5,  /* ctrl2cpu reason for entry 5, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_6,  /* ctrl2cpu reason for entry 6, CL8600 only  */
+    CLX_PKT_RX_REASON_IGR_BDI_SPT, /* Ingress bridge domain spanning tree, CL8600 only.          */
+    CLX_PKT_RX_REASON_EGR_BDI_SPT, /* Egress bridge domain spanning tree, CL8600 only.          */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_0, /* ctrl2cpu reason for entry 0, CL8600 only.  */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_1, /* ctrl2cpu reason for entry 1, CL8600 only.  */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_2, /* ctrl2cpu reason for entry 2, CL8600 only.  */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_3, /* ctrl2cpu reason for entry 3, CL8600 only.  */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_4, /* ctrl2cpu reason for entry 4, CL8600 only.  */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_5, /* ctrl2cpu reason for entry 5, CL8600 only.  */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_6, /* ctrl2cpu reason for entry 6, CL8600 only  */
     /* 272 */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_7,  /* ctrl2cpu reason for entry 7, CL8600 only.  */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_8,  /* ctrl2cpu reason for entry 8, CL8600 only.  */
@@ -731,8 +729,7 @@ typedef enum {
 } CLX_PKT_DROP_REASON_T;
 
 /* Key Value, IPv6 */
-typedef struct
-{
+typedef struct {
     CLX_IPV6_T dip;         /* 128-bit IPv6 destination IP Address                  */
     CLX_IPV6_T dip_mask;    /* Hit if packet.dip equals to (dip & dip_mask).        */
     CLX_IPV6_T dip_max;     /* Hit if packet.dip within [dip, dip_max].             */
@@ -752,32 +749,31 @@ typedef struct
     /* CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_XXX_CHECK works as the mask of
      * CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_XXX_EN */
 
-#define CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_MY_ROUTER_MAC_EN \
-    (1 << 0)      /* The Mac of IPv6 Packet is My Router Mac.                 */
-#define CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_MY_ROUTER_MAC_CHECK \
-    (1 << 1)      /* Check the Mac of IPv6 Packet is My Router Mac or not.    */
-#define CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_ROUTE_EN \
-    (1 << 2)      /* The IPv6 route is enable.                                */
-#define CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_ROUTE_CHECK \
-    (1 << 3)      /* Check the IPv6 route is enable or not.                   */
-#define CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_ICMP_EN \
-    (1 << 4)      /* If true: icmp type/code, Else: TCP/UDP/SCTP dport.       */
-#define CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_DIP_RANGE_EN \
-    (1 << 5)      /* If true: key is dip-to-dip_max, Else: dip & dip_mask     */
-#define CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_HEADER_OPTION_EN \
-    (1 << 6)      /* [CL8600 only] IPv6 Packet with Header Option is allowed.   */
-#define CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_HEADER_OPTION_CHECK \
-    (1 << 7)      /* [CL8600 only] Check IPv6 Packet with Header Option or not. */
+/* The Mac of IPv6 Packet is My Router Mac.                 */
+#define CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_MY_ROUTER_MAC_EN (1 << 0)
+/* Check the Mac of IPv6 Packet is My Router Mac or not.    */
+#define CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_MY_ROUTER_MAC_CHECK (1 << 1)
+/* The IPv6 route is enable.                                */
+#define CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_ROUTE_EN (1 << 2)
+/* Check the IPv6 route is enable or not.                   */
+#define CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_ROUTE_CHECK (1 << 3)
+/* If true: icmp type/code, Else: TCP/UDP/SCTP dport.       */
+#define CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_ICMP_EN (1 << 4)
+/* If true: key is dip-to-dip_max, Else: dip & dip_mask     */
+#define CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_DIP_RANGE_EN (1 << 5)
+/* [CL8600 only] IPv6 Packet with Header Option is allowed.   */
+#define CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_HEADER_OPTION_EN (1 << 6)
+/* [CL8600 only] Check IPv6 Packet with Header Option or not. */
+#define CLX_PKT_CTRL_TO_CPU_IPV6_FLAGS_HEADER_OPTION_CHECK (1 << 7)
 
-    UI32_T flags; /* used to set ipv6 flag                                */
+    UI32_T flags;                    /* used to set ipv6 flag                                */
     CLX_PKT_TUNNEL_TYPE_T term_type; /* ipv6 tunnel type                                */
     CLX_BRIDGE_DOMAIN_T bdid;        /* [CL8600 only] bridge domain id                       */
     CLX_BRIDGE_DOMAIN_T bdid_mask;   /* [CL8600 only] used to mask bridge domain id          */
 } CLX_PKT_CTRL_TO_CPU_IPV6_KEY_T;
 
 /* Key Value, IPv4 */
-typedef struct
-{
+typedef struct {
     CLX_IPV4_T dip;         /* 32-bit IPv4 destination IP Address                   */
     CLX_IPV4_T dip_mask;    /* Hit if packet.dip equals to (dip & dip_mask).        */
     CLX_IPV4_T dip_max;     /* Hit if packet.dip within [dip, dip_max].             */
@@ -797,26 +793,26 @@ typedef struct
     /* CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_XXX_CHECK works as the mask of
      * CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_XXX_EN */
 
-#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_MY_ROUTER_MAC_EN \
-    (1 << 0)                         /* The Mac of IPv4 Packet is My Router Mac.               */
-#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_MY_ROUTER_MAC_CHECK \
-    (1 << 1)                         /* Check the Mac of IPv4 Packet is My Router Mac or not.  */
-#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_ROUTE_EN \
-    (1 << 2)                         /* The IPv4 route is enable.                              */
-#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_ROUTE_CHECK \
-    (1 << 3)                         /* Check the IPv4 route is enable or not.                 */
-#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_HEADER_OPTION_EN \
-    (1 << 4)                         /* IPv4 Packet with Header Option is allowed.             */
-#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_HEADER_OPTION_CHECK \
-    (1 << 5)                         /* Check IPv4 Packet with Header Option or not.           */
-#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_HEADER_FRAGMENT_EN \
-    (1 << 6)                         /* IPv4 Packet with Header Fragment is allowed.           */
-#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_HEADER_FRAGMENT_CHECK \
-    (1 << 7)                         /* Check IPv4 Packet with Header Fragment or not.         */
-#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_ICMP_EN \
-    (1 << 8)                         /* If true: icmp type/code, Else: TCP/UDP/SCTP dport.     */
-#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_DIP_RANGE_EN \
-    (1 << 9)                         /* If true: key is dip-to-dip_max, Else: dip & dip_mask   */
+/* The Mac of IPv4 Packet is My Router Mac.               */
+#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_MY_ROUTER_MAC_EN (1 << 0)
+/* Check the Mac of IPv4 Packet is My Router Mac or not.  */
+#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_MY_ROUTER_MAC_CHECK (1 << 1)
+/* The IPv4 route is enable.                              */
+#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_ROUTE_EN (1 << 2)
+/* Check the IPv4 route is enable or not.                 */
+#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_ROUTE_CHECK (1 << 3)
+/* IPv4 Packet with Header Option is allowed.             */
+#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_HEADER_OPTION_EN (1 << 4)
+/* Check IPv4 Packet with Header Option or not.           */
+#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_HEADER_OPTION_CHECK (1 << 5)
+/* IPv4 Packet with Header Fragment is allowed.           */
+#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_HEADER_FRAGMENT_EN (1 << 6)
+/* Check IPv4 Packet with Header Fragment or not.         */
+#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_HEADER_FRAGMENT_CHECK (1 << 7)
+/* If true: icmp type/code, Else: TCP/UDP/SCTP dport.     */
+#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_ICMP_EN (1 << 8)
+/* If true: key is dip-to-dip_max, Else: dip & dip_mask   */
+#define CLX_PKT_CTRL_TO_CPU_IPV4_FLAGS_DIP_RANGE_EN (1 << 9)
 
     UI32_T flags;                    /* used to set flag                                     */
     UI8_T header_length;             /* ipv4 header length                                   */
@@ -827,8 +823,7 @@ typedef struct
 } CLX_PKT_CTRL_TO_CPU_IPV4_KEY_T;
 
 /* Key Value, ARP */
-typedef struct
-{
+typedef struct {
     UI16_T oper;               /* ARP/RARP operation                                   */
     UI16_T oper_mask;          /* ARP/RARP operation                                   */
     CLX_IPV4_T target_ip;      /* Target IP address                                    */
@@ -837,24 +832,24 @@ typedef struct
     /* CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_XXX_CHECK works as the mask of
      * CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_XXX_EN */
 
-#define CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_MY_ROUTER_MAC_EN \
-    (1 << 0)      /* The Mac of ARP Packet is My Router Mac.                  */
-#define CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_MY_ROUTER_MAC_CHECK \
-    (1 << 1)      /* Ignore the Mac of ARP Packet is My Router Mac or not.    */
-#define CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_L2_DA_BC_EN \
-    (1 << 2)      /* [CL8600 only] The L2 mac da is broadcast                 */
-#define CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_L2_DA_BC_CHECK \
-    (1 << 3)      /* [CL8600 only] Ignore the l2 mac da is broadcast or not.  */
-#define CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_L2_DA_EQ_THA_EN \
-    (1 << 4)      /* [CL8600 only] The l2 mac da is equal to target hard address.               */
-#define CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_L2_DA_EQ_THA_CHECK \
-    (1 << 5)      /* [CL8600 only] Ignore the l2 mac da is equal to target hard address or not. */
-#define CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_L2_SA_EQ_SHA_EN \
-    (1 << 6)      /* [CL8600 only] The l2 mac sa is equal to sender hard address.               */
-#define CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_L2_SA_EQ_SHA_CHECK \
-    (1 << 7)      /* [CL8600 only] Ignore l2 mac sa is equal to sender hard address not.        */
+/* The Mac of ARP Packet is My Router Mac.                  */
+#define CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_MY_ROUTER_MAC_EN (1 << 0)
+/* Ignore the Mac of ARP Packet is My Router Mac or not.    */
+#define CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_MY_ROUTER_MAC_CHECK (1 << 1)
+/* [CL8600 only] The L2 mac da is broadcast                 */
+#define CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_L2_DA_BC_EN (1 << 2)
+/* [CL8600 only] Ignore the l2 mac da is broadcast or not.  */
+#define CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_L2_DA_BC_CHECK (1 << 3)
+/* [CL8600 only] The l2 mac da is equal to target hard address.               */
+#define CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_L2_DA_EQ_THA_EN (1 << 4)
+/* [CL8600 only] Ignore the l2 mac da is equal to target hard address or not. */
+#define CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_L2_DA_EQ_THA_CHECK (1 << 5)
+/* [CL8600 only] The l2 mac sa is equal to sender hard address.               */
+#define CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_L2_SA_EQ_SHA_EN (1 << 6)
+/* [CL8600 only] Ignore l2 mac sa is equal to sender hard address not.        */
+#define CLX_PKT_CTRL_TO_CPU_ARP_FLAGS_L2_SA_EQ_SHA_CHECK (1 << 7)
 
-    UI32_T flags; /* used to set flag                                     */
+    UI32_T flags;                    /* used to set flag                                     */
     CLX_PKT_TUNNEL_TYPE_T term_type; /* tunnel type                                          */
     CLX_BRIDGE_DOMAIN_T bdid;        /* [CL8600 only] bridge domain id                       */
     CLX_BRIDGE_DOMAIN_T bdid_mask;   /* [CL8600 only] used to mask bridge domain id          */
@@ -869,8 +864,7 @@ typedef struct
 } CLX_PKT_CTRL_TO_CPU_ARP_KEY_T;
 
 /* Key Value, L2 */
-typedef struct
-{
+typedef struct {
     CLX_MAC_T da;         /* 48-bit DA                                            */
     CLX_MAC_T da_mask;    /* It is used to mask the DA.                           */
     UI16_T eth_type;      /* Ethernet type                                        */
@@ -881,14 +875,14 @@ typedef struct
     /* CLX_PKT_CTRL_TO_CPU_L2_FLAGS_XXX_CHECK works as the mask of
      * CLX_PKT_CTRL_TO_CPU_L2_FLAGS_XXX_EN */
 
-#define CLX_PKT_CTRL_TO_CPU_L2_FLAGS_MY_ROUTER_MAC_EN \
-    (1 << 0)                         /* The Mac of L2 Packet is My Router Mac.                   */
-#define CLX_PKT_CTRL_TO_CPU_L2_FLAGS_MY_ROUTER_MAC_CHECK \
-    (1 << 1)                         /* Ignore the Mac of L2 Packet is My Router Mac or not.     */
-#define CLX_PKT_CTRL_TO_CPU_L2_FLAGS_LLC_EN \
-    (1 << 2)                         /* The eth-type is < 1500 or Jumbo LLC.                     */
-#define CLX_PKT_CTRL_TO_CPU_L2_FLAGS_LLC_CHECK \
-    (1 << 3)                         /* Ignore the eth-type check.                               */
+/* The Mac of L2 Packet is My Router Mac.                   */
+#define CLX_PKT_CTRL_TO_CPU_L2_FLAGS_MY_ROUTER_MAC_EN (1 << 0)
+/* Ignore the Mac of L2 Packet is My Router Mac or not.     */
+#define CLX_PKT_CTRL_TO_CPU_L2_FLAGS_MY_ROUTER_MAC_CHECK (1 << 1)
+/* The eth-type is < 1500 or Jumbo LLC.                     */
+#define CLX_PKT_CTRL_TO_CPU_L2_FLAGS_LLC_EN (1 << 2)
+/* Ignore the eth-type check.                               */
+#define CLX_PKT_CTRL_TO_CPU_L2_FLAGS_LLC_CHECK (1 << 3)
 
     UI32_T flags;                    /* used to set flag                                     */
     CLX_PKT_TUNNEL_TYPE_T term_type; /* tunnel type                                          */
@@ -897,8 +891,7 @@ typedef struct
 } CLX_PKT_CTRL_TO_CPU_L2_KEY_T;
 
 /* Key Value, TUNNEL */
-typedef struct
-{
+typedef struct {
     CLX_PKT_TUNNEL_TYPE_T term_type; /* Tunnel type                                          */
 
 #define CLX_PKT_CTRL_TO_CPU_MATCH_SIZE (25)
@@ -908,34 +901,32 @@ typedef struct
 } CLX_PKT_CTRL_TO_CPU_TUNNEL_KEY_T;
 
 /* Key Value */
-typedef union
-{
+typedef union {
     CLX_PKT_CTRL_TO_CPU_IPV6_KEY_T ipv6; /* when the key_type is CLX_PKT_KEY_TYPE_IPV6.   */
     CLX_PKT_CTRL_TO_CPU_IPV4_KEY_T ipv4; /* when the key_type is CLX_PKT_KEY_TYPE_IPV4.   */
     CLX_PKT_CTRL_TO_CPU_ARP_KEY_T arp;   /* when the key_type is CLX_PKT_KEY_TYPE_ARP.    */
     CLX_PKT_CTRL_TO_CPU_L2_KEY_T l2;     /* when the key_type is CLX_PKT_KEY_TYPE_L2.     */
     CLX_PKT_CTRL_TO_CPU_TUNNEL_KEY_T
-        tunnel; /*[CL8600 not support] when the key_type is CLX_PKT_KEY_TYPE_TUNNEL. */
+    tunnel; /*[CL8600 not support] when the key_type is CLX_PKT_KEY_TYPE_TUNNEL. */
 } CLX_PKT_CTRL_TO_CPU_INKEY_T;
 
 /* Entry of Control-to-CPU Table */
-typedef struct
-{
+typedef struct {
     /* Key */
     CLX_PKT_KEY_TYPE_T key_type; /* Key for IPv6, IPv4, ARP and L2          */
     CLX_PKT_CTRL_TO_CPU_INKEY_T
-        in_key_value; /* CLX_PKT_KEY_TYPE_IPV6   needs to use CLX_PKT_CTRL_TO_CPU_IPV6_KEY_T.
-                       * CLX_PKT_KEY_TYPE_IPV4   needs to use CLX_PKT_CTRL_TO_CPU_IPV4_KEY_T.
-                       * CLX_PKT_KEY_TYPE_ARP    needs to use CLX_PKT_CTRL_TO_CPU_ARP_KEY_T.
-                       * CLX_PKT_KEY_TYPE_L2     needs to use CLX_PKT_CTRL_TO_CPU_L2_KEY_T.
-                       * CLX_PKT_KEY_TYPE_TUNNEL needs to use CLX_PKT_CTRL_TO_CPU_TUNNEL_KEY_T.
-                       */
+    in_key_value; /* CLX_PKT_KEY_TYPE_IPV6   needs to use CLX_PKT_CTRL_TO_CPU_IPV6_KEY_T.
+                   * CLX_PKT_KEY_TYPE_IPV4   needs to use CLX_PKT_CTRL_TO_CPU_IPV4_KEY_T.
+                   * CLX_PKT_KEY_TYPE_ARP    needs to use CLX_PKT_CTRL_TO_CPU_ARP_KEY_T.
+                   * CLX_PKT_KEY_TYPE_L2     needs to use CLX_PKT_CTRL_TO_CPU_L2_KEY_T.
+                   * CLX_PKT_KEY_TYPE_TUNNEL needs to use CLX_PKT_CTRL_TO_CPU_TUNNEL_KEY_T.
+                   */
 
     /* Action */
     CLX_FWD_ACTION_T fwd_action; /* It can be forwarded, flooded, dropped, It will be obsoleted by
                                     clx_swc_setRxReasonAction  */
     CLX_PKT_RX_REASON_T
-        cpu_reason_code;         /* [CL8600 not support] Self-defined ctrl2cpu reason code       */
+    cpu_reason_code;             /* [CL8600 not support] Self-defined ctrl2cpu reason code       */
 
     UI32_T ctrl_traffic; /* [CL8600 not support] TRUE: The packet to be forwarded to TM via the head
                             room */
@@ -962,8 +953,7 @@ typedef enum {
 } CLX_PKT_TYPE_T;
 
 /* Outer and Inner VLAN IDs */
-typedef struct
-{
+typedef struct {
     CLX_VLAN_T outer; /* The VLAN of outer tag */
     CLX_VLAN_T inner; /* The VLAN of inner tag */
 } CLX_PKT_VLAN_T;
@@ -978,8 +968,7 @@ typedef enum {
 } CLX_PKT_SEG_TYPE_T;
 
 /* Packet Buffer Block */
-typedef struct CLX_PKT_BLK_S
-{
+typedef struct CLX_PKT_BLK_S {
     UI8_T *ptr_buf;                 /* The data buffer pointer                              */
     UI8_T *ptr_dma_addr;            /* used for free dma mem when pph in dma mem */
     UI32_T len;                     /* The length of this block                             */
@@ -987,8 +976,7 @@ typedef struct CLX_PKT_BLK_S
 } CLX_PKT_BLK_T;
 
 /* RX Packet Structure */
-typedef struct
-{
+typedef struct {
     CLX_PKT_TYPE_T pkt_type; /* Generic or SDN packet                                */
     CLX_COLOR_T color;       /* Color                                                */
     UI32_T tc;               /* Traffic class                                        */
@@ -1044,18 +1032,18 @@ typedef struct
     UI32_T total_len;        /* Total length of the payload                          */
 
     /* Flags */
-#define CLX_PKT_RX_PKT_FLAGS_ROUTE \
-    (1 << 0) /* The packet is an L3 routed packet.                   */
-#define CLX_PKT_RX_PKT_FLAGS_BPDU \
-    (1 << 1) /* The packet is a bpdu packet.                         */
-#define CLX_PKT_RX_PKT_FLAGS_TUNNEL_TERM \
-    (1 << 2) /* The tunnel header should be removed.                 */
-#define CLX_PKT_RX_PKT_FLAGS_SPAN_TERM \
-    (1 << 3) /* The packet is either ERSPAN or RSPAN mirror packet.  */
-#define CLX_PKT_RX_PKT_FLAGS_TRUNCATE \
-    (1 << 4) /* The packet has been truncated.                       */
-#define CLX_PKT_RX_PKT_FLAGS_DROP \
-    (1 << 5) /* The packet is dropped.                               */
+/* The packet is an L3 routed packet.                   */
+#define CLX_PKT_RX_PKT_FLAGS_ROUTE (1 << 0)
+/* The packet is a bpdu packet.                         */
+#define CLX_PKT_RX_PKT_FLAGS_BPDU (1 << 1)
+/* The tunnel header should be removed.                 */
+#define CLX_PKT_RX_PKT_FLAGS_TUNNEL_TERM (1 << 2)
+/* The packet is either ERSPAN or RSPAN mirror packet.  */
+#define CLX_PKT_RX_PKT_FLAGS_SPAN_TERM (1 << 3)
+/* The packet has been truncated.                       */
+#define CLX_PKT_RX_PKT_FLAGS_TRUNCATE (1 << 4)
+/* The packet is dropped.                               */
+#define CLX_PKT_RX_PKT_FLAGS_DROP (1 << 5)
     UI32_T flags;
 } CLX_PKT_RX_PKT_T;
 
@@ -1073,8 +1061,7 @@ typedef void *(*CLX_PKT_RX_ALLOC_FUNC_T)(void);
 typedef CLX_ERROR_NO_T (*CLX_PKT_RX_FREE_FUNC_T)(const void *ptr_pkt_buf);
 
 /* User Configurable RX Parameter */
-typedef struct
-{
+typedef struct {
     UI32_T buf_len; /* The size of packet buffer attached to each descriptor     */
     CLX_PKT_RX_ALLOC_FUNC_T rx_alloc; /* RX packet allocation function  */
     CLX_PKT_RX_FREE_FUNC_T rx_free;   /* RX packet free function        */
@@ -1107,8 +1094,7 @@ typedef enum {
 } CLX_PKT_TX_RAW_MODE_T;
 
 /* Legacy Packet Structure for Raw Mode. */
-typedef struct
-{
+typedef struct {
     CLX_PKT_TX_RAW_MODE_T type;                   /* Tx raw mode */
     CLX_PORT_T egr_phy_port;                      /* The destination port */
 
@@ -1126,21 +1112,18 @@ typedef struct
 } CLX_PKT_TX_RAW_T;
 
 /* Legacy Packet Structure for Ethernet Mode. */
-typedef struct
-{
+typedef struct {
     CLX_PORT_T igr_phy_port; /* The source port      */
 } CLX_PKT_TX_ETH_T;
 
 /* TX Packet Structure */
-typedef struct
-{
+typedef struct {
     CLX_PKT_TYPE_T pkt_type;   /* The packet type of the packet sent */
 
     CLX_PKT_TX_MODE_T tx_mode; /* The Tx mode of the packet sent     */
-    union
-    {
-        CLX_PKT_TX_RAW_T raw; /* RAW mode: metadata of CLX_PKT_TX_MODE_RAW. */
-        CLX_PKT_TX_ETH_T eth; /* ETH mode: metadata of CLX_PKT_TX_MODE_ETH. */
+    union {
+        CLX_PKT_TX_RAW_T raw;  /* RAW mode: metadata of CLX_PKT_TX_MODE_RAW. */
+        CLX_PKT_TX_ETH_T eth;  /* ETH mode: metadata of CLX_PKT_TX_MODE_ETH. */
     };
 
     CLX_PKT_BLK_T *ptr_data;    /* The packet payload saved block             */
@@ -1149,26 +1132,25 @@ typedef struct
 
     UI16_T seq_num;
 
-#define CLX_PKT_TX_PKT_FLAGS_PTP_EN (1 << 0)    /* The Precision Time Protocol is enable.     */
-#define CLX_PKT_TX_PKT_FLAGS_PTP_2STEP_SYNC_MESSAGE \
-    (1 << 1)                                    /* The 2-step Master Sync message.            */
-#define CLX_PKT_TX_PKT_FLAGS_PTP_1STEP_SYNC_MESSAGE \
-    (1 << 2)                                    /* The 1-step Master Sync message.            */
-#define CLX_PKT_TX_PKT_FLAGS_PTP_DELAY_REQUEST \
-    (1 << 3)                                    /* The Slave Delay Request message.           */
-#define CLX_PKT_TX_PKT_FLAGS_PTP_TC_EN (1 << 4) /* The Transparent clock is enable.           */
-#define CLX_PKT_TX_PKT_FLAGS_PTP_PEER_DELAY_REQUEST \
-    (1 << 5)                                    /* The Slave Peer Delay Request message.      */
-#define CLX_PKT_TX_PKT_FLAGS_PTP_PEER_DELAY_RESPONSE \
-    (1 << 6)                                    /* The Slave Peer Delay Response message.     */
+#define CLX_PKT_TX_PKT_FLAGS_PTP_EN (1 << 0) /* The Precision Time Protocol is enable.     */
+/* The 2-step Master Sync message.            */
+#define CLX_PKT_TX_PKT_FLAGS_PTP_2STEP_SYNC_MESSAGE (1 << 1)
+/* The 1-step Master Sync message.            */
+#define CLX_PKT_TX_PKT_FLAGS_PTP_1STEP_SYNC_MESSAGE (1 << 2)
+/* The Slave Delay Request message.           */
+#define CLX_PKT_TX_PKT_FLAGS_PTP_DELAY_REQUEST (1 << 3)
+#define CLX_PKT_TX_PKT_FLAGS_PTP_TC_EN         (1 << 4) /* The Transparent clock is enable.           */
+/* The Slave Peer Delay Request message.      */
+#define CLX_PKT_TX_PKT_FLAGS_PTP_PEER_DELAY_REQUEST (1 << 5)
+/* The Slave Peer Delay Response message.     */
+#define CLX_PKT_TX_PKT_FLAGS_PTP_PEER_DELAY_RESPONSE (1 << 6)
 
     UI32_T flags;
 } CLX_PKT_TX_PKT_T;
 
 /* ----------------------------------------------------------------------------------- cnt */
 /* TX Cnt */
-typedef struct
-{
+typedef struct {
     UI32_T packet; /* normal packet */
     UI32_T under_size_err;
     UI32_T over_size_err;
@@ -1176,14 +1158,12 @@ typedef struct
 } CLX_PKT_TX_CNT_T;
 
 /* RX Cnt */
-typedef struct
-{
+typedef struct {
     UI32_T packet; /* normal packet */
 
 } CLX_PKT_RX_CNT_T;
 
-typedef struct
-{
+typedef struct {
     /* queue */
     UI32_T enque_ok;    /*enqueue count*/
     UI32_T enque_retry; /*enqueue retry*/
@@ -1223,8 +1203,7 @@ typedef struct
 
 } CLX_PKT_RX_CHANNEL_CNT_T;
 
-typedef struct
-{
+typedef struct {
     UI32_T rch_avbl_gpd_no;  /* Rch avbl gpd no */
     UI32_T rch_pfc;          /* Rch pfc */
     UI32_T rch_cmdq_pfc;     /* Rch cmdq pfc */
