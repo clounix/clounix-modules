@@ -99,23 +99,20 @@
 #define HAL_MT_NAMCHABARWA_PKT_RCH_CNT(__unit__, __channel__) \
     (_hal_mt_namchabarwa_pkt_intr_vec[0 + (__channel__)].intr_cnt)
 
-typedef struct
-{
+typedef struct {
     UI32_T intr_reg;
     CLX_SEMAPHORE_ID_T intr_event;
     UI32_T intr_cnt;
 
 } HAL_MT_NAMCHABARWA_PKT_INTR_VEC_T;
 
-typedef struct HAL_MT_NAMCHABARWA_PKT_PROFILE_NODE_S
-{
+typedef struct HAL_MT_NAMCHABARWA_PKT_PROFILE_NODE_S {
     HAL_MT_NAMCHABARWA_PKT_NETIF_PROFILE_T *ptr_profile;
     struct HAL_MT_NAMCHABARWA_PKT_PROFILE_NODE_S *ptr_next_node;
 
 } HAL_MT_NAMCHABARWA_PKT_PROFILE_NODE_T;
 
-typedef struct
-{
+typedef struct {
     HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_T meta;
     struct net_device *ptr_net_dev;
     HAL_MT_NAMCHABARWA_PKT_PROFILE_NODE_T
@@ -207,15 +204,13 @@ static UI32_T _hal_mt_namchabarwa_pkt_slice_port_to_di_db[OSAL_MDC_MAX_CHIPS_PER
  */
 /* ----------------------------------------------------------------------------------- General
  * structure */
-typedef struct
-{
+typedef struct {
     UI32_T unit;
     UI32_T channel;
 
 } HAL_MT_NAMCHABARWA_PKT_ISR_COOKIE_T;
 
-typedef struct
-{
+typedef struct {
     CLX_HUGE_T que_id;
     CLX_SEMAPHORE_ID_T sema;
     UI32_T len;    /* Software CPU queue maximum length.        */
@@ -223,8 +218,7 @@ typedef struct
 
 } HAL_MT_NAMCHABARWA_PKT_SW_QUEUE_T;
 
-typedef struct
-{
+typedef struct {
     /* handleErrorTask */
     CLX_THREAD_ID_T err_task_id;
 
@@ -243,8 +237,7 @@ typedef struct
 
 /* ----------------------------------------------------------------------------------- TX structure
  */
-typedef struct
-{
+typedef struct {
     /* CLX_SEMAPHORE_ID_T           sema; */
 
     /* since the Tx GPD ring may be accessed by multiple process including
@@ -272,8 +265,7 @@ typedef struct
     CLX_ADDR_T bus_addr;
 } HAL_MT_NAMCHABARWA_PKT_TX_PDMA_T;
 
-typedef struct
-{
+typedef struct {
     HAL_MT_NAMCHABARWA_PKT_TX_WAIT_T wait_mode;
     HAL_MT_NAMCHABARWA_PKT_TX_PDMA_T pdma[HAL_MT_NAMCHABARWA_PKT_TX_CHANNEL_LAST];
     HAL_MT_NAMCHABARWA_PKT_TX_CNT_T cnt;
@@ -297,8 +289,7 @@ typedef struct
 
 /* ----------------------------------------------------------------------------------- RX structure
  */
-typedef struct
-{
+typedef struct {
     CLX_SEMAPHORE_ID_T sema;
     UI32_T pop_idx;  /* ring curr index */
     UI32_T work_idx; /* ring work index */
@@ -311,8 +302,7 @@ typedef struct
     CLX_ADDR_T bus_addr;
 } HAL_MT_NAMCHABARWA_PKT_RX_PDMA_T;
 
-typedef struct
-{
+typedef struct {
     /* Rx system configuration */
     UI32_T buf_len;
 
@@ -338,8 +328,7 @@ typedef struct
 
 /* ----------------------------------------------------------------------------------- Network
  * Device */
-struct net_device_priv
-{
+struct net_device_priv {
     struct net_device *ptr_net_dev;
     struct net_device_stats stats;
     UI32_T unit;
@@ -1560,7 +1549,6 @@ _hal_mt_namchabarwa_pkt_freeRxPayloadBufGpd(const UI32_T unit,
 {
     CLX_ERROR_NO_T rc = CLX_E_OK;
     CLX_ADDR_T phy_addr = 0;
-
     struct sk_buff *ptr_skb = NULL;
 
     phy_addr = CLX_ADDR_32_TO_64(ptr_sw_gpd->rx_gpd.d_addr_hi, ptr_sw_gpd->rx_gpd.d_addr_lo);
@@ -1569,7 +1557,6 @@ _hal_mt_namchabarwa_pkt_freeRxPayloadBufGpd(const UI32_T unit,
     }
 
     ptr_skb = ptr_sw_gpd->ptr_cookie;
-    osal_skb_unmapDma(phy_addr, ptr_skb->len, DMA_FROM_DEVICE);
     osal_skb_free(ptr_skb);
 
     return (rc);
@@ -2491,8 +2478,8 @@ _hal_mt_namchabarwa_pkt_rxEnQueue(const UI32_T unit,
         if (NULL == ptr_net_dev) {
             ptr_rx_cb->cnt.channel[channel].netdev_miss++;
             osal_skb_free(ptr_skb);
-            OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX), "u=%u, rxch=%u, port=%u find netdev failed\n", unit,
-                       channel,port);
+            OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX), "u=%u, rxch=%u, port=%u find netdev failed\n",
+                       unit, channel, port);
             return;
         }
 
@@ -3776,20 +3763,16 @@ _hal_mt_namchabarwa_pkt_handleRxDoneTask(void *ptr_argv)
                 HAL_MT_NAMCHABARWA_PKT_ALLOC_MEM_RETRY_SLEEP();
             }
 
+            if (0 != (((OSAL_DBG_RX | OSAL_DBG_INFO)) & (verbosity))) {
+                osal_printf("after allocRxPayloadBuf ptr_rx_pdma->pop_idx:%u\n",
+                            ptr_rx_pdma->pop_idx);
+                hal_mt_namchabarwa_pkt_showPdmaGpd(unit, ptr_rx_gpd);
+            }
+
             /* Enque the SW-GPD to rxTask */
             if (HAL_MT_NAMCHABARWA_PKT_PDMA_CH_PKT_EOP == ptr_rx_gpd->eop) {
                 ptr_sw_gpd->ptr_next = NULL;
                 ptr_sw_first_gpd->rx_complete = TRUE;
-
-                // if (0 != (((OSAL_DBG_RX | OSAL_DBG_INFO)) & (verbosity)))
-                // {
-                //     ptr_sw_gpd = ptr_sw_first_gpd;
-                //     while(ptr_sw_gpd != NULL)
-                //     {
-                //         hal_mt_namchabarwa_pkt_showPdmaGpd(unit, (HAL_MT_NAMCHABARWA_PKT_GPD_T
-                //         *)(&ptr_sw_gpd->rx_gpd)); ptr_sw_gpd = ptr_sw_gpd->ptr_next;
-                //     }
-                // }
                 _hal_mt_namchabarwa_pkt_rxEnQueue(unit, channel, ptr_sw_first_gpd);
             }
 
@@ -4776,7 +4759,7 @@ _hal_mt_namchabarwa_pkt_net_dev_tx(struct sk_buff *ptr_skb, struct net_device *p
     struct net_device_priv *ptr_priv = netdev_priv(ptr_net_dev);
     HAL_MT_NAMCHABARWA_PKT_TX_CB_T *ptr_tx_cb;
     /* chip meta */
-    unsigned int unit;
+    unsigned int unit = 0;
     unsigned int channel = 0;
     HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_T *ptr_sw_gpd = NULL;
     void *ptr_virt_addr = NULL;
