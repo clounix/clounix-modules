@@ -1672,7 +1672,7 @@ _osal_mdc_systemIntrCallback(int irq, void *ptr_cookie)
             intr_data.msi += HAL_MT_NAMHABARWA_INTR_ALL_MSI_OFFSET;
         }
     }
-    OSAL_PRINT(OSAL_DBG_DEBUG, "handler irq:%d\n", intr_data.msi);
+    OSAL_PRINT(OSAL_DBG_INTR, "handler irq:%d\n", intr_data.msi);
 
     /* Invoke kernel callback, the callback function exist only in below cases:
      * 1. SDK built in kernel mode
