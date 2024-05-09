@@ -2147,7 +2147,7 @@ _hal_mt_namchabarwa_pkt_getPacketDest(const UI32_T unit,
         *ptr_dest = HAL_MT_NAMCHABARWA_PKT_DEST_NETDEV;
     }
 
-    OSAL_PRINT(OSAL_DBG_PROFILE, "final dest type:%d\n", *ptr_dest);
+    OSAL_PRINT(OSAL_DBG_PROFILE, "port:%d final dest type:%d\n", port, *ptr_dest);
 }
 
 /**
@@ -2155,11 +2155,20 @@ _hal_mt_namchabarwa_pkt_getPacketDest(const UI32_T unit,
  *
  * @param [in]     ptr_virt_addr    - Pointer for the RX PKT buf address
  * @param [in]     buf_len          - pkt buf_len
+ * @param [in]     loglvl           - Log level for printing the payload.
  */
 static void
-_hal_mt_namchabarwa_pkt_print_payload(UI8_T *ptr_virt_addr, UI32_T buf_len)
+_hal_mt_namchabarwa_pkt_print_payload(UI8_T *ptr_virt_addr, UI32_T buf_len, UI32_T loglvl)
 {
     UI32_T i = 0;
+    if (0 == (loglvl & (verbosity))) {
+        return;
+    }
+    if (loglvl & OSAL_DBG_RX) {
+        osal_printf("\nRx Payload:\n");
+    } else if (loglvl & OSAL_DBG_TX) {
+        osal_printf("\nTx Payload:\n");
+    }
 
     osal_printf("==========================  PKT BUF %p %d ====================== \n",
                 ptr_virt_addr, buf_len);
@@ -2176,12 +2185,23 @@ _hal_mt_namchabarwa_pkt_print_payload(UI8_T *ptr_virt_addr, UI32_T buf_len)
  *
  * @param [in]     unit          - The unit ID
  * @param [in]     ptr_gpd       - Pointer for the GPD
+ * @param [in]     loglvl        - Log level for printing the RX GPD.
  * @return         CLX_E_OK    - Successfully show the RX GPD content.
  */
-static CLX_ERROR_NO_T
-hal_mt_namchabarwa_pkt_showPdmaGpd(const UI32_T unit,
-                                   const volatile HAL_MT_NAMCHABARWA_PKT_GPD_T *ptr_gpd)
+static void
+_hal_mt_namchabarwa_pkt_showPdmaGpd(const UI32_T unit,
+                                    const volatile HAL_MT_NAMCHABARWA_PKT_GPD_T *ptr_gpd,
+                                    UI32_T loglvl)
 {
+    if (0 == (loglvl & (verbosity))) {
+        return;
+    }
+    if (loglvl & OSAL_DBG_RX) {
+        osal_printf("\nRx Descriptor:\n");
+    } else if (loglvl & OSAL_DBG_TX) {
+        osal_printf("\nTx Descriptor:\n");
+    }
+
     osal_printf("d_addr_hi          : 0x%08x\n", ptr_gpd->d_addr_hi);
     osal_printf("d_addr_lo          : 0x%08x\n", ptr_gpd->d_addr_lo);
     osal_printf("s_addr_hi          : 0x%08x\n", ptr_gpd->s_addr_hi);
@@ -2195,19 +2215,25 @@ hal_mt_namchabarwa_pkt_showPdmaGpd(const UI32_T unit,
     osal_printf("sinc               : 0x%-10x\n", ptr_gpd->sinc);
     osal_printf("limit_xfer_en      : 0x%-10x\n", ptr_gpd->limit_xfer_en);
     osal_printf("xfer_size          : 0x%-10x\n", ptr_gpd->xfer_size);
-
-    return (CLX_E_OK);
 }
 
 static void
-_hal_mt_namchabarwa_pkt_print_pph(HAL_MT_NAMCHABARWA_PKT_PPH_L2_T *ptr_pph_l2)
+_hal_mt_namchabarwa_pkt_print_pph(HAL_MT_NAMCHABARWA_PKT_PPH_L2_T *ptr_pph_l2, UI32_T loglvl)
 {
     HAL_MT_NAMCHABARWA_PKT_PPH_L3UC_T *ptr_pph_l3 = NULL;
     HAL_MT_NAMCHABARWA_PKT_PPH_L25_T *ptr_pph_l25 = NULL;
 
+    if (0 == (loglvl & (verbosity))) {
+        return;
+    }
+    if (loglvl & OSAL_DBG_RX) {
+        osal_printf("\nRx PPH:\n");
+    } else if (loglvl & OSAL_DBG_TX) {
+        osal_printf("\nTx PPH:\n");
+    }
+
     /*print common field*/
-    osal_printf("\n ==========================  PPH %u====================== \n",
-                ptr_pph_l2->fwd_op);
+    osal_printf("==========================  PPH %u====================== \n", ptr_pph_l2->fwd_op);
     osal_printf("fwd_op                      :%u\n", ptr_pph_l2->fwd_op);
     osal_printf("tc                          :%u\n", ptr_pph_l2->tc);
     osal_printf("color                       :%u\n", ptr_pph_l2->color);
@@ -2366,12 +2392,6 @@ _hal_mt_namchabarwa_pkt_rxEnQueue(const UI32_T unit,
     ptr_skb = (struct sk_buff *)ptr_virt_addr;
     osal_skb_unmapDma(phy_addr, ptr_skb->len, DMA_FROM_DEVICE);
 
-    if (0 != (((OSAL_DBG_RX | OSAL_DBG_INFO)) & (verbosity))) {
-        hal_mt_namchabarwa_pkt_showPdmaGpd(unit,
-                                           (HAL_MT_NAMCHABARWA_PKT_GPD_T *)(&ptr_sw_gpd->rx_gpd));
-        _hal_mt_namchabarwa_pkt_print_payload((UI8_T *)ptr_skb->data, ptr_sw_gpd->rx_gpd.size);
-    }
-
     /* get pph in skb*/
     ptr_sw_gpd->ptr_pph_l2 = (HAL_MT_NAMCHABARWA_PKT_PPH_L2_T *)((UI8_T *)ptr_skb->data +
                                                                  HAL_MT_NAMCHABARWA_PKT_EMAC_SZ);
@@ -2382,12 +2402,15 @@ _hal_mt_namchabarwa_pkt_rxEnQueue(const UI32_T unit,
         i++;
     }
 
-    if (0 != (((OSAL_DBG_RX | OSAL_DBG_INFO)) & (verbosity))) {
-        osal_printf("rxch=%u after HAL_MT_NAMCHABARWA_PKT_BE_TO_HOST32 pph:\n", channel);
-        _hal_mt_namchabarwa_pkt_print_payload((UI8_T *)ptr_sw_gpd->ptr_pph_l2,
-                                              HAL_MT_NAMCHABARWA_PKT_PPH_HDR_SZ);
-        _hal_mt_namchabarwa_pkt_print_pph(ptr_sw_gpd->ptr_pph_l2);
-    }
+    osal_skb_syncDeviceDma(phy_addr, ptr_skb->len, DMA_FROM_DEVICE);
+
+    /* print dma detail info */
+    _hal_mt_namchabarwa_pkt_print_payload(
+        ((UI8_T *)ptr_skb->data + HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ),
+        ptr_sw_gpd->rx_gpd.size - HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ, OSAL_DBG_RX);
+    _hal_mt_namchabarwa_pkt_print_pph(ptr_sw_gpd->ptr_pph_l2, OSAL_DBG_RX);
+    _hal_mt_namchabarwa_pkt_showPdmaGpd(unit, (HAL_MT_NAMCHABARWA_PKT_GPD_T *)(&ptr_sw_gpd->rx_gpd),
+                                        OSAL_DBG_RX);
 
     _hal_mt_namchabarwa_pkt_getPacketDest(unit, ptr_sw_gpd, &dest_type, &ptr_dest);
 
@@ -2855,11 +2878,10 @@ hal_mt_namchabarwa_pkt_sendGpd(const UI32_T unit,
                                 sizeof(HAL_MT_NAMCHABARWA_PKT_TX_GPD_T));
                     osal_dma_flushCache((void *)ptr_tx_gpd,
                                         sizeof(HAL_MT_NAMCHABARWA_PKT_TX_GPD_T));
-                    if (0 != (((OSAL_DBG_RX | OSAL_DBG_INFO)) & (verbosity))) {
-                        osal_printf("send pkt before:\n");
-                        hal_mt_namchabarwa_pkt_showPdmaGpd(
-                            unit, (HAL_MT_NAMCHABARWA_PKT_GPD_T *)(&ptr_sw_gpd->tx_gpd));
-                    }
+
+                    _hal_mt_namchabarwa_pkt_showPdmaGpd(
+                        unit, (HAL_MT_NAMCHABARWA_PKT_GPD_T *)(&ptr_sw_gpd->tx_gpd), OSAL_DBG_TX);
+
                     /* next */
                     used_idx++;
                     used_idx %= ptr_tx_pdma->gpd_num;
@@ -3763,11 +3785,7 @@ _hal_mt_namchabarwa_pkt_handleRxDoneTask(void *ptr_argv)
                 HAL_MT_NAMCHABARWA_PKT_ALLOC_MEM_RETRY_SLEEP();
             }
 
-            if (0 != (((OSAL_DBG_RX | OSAL_DBG_INFO)) & (verbosity))) {
-                osal_printf("after allocRxPayloadBuf ptr_rx_pdma->pop_idx:%u\n",
-                            ptr_rx_pdma->pop_idx);
-                hal_mt_namchabarwa_pkt_showPdmaGpd(unit, ptr_rx_gpd);
-            }
+            _hal_mt_namchabarwa_pkt_showPdmaGpd(unit, ptr_rx_gpd, OSAL_DBG_RX);
 
             /* Enque the SW-GPD to rxTask */
             if (HAL_MT_NAMCHABARWA_PKT_PDMA_CH_PKT_EOP == ptr_rx_gpd->eop) {
@@ -4473,6 +4491,7 @@ _hal_mt_namchabarwa_pkt_delProfListOnAllIntf(const UI32_T unit)
                 osal_free(ptr_curr_node);
                 ptr_curr_node = ptr_next_node;
             }
+            ptr_port_db->ptr_profile_list = NULL;
         }
     }
 
@@ -4714,6 +4733,8 @@ hal_mt_namchabarwa_pkt_preparePPh(const UI32_T unit,
 
     // TODO: fill up pph other fields
 
+    _hal_mt_namchabarwa_pkt_print_pph(ptr_pph, OSAL_DBG_TX);
+
     while (i < HAL_MT_NAMCHABARWA_PKT_PPH_HDR_SZ / 4) {
         *((UI32_T *)ptr_pph + i) = HAL_MT_NAMCHABARWA_PKT_HOST_TO_BE32(*((UI32_T *)ptr_pph + i));
         i++;
@@ -4799,13 +4820,7 @@ _hal_mt_namchabarwa_pkt_net_dev_tx(struct sk_buff *ptr_skb, struct net_device *p
         ptr_skb->len = ETH_ZLEN;
     }
 
-    /* pad 4-bytes for chip-crc */
-    skb_pad(ptr_skb, ETH_FCS_LEN);
-    ptr_skb->len += ETH_FCS_LEN;
-    skb_set_tail_pointer(ptr_skb, ptr_skb->len);
-
     /* prepare buf */
-    pkt_len = HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ + ptr_skb->len;
     headroom = skb_headroom(ptr_skb);
     if (headroom < HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ) {
         if (pskb_expand_head(ptr_skb, HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ - headroom, 0,
@@ -4815,8 +4830,16 @@ _hal_mt_namchabarwa_pkt_net_dev_tx(struct sk_buff *ptr_skb, struct net_device *p
             osal_skb_free(ptr_skb);
             return -EFAULT;
         }
-        skb_push(ptr_skb, HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ);
     }
+
+    /* pad 4-bytes for chip-crc */
+    skb_pad(ptr_skb, ETH_FCS_LEN);
+    ptr_skb->len += ETH_FCS_LEN;
+    skb_set_tail_pointer(ptr_skb, ptr_skb->len);
+    pkt_len = ptr_skb->len;
+
+    /* push 52bytes for pdma header */
+    skb_push(ptr_skb, HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ);
 
     ptr_virt_addr = (void *)ptr_skb->data;
 
@@ -4828,12 +4851,11 @@ _hal_mt_namchabarwa_pkt_net_dev_tx(struct sk_buff *ptr_skb, struct net_device *p
         unit, ptr_priv->port,
         (HAL_MT_NAMCHABARWA_PKT_PPH_L2_T *)((UI8_T *)ptr_virt_addr +
                                             HAL_MT_NAMCHABARWA_PKT_EMAC_SZ));
-    if (0 != (((OSAL_DBG_TX | OSAL_DBG_INFO)) & (verbosity))) {
-        osal_printf("netdev:%s bind port:%d, data_len:%d len:%d pkt_len:%d\n",
-                    ptr_priv->ptr_net_dev->name, ptr_priv->port, ptr_skb->data_len, ptr_skb->len,
-                    pkt_len);
-        _hal_mt_namchabarwa_pkt_print_payload(ptr_virt_addr, ptr_skb->len);
-    }
+    osal_printf("netdev:%s bind port:%d, data_len:%d len:%d pkt_len:%d\n",
+                ptr_priv->ptr_net_dev->name, ptr_priv->port, ptr_skb->data_len, ptr_skb->len,
+                pkt_len);
+    _hal_mt_namchabarwa_pkt_print_payload(
+        ((UI8_T *)ptr_virt_addr + HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ), pkt_len, OSAL_DBG_TX);
 
     phy_addr = osal_skb_mapDma(ptr_skb, DMA_TO_DEVICE);
     if (0x0 == phy_addr) {
@@ -4843,6 +4865,8 @@ _hal_mt_namchabarwa_pkt_net_dev_tx(struct sk_buff *ptr_skb, struct net_device *p
         osal_free(ptr_sw_gpd);
         return -EFAULT;
     }
+
+    osal_skb_syncDeviceDma(phy_addr, ptr_skb->len, DMA_TO_DEVICE);
 
     /* alloc gpd */
     ptr_sw_gpd = osal_alloc(sizeof(HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_T));
@@ -4861,7 +4885,7 @@ _hal_mt_namchabarwa_pkt_net_dev_tx(struct sk_buff *ptr_skb, struct net_device *p
     ptr_sw_gpd->channel = channel;
 
     /* prepare gpd */
-    hal_mt_namchabarwa_pkt_prepareGpd(unit, phy_addr, pkt_len, ptr_sw_gpd);
+    hal_mt_namchabarwa_pkt_prepareGpd(unit, phy_addr, ptr_skb->len, ptr_sw_gpd);
 
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(4, 6, 7)
     ptr_net_dev->trans_start = jiffies;
@@ -4872,7 +4896,7 @@ _hal_mt_namchabarwa_pkt_net_dev_tx(struct sk_buff *ptr_skb, struct net_device *p
     /* send gpd */
     if (CLX_E_OK == hal_mt_namchabarwa_pkt_sendGpd(unit, channel, ptr_sw_gpd)) {
         ptr_priv->stats.tx_packets++;
-        ptr_priv->stats.tx_bytes += pkt_len - HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ;
+        ptr_priv->stats.tx_bytes += pkt_len;
     } else {
         ptr_priv->stats
             .tx_fifo_errors++; /* to record the extreme cases where packets are dropped */
