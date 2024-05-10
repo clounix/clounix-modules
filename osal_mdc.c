@@ -670,19 +670,19 @@ _osal_mdc_probePciCallback(struct pci_dev *pdev, const struct pci_device_id *id)
     _ptr_osal_mdc_dev->access.write_callback = osal_mdc_writePciReg;
 #endif
     if (NETIF_KNL_DEVICE_IS_LIGHTNING(device_id) || NETIF_KNL_DEVICE_IS_DAWN(device_id)) {
-        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(48))) {
+        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32))) {
             OSAL_PRINT(OSAL_DBG_ERR, "dma_set_mask_and_coherent failed");
         }
         _osal_mdc_cb.dev[_osal_mdc_cb.dev_num].mmio_bar = OSAL_MDC_PCI_BAR0_OFFSET;
         _osal_mdc_cb.dev[_osal_mdc_cb.dev_num].msi_cnt = 1;
     } else if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(device_id)) {
-        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(48))) {
+        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32))) {
             OSAL_PRINT(OSAL_DBG_ERR, "dma_set_mask_and_coherent failed");
         }
         _osal_mdc_cb.dev[_osal_mdc_cb.dev_num].mmio_bar = OSAL_MDC_PCI_BAR2_OFFSET;
         _osal_mdc_cb.dev[_osal_mdc_cb.dev_num].msi_cnt = 21;
     } else if (NETIF_KNL_DEVICE_IS_KAWAGARBO(device_id)) {
-        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(48))) {
+        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32))) {
             OSAL_PRINT(OSAL_DBG_ERR, "dma_set_mask_and_coherent failed");
         }
         _osal_mdc_cb.dev[_osal_mdc_cb.dev_num].mmio_bar = OSAL_MDC_PCI_BAR0_OFFSET;

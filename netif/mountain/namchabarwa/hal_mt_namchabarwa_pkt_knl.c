@@ -4851,9 +4851,10 @@ _hal_mt_namchabarwa_pkt_net_dev_tx(struct sk_buff *ptr_skb, struct net_device *p
         unit, ptr_priv->port,
         (HAL_MT_NAMCHABARWA_PKT_PPH_L2_T *)((UI8_T *)ptr_virt_addr +
                                             HAL_MT_NAMCHABARWA_PKT_EMAC_SZ));
-    osal_printf("netdev:%s bind port:%d, data_len:%d len:%d pkt_len:%d\n",
-                ptr_priv->ptr_net_dev->name, ptr_priv->port, ptr_skb->data_len, ptr_skb->len,
-                pkt_len);
+
+    OSAL_PRINT(OSAL_DBG_TX, "netdev:%s bind port:%d, data_len:%d len:%d pkt_len:%d\n",
+               ptr_priv->ptr_net_dev->name, ptr_priv->port, ptr_skb->data_len, ptr_skb->len,
+               pkt_len);
     _hal_mt_namchabarwa_pkt_print_payload(
         ((UI8_T *)ptr_virt_addr + HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ), pkt_len, OSAL_DBG_TX);
 
