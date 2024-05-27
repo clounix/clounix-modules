@@ -31,11 +31,12 @@ INC_PATH            := $(SRC_PATH)/inc
 BUILD_OUTPUT_DIR    := $(KERNEL_MODULE)/build
 MODULE_OUTPUT_DIR   := $(BUILD_OUTPUT_DIR)/module
 
+CLX_EN_NETIF        ?= DISABLED
+
 all: compile install
 ################################################################################
 EXTRA_CFLAGS += -I$(INC_PATH)
 EXTRA_CFLAGS += -I$(SRC_PATH)/inc/
-EXTRA_CFLAGS += -DCLX_EN_NETIF
 EXTRA_CFLAGS += -DCLX_EN_DAWN
 EXTRA_CFLAGS += -DCLX_EN_LIGHTNING
 EXTRA_CFLAGS += -DCLX_EN_NAMCHABARWA
@@ -63,12 +64,15 @@ DEV_MODULE_NAME            := clx_dev
 ################################################################################
 DEV_OBJS_TOTAL             := ./osal_mdc.o
 
+ifeq ($(findstring ENABLED,$(CLX_EN_NETIF)),ENABLED)
 DEV_OBJS_TOTAL             += ./netif/common/netif_osal.o
 DEV_OBJS_TOTAL             += ./netif/common/netif_perf.o
 DEV_OBJS_TOTAL             += ./netif/common/netif_nl.o
 DEV_OBJS_TOTAL             += ./netif/light/dawn/hal_lt_dawn_pkt_knl.o
 DEV_OBJS_TOTAL             += ./netif/light/lightning/hal_lt_lightning_pkt_knl.o
 DEV_OBJS_TOTAL             += ./netif/mountain/namchabarwa/hal_mt_namchabarwa_pkt_knl.o
+EXTRA_CFLAGS               += -DCLX_EN_NETIF
+endif
 
 obj-m                      := $(DEV_MODULE_NAME).o
 $(DEV_MODULE_NAME)-objs    := $(DEV_OBJS_TOTAL)
