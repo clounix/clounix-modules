@@ -2097,8 +2097,7 @@ _hal_mt_namchabarwa_pkt_print_payload(UI8_T *ptr_virt_addr, UI32_T size, UI32_T 
         osal_printf("\nTx Payload:\n");
     }
 
-
-    buf_len = sizeof(buf) /sizeof(buf[0]);
+    buf_len = sizeof(buf) / sizeof(buf[0]);
     memset(buf, 0, buf_len);
     buf_size += snprintf(&buf[buf_size], buf_len, "%04x ", 0);
     for (len = 0; len < size; len++) {
@@ -2113,7 +2112,6 @@ _hal_mt_namchabarwa_pkt_print_payload(UI8_T *ptr_virt_addr, UI32_T size, UI32_T 
     if (size % 16) {
         osal_printf("%s\r\n", buf);
     }
-
 }
 
 /**
@@ -4364,7 +4362,7 @@ _hal_mt_namchabarwa_pkt_delProfFromListById(
     }
 
     if (NULL == ptr_profile) {
-        OSAL_PRINT((OSAL_DBG_PROFILE | OSAL_DBG_INFO), "find prof failed, id=%d\n", id);
+        OSAL_PRINT((OSAL_DBG_PROFILE | OSAL_DBG_ERR), "find prof failed, id=%d\n", id);
     }
 
     return (ptr_profile);
@@ -4858,8 +4856,9 @@ _hal_mt_namchabarwa_pkt_net_dev_tx(struct sk_buff *ptr_skb, struct net_device *p
     // should clear, or maybe cannot send to port
     osal_memset(ptr_virt_addr, 0x0, HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ);
 
-    if (!IS_ALIGNED((unsigned long) ptr_skb->data, 4)) {
-        OSAL_PRINT(OSAL_DBG_ERR, "tx err, skb data addr:0x%lx, not align 4bytes\n", (unsigned long) ptr_skb->data);
+    if (!IS_ALIGNED((unsigned long)ptr_skb->data, 4)) {
+        OSAL_PRINT(OSAL_DBG_ERR, "tx err, skb data addr:0x%lx, not align 4bytes\n",
+                   (unsigned long)ptr_skb->data);
     }
 
     // must prepare pph before mapdma
