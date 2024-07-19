@@ -68,18 +68,20 @@
 #define OSAL_MDC_INTR_INVALID_MSI     (0xDEADDEAD)
 
 /* This flag value will be specified when user inserts kernel module. */
-#define OSAL_DBG_CRIT    (0x1UL << 0)
-#define OSAL_DBG_ERR     (0x1UL << 1)
-#define OSAL_DBG_WARN    (0x1UL << 2)
-#define OSAL_DBG_INFO    (0x1UL << 3)
-#define OSAL_DBG_DEBUG   (0x1UL << 4)
-#define OSAL_DBG_TX      (0x1UL << 5)
-#define OSAL_DBG_RX      (0x1UL << 6)
-#define OSAL_DBG_INTF    (0x1UL << 7)
-#define OSAL_DBG_PROFILE (0x1UL << 8)
-#define OSAL_DBG_COMMON  (0x1UL << 9)
-#define OSAL_DBG_NETLINK (0x1UL << 10)
-#define OSAL_DBG_INTR    (0x1UL << 11)
+#define OSAL_DBG_CRIT       (0x1UL << 0)
+#define OSAL_DBG_ERR        (0x1UL << 1)
+#define OSAL_DBG_WARN       (0x1UL << 2)
+#define OSAL_DBG_INFO       (0x1UL << 3)
+#define OSAL_DBG_DEBUG      (0x1UL << 4)
+#define OSAL_DBG_TX         (0x1UL << 5)
+#define OSAL_DBG_RX         (0x1UL << 6)
+#define OSAL_DBG_TX_PAYLOAD (0x1UL << 7)
+#define OSAL_DBG_RX_PAYLOAD (0x1UL << 8)
+#define OSAL_DBG_INTF       (0x1UL << 9)
+#define OSAL_DBG_PROFILE    (0x1UL << 10)
+#define OSAL_DBG_COMMON     (0x1UL << 11)
+#define OSAL_DBG_NETLINK    (0x1UL << 12)
+#define OSAL_DBG_INTR       (0x1UL << 13)
 
 extern UI32_T verbosity;
 #ifdef __KERNEL__
@@ -199,7 +201,6 @@ typedef enum {
     OSAL_MDC_IOCTL_TYPE_MDC_DISCONNECT_ISR,
     OSAL_MDC_IOCTL_TYPE_MDC_SAVE_PCI_CONFIG,
     OSAL_MDC_IOCTL_TYPE_MDC_RESTORE_PCI_CONFIG,
-
     /* network interface */
     OSAL_MDC_IOCTL_TYPE_NETIF_CREATE_INTF,
     OSAL_MDC_IOCTL_TYPE_NETIF_DESTROY_INTF,
@@ -303,12 +304,14 @@ osal_mdc_initDmaMem(void);
 CLX_ERROR_NO_T
 osal_mdc_deinitDmaMem(void);
 
-void *osal_mdc_mmapDmaMem(const CLX_ADDR_T dma_phy_addr, const UI32_T size);
+void *
+osal_mdc_mmapDmaMem(const CLX_ADDR_T dma_phy_addr, const UI32_T size);
 
 CLX_ERROR_NO_T
 osal_mdc_munmapDmaMem(void *ptr_virt_addr);
 
-void *osal_mdc_allocDmaMem(const UI32_T size);
+void *
+osal_mdc_allocDmaMem(const UI32_T size);
 
 CLX_ERROR_NO_T
 osal_mdc_freeDmaMem(void *ptr_virt_addr);
@@ -344,8 +347,10 @@ CLX_ERROR_NO_T
 osal_mdc_restorePciConfig(const UI32_T unit);
 
 /* IO */
-int osal_io_copyToUser(void *ptr_usr_buf, void *ptr_knl_buf, unsigned int size);
+int
+osal_io_copyToUser(void *ptr_usr_buf, void *ptr_knl_buf, unsigned int size);
 
-int osal_io_copyFromUser(void *ptr_knl_buf, void *ptr_usr_buf, unsigned int size);
+int
+osal_io_copyFromUser(void *ptr_knl_buf, void *ptr_usr_buf, unsigned int size);
 
 #endif /* OSAL_MDC_H */

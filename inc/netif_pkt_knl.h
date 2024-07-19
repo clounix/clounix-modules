@@ -57,7 +57,8 @@ hal_lt_dawn_pkt_getNetDev(const UI32_T unit, const UI32_T port, struct net_devic
 CLX_ERROR_NO_T
 hal_lt_dawn_pkt_dev_tx(const UI32_T unit, void *ptr_data);
 
-long hal_lt_dawn_pkt_dev_ioctl(const UI32_T unit);
+long
+hal_lt_dawn_pkt_dev_ioctl(const UI32_T unit);
 
 CLX_ERROR_NO_T
 hal_lt_lightning_pkt_getNetDev(const UI32_T unit,
@@ -67,7 +68,8 @@ hal_lt_lightning_pkt_getNetDev(const UI32_T unit,
 CLX_ERROR_NO_T
 hal_lt_lightning_pkt_dev_tx(const UI32_T unit, void *ptr_data);
 
-long hal_lt_lightning_pkt_dev_ioctl(const UI32_T unit);
+long
+hal_lt_lightning_pkt_dev_ioctl(const UI32_T unit);
 
 CLX_ERROR_NO_T
 hal_mt_namchabarwa_pkt_getNetDev(const UI32_T unit,
@@ -77,6 +79,7 @@ hal_mt_namchabarwa_pkt_getNetDev(const UI32_T unit,
 CLX_ERROR_NO_T
 hal_mt_namchabarwa_pkt_dev_tx(const UI32_T unit, void *ptr_data);
 
-long hal_mt_namchabarwa_pkt_dev_ioctl(const UI32_T unit);
+long
+hal_mt_namchabarwa_pkt_dev_ioctl(const UI32_T unit);
 
 #endif /* End of NETIF_PKT_KNL_H */

@@ -71,11 +71,11 @@ static UI16_T dev_id = 0;
 typedef CLX_ERROR_NO_T (*PERF_TX_GET_INTR_T)(const UI32_T unit,
                                              const UI32_T channel,
                                              UI32_T *ptr_intr_cnt);
-
+#if defined(CLX_EN_NETIF)
 typedef CLX_ERROR_NO_T (*PERF_TX_GET_NETDEV_T)(const UI32_T unit,
                                                const UI32_T port,
                                                struct net_device **pptr_net_dev);
-
+#endif
 typedef CLX_ERROR_NO_T (*PERF_TX_PREPARE_GPD_T)(const UI32_T unit,
                                                 const CLX_ADDR_T phy_addr,
                                                 const UI32_T len,
@@ -125,7 +125,9 @@ typedef struct {
 
     /* chip dependent callbacks */
     PERF_TX_GET_INTR_T get_intr_cnt;
+#if defined(CLX_EN_NETIF)
     PERF_TX_GET_NETDEV_T get_netdev;
+#endif
     PERF_TX_PREPARE_GPD_T prepare_gpd;
     PERF_TX_SEND_GPD_T send_gpd;
 
@@ -156,12 +158,15 @@ CLX_ERROR_NO_T
 _hal_perf_pkt_getTxIntrCnt(const UI32_T unit, const UI32_T channel, UI32_T *ptr_intr_cnt)
 {
     CLX_ERROR_NO_T ret;
-
+#if defined(CLX_EN_NETIF)
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id)) {
         ret = hal_lt_dawn_pkt_getTxIntrCnt(unit, channel, ptr_intr_cnt);
     } else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id)) {
         ret = hal_lt_lightning_pkt_getTxIntrCnt(unit, channel, ptr_intr_cnt);
     } else if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(dev_id)) {
+#else
+    if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(dev_id)) {
+#endif
         ret = hal_mt_namchabarwa_pkt_getTxIntrCnt(unit, channel, ptr_intr_cnt);
     } else {
         OSAL_PRINT(OSAL_DBG_ERR, "unknown chip family, dev_id=0x%x\n", dev_id);
@@ -169,6 +174,8 @@ _hal_perf_pkt_getTxIntrCnt(const UI32_T unit, const UI32_T channel, UI32_T *ptr_
     }
     return ret;
 }
+
+#if defined(CLX_EN_NETIF)
 CLX_ERROR_NO_T
 _hal_perf_pkt_getNetDev(const UI32_T unit, const UI32_T port, struct net_device **pptr_net_dev)
 {
@@ -186,6 +193,8 @@ _hal_perf_pkt_getNetDev(const UI32_T unit, const UI32_T port, struct net_device 
     }
     return ret;
 }
+#endif
+
 CLX_ERROR_NO_T
 _hal_perf_pkt_prepareGpd(const UI32_T unit,
                          const CLX_ADDR_T phy_addr,
@@ -195,7 +204,7 @@ _hal_perf_pkt_prepareGpd(const UI32_T unit,
 {
     CLX_ERROR_NO_T ret;
     void *ptr_cookie = NULL;
-
+#if defined(CLX_EN_NETIF)
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id)) {
         ret = hal_lt_dawn_pkt_prepareGpd(unit, phy_addr, len, port,
                                          (HAL_LT_DAWN_PKT_TX_SW_GPD_T *)ptr_sw_gpd);
@@ -203,6 +212,9 @@ _hal_perf_pkt_prepareGpd(const UI32_T unit,
         ret = hal_lt_lightning_pkt_prepareGpd(unit, phy_addr, len, port,
                                               (HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T *)ptr_sw_gpd);
     } else if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(dev_id)) {
+#else
+    if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(dev_id)) {
+#endif
         ptr_cookie = ((HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_T *)ptr_sw_gpd)->ptr_cookie;
         ret = hal_mt_namchabarwa_pkt_preparePPh(
             unit, port,
@@ -220,12 +232,16 @@ CLX_ERROR_NO_T
 _hal_perf_pkt_sendGpd(const UI32_T unit, const UI32_T channel, void *ptr_sw_gpd)
 {
     CLX_ERROR_NO_T ret;
+#if defined(CLX_EN_NETIF)
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id)) {
         ret = hal_lt_dawn_pkt_sendGpd(unit, channel, (HAL_LT_DAWN_PKT_TX_SW_GPD_T *)ptr_sw_gpd);
     } else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id)) {
         ret = hal_lt_lightning_pkt_sendGpd(unit, channel,
                                            (HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T *)ptr_sw_gpd);
     } else if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(dev_id)) {
+#else
+    if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(dev_id)) {
+#endif
         ret = hal_mt_namchabarwa_pkt_sendGpd(unit, channel,
                                              (HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_T *)ptr_sw_gpd);
     } else {
@@ -238,12 +254,15 @@ CLX_ERROR_NO_T
 _hal_perf_pkt_getRxIntrCnt(const UI32_T unit, const UI32_T channel, UI32_T *ptr_intr_cnt)
 {
     CLX_ERROR_NO_T ret;
-
+#if defined(CLX_EN_NETIF)
     if (NETIF_KNL_DEVICE_IS_DAWN(dev_id)) {
         ret = hal_lt_dawn_pkt_getRxIntrCnt(unit, channel, ptr_intr_cnt);
     } else if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id)) {
         ret = hal_lt_lightning_pkt_getRxIntrCnt(unit, channel, ptr_intr_cnt);
     } else if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(dev_id)) {
+#else
+    if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(dev_id)) {
+#endif
         ret = hal_mt_namchabarwa_pkt_getRxIntrCnt(unit, channel, ptr_intr_cnt);
     } else {
         OSAL_PRINT(OSAL_DBG_ERR, "unknown chip family, dev_id=0x%x\n", dev_id);
@@ -255,7 +274,9 @@ _hal_perf_pkt_getRxIntrCnt(const UI32_T unit, const UI32_T channel, UI32_T *ptr_
 /* -------------------------------------------------------------- statics */
 static PERF_TX_PERF_CB_T _perf_tx_perf_cb = {
     .get_intr_cnt = _hal_perf_pkt_getTxIntrCnt,
+#if defined(CLX_EN_NETIF)
     .get_netdev = _hal_perf_pkt_getNetDev,   /* test_skb = TRUE  */
+#endif
     .prepare_gpd = _hal_perf_pkt_prepareGpd, /* test_skb = FALSE */
     .send_gpd = _hal_perf_pkt_sendGpd,       /* test_skb = FALSE */
 };
@@ -366,7 +387,9 @@ _perf_txTask(void *ptr_argv)
 
     /* test targets */
     void *ptr_sw_gpd = NULL;
+#if defined(CLX_EN_NETIF)
     struct sk_buff *ptr_skb = NULL;
+#endif
 
     /* temp variables */
     UI32_T send_fail = 0;
@@ -386,12 +409,16 @@ _perf_txTask(void *ptr_argv)
             }
 
             if (TRUE == test_skb) {
+#if defined(CLX_EN_NETIF)
                 ptr_skb = osal_skb_alloc(len);
                 ptr_skb->len = len;
                 _perf_tx_perf_cb.get_netdev(unit, port, &ptr_skb->dev);
 
                 /* send skb */
                 osal_skb_send(ptr_skb);
+#else
+                OSAL_PRINT(OSAL_DBG_ERR, "NOT SUPPORT TEST SKB\n");
+#endif
             } else {
                 /* prepare buf */
                 ptr_virt_addr = osal_dma_alloc(len);

@@ -1868,9 +1868,10 @@ _hal_lt_dawn_pkt_rxCheckPattern(volatile HAL_LT_DAWN_PKT_RX_GPD_T *ptr_rx_gpd,
     for (idx = 0; idx < CLX_NETIF_PROFILE_PATTERN_NUM; idx++) {
         OSAL_PRINT(OSAL_DBG_PROFILE, "compare pattern id=%d\n", idx);
         if (0 != (ptr_profile->flags & (HAL_LT_DAWN_PKT_NETIF_PROFILE_FLAGS_PATTERN_0 << idx))) {
-            match = _hal_lt_dawn_pkt_comparePatternWithPayload(
-                ptr_rx_gpd, ptr_profile->pattern[idx], ptr_profile->mask[idx],
-                ptr_profile->offset[idx]);
+            match = _hal_lt_dawn_pkt_comparePatternWithPayload(ptr_rx_gpd,
+                                                               ptr_profile->pattern[idx],
+                                                               ptr_profile->mask[idx],
+                                                               ptr_profile->offset[idx]);
             if (TRUE == match) {
                 /* Do nothing */
             } else {
@@ -4597,8 +4598,8 @@ _hal_lt_dawn_pkt_net_dev_tx(struct sk_buff *ptr_skb, struct net_device *ptr_net_
                 ptr_priv->stats.tx_packets++;
                 ptr_priv->stats.tx_bytes += ptr_skb->len;
             } else {
-                ptr_priv->stats
-                    .tx_fifo_errors++; /* to record the extreme cases where packets are dropped */
+                ptr_priv->stats.tx_fifo_errors++; /* to record the extreme cases where packets are
+                                                     dropped */
                 ptr_priv->stats.tx_dropped++;
 
                 osal_skb_unmapDma(phy_addr, ptr_skb->len, DMA_TO_DEVICE);
@@ -4712,8 +4713,8 @@ _hal_lt_dawn_pkt_setup(struct net_device *ptr_net_dev)
     ptr_net_dev->netdev_ops = &_hal_lt_dawn_pkt_net_dev_ops;
     ptr_net_dev->ethtool_ops = &_hal_lt_dawn_pkt_net_dev_ethtool_ops;
     ptr_net_dev->watchdog_timeo = HAL_LT_DAWN_PKT_TX_TIMEOUT;
-    ptr_net_dev->mtu =
-        HAL_LT_DAWN_PKT_MAX_ETH_FRAME_SIZE; /* This mtu need to be synced to chip's */
+    ptr_net_dev->mtu = HAL_LT_DAWN_PKT_MAX_ETH_FRAME_SIZE; /* This mtu need to be synced to chip's
+                                                            */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)
     ptr_net_dev->min_mtu = 64;
     ptr_net_dev->max_mtu = 65535;

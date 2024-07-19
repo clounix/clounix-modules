@@ -71,6 +71,7 @@ typedef enum {
     CLX_E_OP_INVALID,      /* Operation is invalid */
     CLX_E_OP_STOPPED,      /* Operation is stopped by user callback */
     CLX_E_OP_INCOMPLETE,   /* Operation is incomplete */
+    CLX_E_TRY_AGAIN,       /* Opertion not exec, try again */
     CLX_E_LAST
 } CLX_ERROR_NO_T;
 

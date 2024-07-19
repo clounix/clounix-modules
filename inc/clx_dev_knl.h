@@ -52,7 +52,7 @@
 #define HAL_INVALID_DEVICE_ID (0xFFFFFFFF)
 
 #define NETIF_KNL_DEVICE_IS_NAMCHABARWA(__dev_id__) (HAL_DEVICE_ID_CL8600 == (__dev_id__ & 0xFF00))
-#define NETIF_KNL_DEVICE_IS_KAWAGARBO(__dev_id__) (HAL_DEVICE_ID_CL8400 == (__dev_id__ & 0xFF00))
+#define NETIF_KNL_DEVICE_IS_KAWAGARBO(__dev_id__)   (HAL_DEVICE_ID_CL8400 == (__dev_id__ & 0xFF00))
 
 #define NETIF_KNL_DEVICE_IS_LIGHTNING(__dev_id__) (HAL_DEVICE_ID_CL8500 == (__dev_id__ & 0xFF00))
 #define NETIF_KNL_DEVICE_IS_DAWN(__dev_id__)      (HAL_DEVICE_ID_CL8300 == (__dev_id__ & 0xFF00))

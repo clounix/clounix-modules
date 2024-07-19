@@ -1008,10 +1008,7 @@ typedef struct HAL_LT_DAWN_PKT_TX_SW_GPD_S {
     HAL_LT_DAWN_PKT_TX_GPD_T tx_gpd;
     UI32_T gpd_num;
     struct HAL_LT_DAWN_PKT_TX_SW_GPD_S *ptr_next;
-
-#if defined(CLX_EN_NETIF)
     UI32_T channel; /* For counter */
-#endif
 
 } HAL_LT_DAWN_PKT_TX_SW_GPD_T;
 

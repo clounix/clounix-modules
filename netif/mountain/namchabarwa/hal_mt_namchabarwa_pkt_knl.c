@@ -113,8 +113,10 @@ typedef struct HAL_MT_NAMCHABARWA_PKT_PROFILE_NODE_S {
 } HAL_MT_NAMCHABARWA_PKT_PROFILE_NODE_T;
 
 typedef struct {
+#if defined(CLX_EN_NETIF)
     HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_T meta;
     struct net_device *ptr_net_dev;
+#endif
     HAL_MT_NAMCHABARWA_PKT_PROFILE_NODE_T
     *ptr_profile_list; /* the profiles binding to this interface */
 
@@ -152,8 +154,11 @@ static HAL_MT_NAMCHABARWA_PKT_INTR_VEC_T _hal_mt_namchabarwa_pkt_err_intr_vec[] 
 
 #define HAL_MT_NAMCHABARWA_PKT_NET_PROFILE_NUM_MAX (256)
 
+#if defined(CLX_EN_NETIF)
 static HAL_MT_NAMCHABARWA_PKT_NETIF_PROFILE_T
     *_ptr_hal_mt_namchabarwa_pkt_profile_entry[HAL_MT_NAMCHABARWA_PKT_NET_PROFILE_NUM_MAX] = {0};
+#endif
+
 static HAL_MT_NAMCHABARWA_PKT_NETIF_PORT_DB_T
     _hal_mt_namchabarwa_pkt_port_db[HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM];
 static UI32_T _hal_mt_namchabarwa_pkt_slice_port_to_di_db[OSAL_MDC_MAX_CHIPS_PER_SYSTEM]
@@ -184,10 +189,13 @@ static UI32_T _hal_mt_namchabarwa_pkt_slice_port_to_di_db[OSAL_MDC_MAX_CHIPS_PER
     (&_hal_mt_namchabarwa_pkt_rx_cb[unit].pdma[channel].ptr_gpd_align_start_addr[gpd])
 /*---------------------------------------------------------------------------*/
 #define HAL_MT_NAMCHABARWA_PKT_GET_PORT_DB(port) (&_hal_mt_namchabarwa_pkt_port_db[port])
+
+#if defined(CLX_EN_NETIF)
 #define HAL_MT_NAMCHABARWA_PKT_GET_PORT_PROFILE_LIST(port) \
     (_hal_mt_namchabarwa_pkt_port_db[port].ptr_profile_list)
 #define HAL_MT_NAMCHABARWA_PKT_GET_PORT_NETDEV(port) \
     _hal_mt_namchabarwa_pkt_port_db[port].ptr_net_dev
+#endif
 
 #define HAL_MT_NAMCHABARWA_PKT_GET_PORT_DI(unit, slice, slice_port)                     \
     (_hal_mt_namchabarwa_pkt_slice_port_to_di_db[unit][HAL_MT_NAMCHABARWA_PKT_SRC_PORT( \
@@ -356,8 +364,7 @@ typedef enum {
  *****************************************************************************
  */
 /*---------------------------------------------------------------------------*/
-static HAL_MT_NAMCHABARWA_PKT_DRV_CB_T
-    _hal_mt_namchabarwa_pkt_drv_cb[OSAL_MDC_MAX_CHIPS_PER_SYSTEM];
+static HAL_MT_NAMCHABARWA_PKT_DRV_CB_T _hal_mt_namchabarwa_pkt_drv_cb[OSAL_MDC_MAX_CHIPS_PER_SYSTEM];
 static HAL_MT_NAMCHABARWA_PKT_TX_CB_T _hal_mt_namchabarwa_pkt_tx_cb[OSAL_MDC_MAX_CHIPS_PER_SYSTEM];
 static HAL_MT_NAMCHABARWA_PKT_RX_CB_T _hal_mt_namchabarwa_pkt_rx_cb[OSAL_MDC_MAX_CHIPS_PER_SYSTEM];
 /*---------------------------------------------------------------------------*/
@@ -856,9 +863,8 @@ _hal_mt_namchabarwa_pkt_clearPcxErrIntrReg(const UI32_T unit)
 }
 
 static CLX_ERROR_NO_T
-_hal_mt_namchabarwa_pkt_clearRxPdmaAbnormalIntrReg(
-    const UI32_T unit,
-    const HAL_MT_NAMCHABARWA_PKT_RX_CHANNEL_T channel)
+_hal_mt_namchabarwa_pkt_clearRxPdmaAbnormalIntrReg(const UI32_T unit,
+                                                   const HAL_MT_NAMCHABARWA_PKT_RX_CHANNEL_T channel)
 {
     UI32_T data;
 
@@ -880,9 +886,8 @@ _hal_mt_namchabarwa_pkt_clearRxPdmaAbnormalIntrReg(
 }
 
 static CLX_ERROR_NO_T
-_hal_mt_namchabarwa_pkt_clearTxPdmaAbnormalIntrReg(
-    const UI32_T unit,
-    const HAL_MT_NAMCHABARWA_PKT_TX_CHANNEL_T channel)
+_hal_mt_namchabarwa_pkt_clearTxPdmaAbnormalIntrReg(const UI32_T unit,
+                                                   const HAL_MT_NAMCHABARWA_PKT_TX_CHANNEL_T channel)
 {
     UI32_T data;
 
@@ -1135,94 +1140,7 @@ hal_mt_namchabarwa_pkt_clearRxKnlCnt(const UI32_T unit, void *ptr_data)
     return (CLX_E_OK);
 }
 
-/**
- * @brief To set the port attributes such as status or speeds.
- *
- * @param [in]     unit          - The unit ID
- * @param [in]     ptr_data      - Pointer of the data
- * @return         CLX_E_OK    - Successfully set the attributes.
- */
-CLX_ERROR_NO_T
-hal_mt_namchabarwa_pkt_setPortAttr(const UI32_T unit, void *ptr_data)
-{
-#define HAL_MT_NAMCHABARWA_PKT_PORT_STATUS_UP   (1)
-#define HAL_MT_NAMCHABARWA_PKT_PORT_STATUS_DOWN (0)
-    struct net_device *ptr_net_dev;
-    struct net_device_priv *ptr_priv;
-    UI32_T port;
-    UI32_T status;
-    UI32_T speed;
-    HAL_MT_NAMCHABARWA_PKT_IOCTL_PORT_COOKIE_T *ptr_cookie = ptr_data;
-
-    osal_io_copyFromUser(&port, &ptr_cookie->port, sizeof(UI32_T));
-    osal_io_copyFromUser(&status, &ptr_cookie->status, sizeof(UI32_T));
-    osal_io_copyFromUser(&speed, &ptr_cookie->speed, sizeof(UI32_T));
-
-    /* coverity: port used as an index of _hal_mt_namchabarwa_pkt_port_db[129] */
-    if (HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM > port) {
-        ptr_net_dev = HAL_MT_NAMCHABARWA_PKT_GET_PORT_NETDEV(port);
-    } else {
-        OSAL_PRINT(OSAL_DBG_ERR, "u=%u, port=%u is outof range[0-%d]\n", unit, port,
-                   HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM);
-        return (CLX_E_BAD_PARAMETER);
-    }
-
-    if ((NULL != ptr_net_dev) && (port < HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM)) {
-        if (HAL_MT_NAMCHABARWA_PKT_PORT_STATUS_UP == status) {
-            netif_carrier_on(ptr_net_dev);
-        } else {
-            netif_carrier_off(ptr_net_dev);
-        }
-
-        /* Link speed config */
-        ptr_priv = netdev_priv(ptr_net_dev);
-        ptr_priv->speed = speed;
-    }
-    return (CLX_E_OK);
-}
-
-/**
- * @brief To get the port attributes such as status or speeds.
- *
- * @param [in]     unit          - The unit ID
- * @param [out]    ptr_data      - Pointer of the data
- * @return         CLX_E_OK    - Successfully set the attributes.
- */
-CLX_ERROR_NO_T
-hal_mt_namchabarwa_pkt_getPortAttr(const UI32_T unit, void *ptr_data)
-{
-    HAL_MT_NAMCHABARWA_PKT_IOCTL_PORT_COOKIE_T *ptr_cookie = ptr_data;
-    struct net_device *ptr_net_dev = NULL;
-    struct net_device_priv *ptr_priv;
-    UI32_T port;
-    UI32_T status;
-    UI32_T speed;
-
-    osal_io_copyFromUser(&port, &ptr_cookie->port, sizeof(UI32_T));
-    if (HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM > port) {
-        ptr_net_dev = HAL_MT_NAMCHABARWA_PKT_GET_PORT_NETDEV(port);
-    } else {
-        OSAL_PRINT(OSAL_DBG_ERR, "u=%u, port=%u is outof range[0-%d]\n", unit, port,
-                   HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM);
-        return (CLX_E_BAD_PARAMETER);
-    }
-
-    if (NULL == ptr_net_dev) {
-        OSAL_PRINT(OSAL_DBG_ERR, "%s(%d): Failed to get netdev, port %d\n", __FUNCTION__, __LINE__,
-                   port);
-        return (CLX_E_BAD_PARAMETER);
-    }
-    status = netif_carrier_ok(ptr_net_dev);
-
-    ptr_priv = netdev_priv(ptr_net_dev);
-    speed = ptr_priv->speed;
-    osal_io_copyToUser(&ptr_cookie->status, &status, sizeof(UI32_T));
-    osal_io_copyToUser(&ptr_cookie->speed, &speed, sizeof(UI32_T));
-
-    return (CLX_E_OK);
-}
-
-static void
+void
 _hal_mt_namchabarwa_pkt_lockRxChannelAll(const UI32_T unit)
 {
     UI32_T rch;
@@ -1234,7 +1152,7 @@ _hal_mt_namchabarwa_pkt_lockRxChannelAll(const UI32_T unit)
     }
 }
 
-static void
+void
 _hal_mt_namchabarwa_pkt_unlockRxChannelAll(const UI32_T unit)
 {
     UI32_T rch;
@@ -1246,6 +1164,7 @@ _hal_mt_namchabarwa_pkt_unlockRxChannelAll(const UI32_T unit)
     }
 }
 
+#if defined(CLX_EN_NETIF)
 static CLX_ERROR_NO_T
 _hal_mt_namchabarwa_pkt_setIntfProperty(const UI32_T unit, void *ptr_data)
 {
@@ -1390,6 +1309,7 @@ _hal_mt_namchabarwa_pkt_getNetlink(const UI32_T unit, void *ptr_data)
 
     return (CLX_E_OK);
 }
+#endif
 
 /* ----------------------------------------------------------------------------------- independent
  * func */
@@ -1405,9 +1325,7 @@ _hal_mt_namchabarwa_pkt_enQueue(HAL_MT_NAMCHABARWA_PKT_SW_QUEUE_T *ptr_que, void
 {
     CLX_ERROR_NO_T rc = CLX_E_OK;
 
-    osal_takeSemaphore(&ptr_que->sema, CLX_SEMAPHORE_WAIT_FOREVER);
     rc = osal_que_enque(&ptr_que->que_id, ptr_data);
-    osal_giveSemaphore(&ptr_que->sema);
 
     return (rc);
 }
@@ -1424,9 +1342,7 @@ _hal_mt_namchabarwa_pkt_deQueue(HAL_MT_NAMCHABARWA_PKT_SW_QUEUE_T *ptr_que, void
 {
     CLX_ERROR_NO_T rc = CLX_E_OK;
 
-    osal_takeSemaphore(&ptr_que->sema, CLX_SEMAPHORE_WAIT_FOREVER);
     rc = osal_que_deque(&ptr_que->que_id, pptr_data);
-    osal_giveSemaphore(&ptr_que->sema);
 
     return (rc);
 }
@@ -1444,9 +1360,7 @@ _hal_mt_namchabarwa_pkt_getQueueCount(HAL_MT_NAMCHABARWA_PKT_SW_QUEUE_T *ptr_que
 {
     CLX_ERROR_NO_T rc = CLX_E_OK;
 
-    osal_takeSemaphore(&ptr_que->sema, CLX_SEMAPHORE_WAIT_FOREVER);
     osal_que_getCount(&ptr_que->que_id, ptr_count);
-    osal_giveSemaphore(&ptr_que->sema);
 
     return (rc);
 }
@@ -1924,6 +1838,7 @@ _hal_mt_namchabarwa_pkt_strictTxDeQueue(const UI32_T unit, void *ptr_data)
         if (FALSE == ptr_tx_cb->running) {
             rc = CLX_E_OTHERS;
             osal_io_copyToUser(&ptr_cookie->rc, &rc, sizeof(CLX_ERROR_NO_T));
+            OSAL_PRINT(OSAL_DBG_TX | OSAL_DBG_DEBUG, "tx callback no running.\n");
             return (CLX_E_OK); /* deinit */
         }
 
@@ -1952,6 +1867,7 @@ _hal_mt_namchabarwa_pkt_strictTxDeQueue(const UI32_T unit, void *ptr_data)
     } else {
         /* It may happen at last gpd, return error and do not invoke callback. */
         rc = CLX_E_OTHERS;
+        OSAL_PRINT(OSAL_DBG_TX | OSAL_DBG_DEBUG, "no packet to free.\n");
         osal_io_copyToUser(&ptr_cookie->rc, &rc, sizeof(CLX_ERROR_NO_T));
         return CLX_E_OK;
     }
@@ -1970,7 +1886,7 @@ _hal_mt_namchabarwa_pkt_strictTxDeQueue(const UI32_T unit, void *ptr_data)
  * @param [in]     ptr_profile     - Pointer of the profile
  * @return         CLX_E_OK    - Successfully dispatch the packets.
  */
-static void
+void
 _hal_mt_namchabarwa_pkt_rxCheckReason(HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T *ptr_sw_gpd,
                                       HAL_MT_NAMCHABARWA_PKT_NETIF_PROFILE_T *ptr_profile,
                                       BOOL_T *ptr_hit_prof)
@@ -2003,7 +1919,7 @@ _hal_mt_namchabarwa_pkt_rxCheckReason(HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T *ptr_sw
     }
 }
 
-static BOOL_T
+BOOL_T
 _hal_mt_namchabarwa_pkt_comparePatternWithPayload(
     volatile HAL_MT_NAMCHABARWA_PKT_RX_GPD_T *ptr_rx_gpd,
     const UI8_T *ptr_pattern,
@@ -2036,7 +1952,7 @@ _hal_mt_namchabarwa_pkt_comparePatternWithPayload(
     return (TRUE);
 }
 
-static void
+void
 _hal_mt_namchabarwa_pkt_rxCheckPattern(volatile HAL_MT_NAMCHABARWA_PKT_RX_GPD_T *ptr_rx_gpd,
                                        HAL_MT_NAMCHABARWA_PKT_NETIF_PROFILE_T *ptr_profile,
                                        BOOL_T *ptr_hit_prof)
@@ -2063,9 +1979,10 @@ _hal_mt_namchabarwa_pkt_rxCheckPattern(volatile HAL_MT_NAMCHABARWA_PKT_RX_GPD_T 
         OSAL_PRINT(OSAL_DBG_PROFILE, "compare pattern id=%d\n", idx);
         if (0 !=
             (ptr_profile->flags & (HAL_MT_NAMCHABARWA_PKT_NETIF_PROFILE_FLAGS_PATTERN_0 << idx))) {
-            match = _hal_mt_namchabarwa_pkt_comparePatternWithPayload(
-                ptr_rx_gpd, ptr_profile->pattern[idx], ptr_profile->mask[idx],
-                ptr_profile->offset[idx]);
+            match = _hal_mt_namchabarwa_pkt_comparePatternWithPayload(ptr_rx_gpd,
+                                                                      ptr_profile->pattern[idx],
+                                                                      ptr_profile->mask[idx],
+                                                                      ptr_profile->offset[idx]);
             if (TRUE == match) {
                 /* Do nothing */
             } else {
@@ -2077,6 +1994,7 @@ _hal_mt_namchabarwa_pkt_rxCheckPattern(volatile HAL_MT_NAMCHABARWA_PKT_RX_GPD_T 
     }
 }
 
+#if defined(CLX_EN_NETIF)
 static void
 _hal_mt_namchabarwa_pkt_matchUserProfile(HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T *ptr_sw_gpd,
                                          HAL_MT_NAMCHABARWA_PKT_PROFILE_NODE_T *ptr_profile_list,
@@ -2109,6 +2027,7 @@ _hal_mt_namchabarwa_pkt_matchUserProfile(HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T *ptr
         ptr_curr_node = ptr_curr_node->ptr_next_node;
     }
 }
+#endif
 
 static void
 _hal_mt_namchabarwa_pkt_getPacketDest(const UI32_T unit,
@@ -2116,6 +2035,7 @@ _hal_mt_namchabarwa_pkt_getPacketDest(const UI32_T unit,
                                       HAL_MT_NAMCHABARWA_PKT_DEST_T *ptr_dest,
                                       void **pptr_cookie)
 {
+#if defined(CLX_EN_NETIF)
     UI32_T port;
     HAL_MT_NAMCHABARWA_PKT_PROFILE_NODE_T *ptr_profile_list;
     HAL_MT_NAMCHABARWA_PKT_NETIF_PROFILE_T *ptr_profile_hit;
@@ -2128,7 +2048,8 @@ _hal_mt_namchabarwa_pkt_getPacketDest(const UI32_T unit,
         port = HAL_MT_NAMCHABARWA_PKT_GET_PORT_DI(unit, ptr_sw_gpd->ptr_pph_l2->slice_id,
                                                   ptr_sw_gpd->ptr_pph_l2->port_num);
         if (-1 == port) {
-            OSAL_PRINT(OSAL_DBG_RX | OSAL_DBG_ERR, "port:%u is invlaid!!!\n", port);
+            OSAL_PRINT(OSAL_DBG_RX | OSAL_DBG_ERR, "port is invlaid!!!,slice_id:%u port_num:%u\n",
+                       ptr_sw_gpd->ptr_pph_l2->slice_id, ptr_sw_gpd->ptr_pph_l2->port_num);
             *ptr_dest = HAL_MT_NAMCHABARWA_PKT_DEST_DROP;
             return;
         }
@@ -2146,8 +2067,11 @@ _hal_mt_namchabarwa_pkt_getPacketDest(const UI32_T unit,
     } else {
         *ptr_dest = HAL_MT_NAMCHABARWA_PKT_DEST_NETDEV;
     }
-
     OSAL_PRINT(OSAL_DBG_PROFILE, "port:%d final dest type:%d\n", port, *ptr_dest);
+#else
+    *ptr_dest = HAL_MT_NAMCHABARWA_PKT_DEST_SDK;
+    OSAL_PRINT(OSAL_DBG_PROFILE, "final dest type:%d\n", *ptr_dest);
+#endif
 }
 
 /**
@@ -2158,26 +2082,38 @@ _hal_mt_namchabarwa_pkt_getPacketDest(const UI32_T unit,
  * @param [in]     loglvl           - Log level for printing the payload.
  */
 static void
-_hal_mt_namchabarwa_pkt_print_payload(UI8_T *ptr_virt_addr, UI32_T buf_len, UI32_T loglvl)
+_hal_mt_namchabarwa_pkt_print_payload(UI8_T *ptr_virt_addr, UI32_T size, UI32_T loglvl)
 {
-    UI32_T i = 0;
+    UI8_T buf[64] = {0};
+    UI8_T buf_len = 0;
+    UI8_T buf_size = 0;
+    UI16_T len = 0;
     if (0 == (loglvl & (verbosity))) {
         return;
     }
-    if (loglvl & OSAL_DBG_RX) {
+    if (loglvl & OSAL_DBG_RX_PAYLOAD) {
         osal_printf("\nRx Payload:\n");
-    } else if (loglvl & OSAL_DBG_TX) {
+    } else if (loglvl & OSAL_DBG_TX_PAYLOAD) {
         osal_printf("\nTx Payload:\n");
     }
 
-    osal_printf("==========================  PKT BUF %p %d ====================== \n",
-                ptr_virt_addr, buf_len);
-    while (i < buf_len) {
-        osal_printf("%02x ", *((UI8_T *)ptr_virt_addr + i));
-        i++;
-        if (i % 8 == 0)
-            osal_printf("\n");
+
+    buf_len = sizeof(buf) /sizeof(buf[0]);
+    memset(buf, 0, buf_len);
+    buf_size += snprintf(&buf[buf_size], buf_len, "%04x ", 0);
+    for (len = 0; len < size; len++) {
+        buf_size += snprintf(&buf[buf_size], buf_len, "%02x ", ptr_virt_addr[len]);
+        if (!((len + 1) % 16)) {
+            osal_printf("%s\r\n", buf);
+            memset(buf, 0, buf_len);
+            buf_size = 0;
+            buf_size += snprintf(&buf[buf_size], buf_len, "%04x ", (len + 1));
+        }
     }
+    if (size % 16) {
+        osal_printf("%s\r\n", buf);
+    }
+
 }
 
 /**
@@ -2196,9 +2132,9 @@ _hal_mt_namchabarwa_pkt_showPdmaGpd(const UI32_T unit,
     if (0 == (loglvl & (verbosity))) {
         return;
     }
-    if (loglvl & OSAL_DBG_RX) {
+    if (loglvl & OSAL_DBG_RX_PAYLOAD) {
         osal_printf("\nRx Descriptor:\n");
-    } else if (loglvl & OSAL_DBG_TX) {
+    } else if (loglvl & OSAL_DBG_TX_PAYLOAD) {
         osal_printf("\nTx Descriptor:\n");
     }
 
@@ -2226,9 +2162,10 @@ _hal_mt_namchabarwa_pkt_print_pph(HAL_MT_NAMCHABARWA_PKT_PPH_L2_T *ptr_pph_l2, U
     if (0 == (loglvl & (verbosity))) {
         return;
     }
-    if (loglvl & OSAL_DBG_RX) {
+
+    if (loglvl & OSAL_DBG_RX_PAYLOAD) {
         osal_printf("\nRx PPH:\n");
-    } else if (loglvl & OSAL_DBG_TX) {
+    } else if (loglvl & OSAL_DBG_TX_PAYLOAD) {
         osal_printf("\nTx PPH:\n");
     }
 
@@ -2353,19 +2290,23 @@ _hal_mt_namchabarwa_pkt_rxEnQueue(const UI32_T unit,
     HAL_MT_NAMCHABARWA_PKT_DEST_T dest_type;
 
     /* skb meta */
-    UI32_T port = 0, len = 0, total_len = 0;
-    struct net_device *ptr_net_dev = NULL;
-    struct net_device_priv *ptr_priv = NULL;
-    struct sk_buff *ptr_skb = NULL, *ptr_merge_skb = NULL;
-    UI32_T copy_offset;
+    UI32_T len = 0, total_len = 0;
+    struct sk_buff *ptr_skb = NULL;
     void *ptr_dest;
     UI32_T i = 0;
+#if defined(CLX_EN_NETIF)
+    UI32_T port = 0;
+    struct net_device *ptr_net_dev = NULL;
+    struct net_device_priv *ptr_priv = NULL;
+    struct sk_buff *ptr_merge_skb = NULL;
+    UI32_T copy_offset;
     UI32_T vid_1st = 0;
     UI32_T vlan_pop_num = 0;
     struct ethhdr *ether = NULL;
     static UI8_T stp_mac[ETH_ALEN] = {0x01, 0x80, 0xc2, 0x00, 0x00, 0x00};
     static UI8_T pvst_mac[ETH_ALEN] = {0x01, 0x00, 0x0c, 0xcc, 0xcc, 0xcd};
     HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_T *ptr_netif = NULL;
+#endif
 
     /* To verify kernel Rx performance */
     if (CLX_E_OK == perf_rxTest()) {
@@ -2386,34 +2327,60 @@ _hal_mt_namchabarwa_pkt_rxEnQueue(const UI32_T unit,
         return;
     }
 
-    /* unmap dma to make sure data transfer completely */
-    phy_addr = CLX_ADDR_32_TO_64(ptr_sw_gpd->rx_gpd.d_addr_hi, ptr_sw_gpd->rx_gpd.d_addr_lo);
-    ptr_virt_addr = ptr_sw_gpd->ptr_cookie;
-    ptr_skb = (struct sk_buff *)ptr_virt_addr;
-    osal_skb_unmapDma(phy_addr, ptr_skb->len, DMA_FROM_DEVICE);
+    while (NULL != ptr_sw_gpd) {
+        len = ptr_sw_gpd->rx_gpd.size;
 
-    /* get pph in skb*/
-    ptr_sw_gpd->ptr_pph_l2 = (HAL_MT_NAMCHABARWA_PKT_PPH_L2_T *)((UI8_T *)ptr_skb->data +
-                                                                 HAL_MT_NAMCHABARWA_PKT_EMAC_SZ);
-    i = 0;
-    while (i < HAL_MT_NAMCHABARWA_PKT_PPH_HDR_SZ / 4) {
-        *((UI32_T *)ptr_sw_gpd->ptr_pph_l2 + i) =
-            HAL_MT_NAMCHABARWA_PKT_BE_TO_HOST32(*((UI32_T *)ptr_sw_gpd->ptr_pph_l2 + i));
-        i++;
+        total_len += len;
+
+        /* unmap dma */
+        phy_addr = CLX_ADDR_32_TO_64(ptr_sw_gpd->rx_gpd.d_addr_hi, ptr_sw_gpd->rx_gpd.d_addr_lo);
+        ptr_virt_addr = ptr_sw_gpd->ptr_cookie;
+
+        ptr_skb = (struct sk_buff *)ptr_virt_addr;
+
+        /* note here ptr_skb->len is the total buffer size not means the actual Rx packet len
+         * it should be updated later
+         */
+        osal_skb_unmapDma(phy_addr, ptr_skb->len, DMA_FROM_DEVICE);
+        // osal_skb_syncDeviceDma(phy_addr, ptr_skb->len, DMA_FROM_DEVICE);
+
+        ptr_skb->len = len;
+
+        if (ptr_sw_gpd->rx_gpd.sop == 1) {
+            /* get pph in skb*/
+            ptr_sw_gpd->ptr_pph_l2 =
+                (HAL_MT_NAMCHABARWA_PKT_PPH_L2_T *)((UI8_T *)ptr_skb->data +
+                                                    HAL_MT_NAMCHABARWA_PKT_EMAC_SZ);
+
+            while (i < HAL_MT_NAMCHABARWA_PKT_PPH_HDR_SZ / 4) {
+                *((UI32_T *)ptr_sw_gpd->ptr_pph_l2 + i) =
+                    HAL_MT_NAMCHABARWA_PKT_BE_TO_HOST32(*((UI32_T *)ptr_sw_gpd->ptr_pph_l2 + i));
+                i++;
+            }
+        }
+
+        if (verbosity & (OSAL_DBG_RX_PAYLOAD)) {
+            if (ptr_sw_gpd->rx_gpd.sop == 1) {
+                _hal_mt_namchabarwa_pkt_print_pph(ptr_sw_gpd->ptr_pph_l2, OSAL_DBG_RX);
+            }
+            _hal_mt_namchabarwa_pkt_showPdmaGpd(
+                unit, (HAL_MT_NAMCHABARWA_PKT_GPD_T *)(&ptr_sw_gpd->rx_gpd), OSAL_DBG_RX);
+            if (ptr_sw_gpd->rx_gpd.sop == 1) {
+                _hal_mt_namchabarwa_pkt_print_payload(
+                    ((UI8_T *)ptr_skb->data + HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ),
+                    ptr_sw_gpd->rx_gpd.size - HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ, OSAL_DBG_RX);
+            } else {
+                _hal_mt_namchabarwa_pkt_print_payload(((UI8_T *)ptr_skb->data),
+                                                      ptr_sw_gpd->rx_gpd.size, OSAL_DBG_RX);
+            }
+        }
+
+        /* next */
+        ptr_sw_gpd = ptr_sw_gpd->ptr_next;
     }
 
-    osal_skb_syncDeviceDma(phy_addr, ptr_skb->len, DMA_FROM_DEVICE);
-
-    /* print dma detail info */
-    _hal_mt_namchabarwa_pkt_print_payload(
-        ((UI8_T *)ptr_skb->data + HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ),
-        ptr_sw_gpd->rx_gpd.size - HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ, OSAL_DBG_RX);
-    _hal_mt_namchabarwa_pkt_print_pph(ptr_sw_gpd->ptr_pph_l2, OSAL_DBG_RX);
-    _hal_mt_namchabarwa_pkt_showPdmaGpd(unit, (HAL_MT_NAMCHABARWA_PKT_GPD_T *)(&ptr_sw_gpd->rx_gpd),
-                                        OSAL_DBG_RX);
-
-    _hal_mt_namchabarwa_pkt_getPacketDest(unit, ptr_sw_gpd, &dest_type, &ptr_dest);
-
+    _hal_mt_namchabarwa_pkt_getPacketDest(unit, ptr_sw_first_gpd, &dest_type, &ptr_dest);
+#if defined(CLX_EN_NETIF)
     if ((HAL_MT_NAMCHABARWA_PKT_DEST_NETDEV == dest_type) ||
         (HAL_MT_NAMCHABARWA_PKT_DEST_NETLINK == dest_type)) {
         /* need to encap the packet as skb */
@@ -2447,7 +2414,10 @@ _hal_mt_namchabarwa_pkt_rxEnQueue(const UI32_T unit,
             port = HAL_MT_NAMCHABARWA_PKT_GET_PORT_DI(unit, ptr_sw_first_gpd->ptr_pph_l2->slice_id,
                                                       ptr_sw_first_gpd->ptr_pph_l2->port_num);
             if (-1 == port) {
-                OSAL_PRINT(OSAL_DBG_RX | OSAL_DBG_ERR, "port:%u is invlaid!!!\n", port);
+                OSAL_PRINT(OSAL_DBG_RX | OSAL_DBG_ERR,
+                           "port:%u is invlaid slice_id:%u port_num:%u!!!\n", port,
+                           ptr_sw_first_gpd->ptr_pph_l2->slice_id,
+                           ptr_sw_first_gpd->ptr_pph_l2->port_num);
                 _hal_mt_namchabarwa_pkt_freeRxGpdList(unit, ptr_sw_first_gpd, TRUE);
                 return;
             }
@@ -2569,8 +2539,11 @@ _hal_mt_namchabarwa_pkt_rxEnQueue(const UI32_T unit,
                        ((NETIF_NL_RX_DST_NETLINK_T *)ptr_dest)->mc_group_name);
             netif_nl_rxSkb(unit, ptr_skb, ptr_dest);
         }
-    } else if (HAL_MT_NAMCHABARWA_PKT_DEST_SDK == dest_type) {
-        while (0 != _hal_mt_namchabarwa_pkt_enQueue(&ptr_rx_cb->sw_queue[channel], ptr_sw_gpd)) {
+    } else
+#endif
+        if (HAL_MT_NAMCHABARWA_PKT_DEST_SDK == dest_type) {
+        while (0 !=
+               _hal_mt_namchabarwa_pkt_enQueue(&ptr_rx_cb->sw_queue[channel], ptr_sw_first_gpd)) {
             ptr_rx_cb->cnt.channel[channel].enque_retry++;
             HAL_MT_NAMCHABARWA_PKT_RX_ENQUE_RETRY_SLEEP();
         }
@@ -2722,7 +2695,7 @@ _hal_mt_namchabarwa_pkt_schedRxDeQueue(const UI32_T unit, void *ptr_data)
             return (CLX_E_OK);
         }
     } else {
-        OSAL_PRINT((OSAL_DBG_WARN | OSAL_DBG_RX), "no pkt in queue\n");
+        OSAL_PRINT((OSAL_DBG_DEBUG | OSAL_DBG_RX), "no pkt in queue\n");
         rc = CLX_E_OTHERS;
         osal_io_copyToUser(&ptr_cookie->rc, &rc, sizeof(CLX_ERROR_NO_T));
         return (CLX_E_OK);
@@ -2784,6 +2757,7 @@ _hal_mt_namchabarwa_pkt_waitTxDone(const UI32_T unit,
     return (rc);
 }
 
+#if defined(CLX_EN_NETIF)
 static CLX_ERROR_NO_T
 _hal_mt_namchabarwa_pkt_resumeAllIntf(const UI32_T unit)
 {
@@ -2835,6 +2809,7 @@ _hal_mt_namchabarwa_pkt_stopAllIntf(const UI32_T unit)
 
     return (CLX_E_OK);
 }
+#endif
 
 /**
  * @brief To perform the packet transmission form CPU to the switch.
@@ -2909,10 +2884,16 @@ hal_mt_namchabarwa_pkt_sendGpd(const UI32_T unit,
                 if (ptr_tx_pdma->free_gpd_num < HAL_MT_NAMCHABARWA_PKT_KNL_TX_RING_AVBL_GPD_LOW) {
                     OSAL_PRINT(OSAL_DBG_TX, "u=%u, txch=%u, tx avbl gpd < %d, suspend all netdev\n",
                                unit, channel, HAL_MT_NAMCHABARWA_PKT_KNL_TX_RING_AVBL_GPD_LOW);
+#if defined(CLX_EN_NETIF)
                     _hal_mt_namchabarwa_pkt_suspendAllIntf(unit);
+#endif
                 }
             } else {
-                rc = CLX_E_TABLE_FULL;
+                OSAL_PRINT((OSAL_DBG_INFO | OSAL_DBG_TX),
+                           "u=%u, txch=%u, not enough gpd.used_gpd_num:%d, free_gpd_num:%d\n", unit,
+                           channel, used_gpd_num, ptr_tx_pdma->free_gpd_num);
+                rc = CLX_E_TRY_AGAIN;
+                ptr_tx_cb->cnt.channel[channel].gpd_empty++;
             }
         } else {
             OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_TX), "u=%u, txch=%u, pdma hw err\n", unit, channel);
@@ -2941,7 +2922,7 @@ _hal_mt_namchabarwa_pkt_rxStop(const UI32_T unit)
 
     /* Check if Rx is already stopped*/
     if (0 == (ptr_cb->init_flag & HAL_MT_NAMCHABARWA_PKT_INIT_RX_START)) {
-        OSAL_PRINT((OSAL_DBG_RX | OSAL_DBG_ERR), "u=%u, rx stop failed, not started\n", unit);
+        OSAL_PRINT((OSAL_DBG_RX | OSAL_DBG_INFO), "u=%u, rx stop failed, not started\n", unit);
         return (CLX_E_OK);
     }
 
@@ -3059,7 +3040,6 @@ hal_mt_namchabarwa_pkt_setRxKnlConfig(const UI32_T unit, void *ptr_data)
         }
 
         osal_io_copyFromUser(&ptr_rx_cb->buf_len, &ptr_cookie->buf_len, sizeof(UI32_T));
-        ptr_rx_cb->buf_len += HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ;
         _hal_mt_namchabarwa_pkt_rxStart(unit);
     }
 
@@ -3105,8 +3085,10 @@ hal_mt_namchabarwa_pkt_deinitTask(const UI32_T unit, void *ptr_data)
     /* to prevent net intf from Tx packet */
     ptr_tx_cb->net_tx_allowed = FALSE;
 
+#if defined(CLX_EN_NETIF)
     /* In case that some undestroyed net intf keep Tx after task deinit */
     _hal_mt_namchabarwa_pkt_stopAllIntf(unit);
+#endif
 
     if (0 == (ptr_cb->init_flag & HAL_MT_NAMCHABARWA_PKT_INIT_TASK)) {
         OSAL_PRINT((OSAL_DBG_RX | OSAL_DBG_ERR), "u=%u, rx stop failed, not started\n", unit);
@@ -3356,7 +3338,9 @@ hal_mt_namchabarwa_pkt_deinitPktDrv(const UI32_T unit, void *ptr_data)
         rc = _hal_mt_namchabarwa_pkt_deinitPktCb(unit);
     }
 
+#if defined(CLX_EN_NETIF)
     netif_nl_destroyAllNetlink(unit);
+#endif
 
     ptr_cb->init_flag &= (~HAL_MT_NAMCHABARWA_PKT_INIT_DRV);
 
@@ -3382,6 +3366,7 @@ _hal_mt_namchabarwa_pkt_handleTxErrStat(const UI32_T unit,
     HAL_MT_NAMCHABARWA_PKT_TX_CB_T *ptr_tx_cb = HAL_MT_NAMCHABARWA_PKT_GET_TX_CB_PTR(unit);
     UI32_T err_intr_status = 0;
     UI32_T err_type = 0;
+    CLX_IRQ_FLAGS_T irg_flags;
 
     osal_mdc_readPciReg(unit,
                         HAL_MT_NAMCHABARWA_PKT_PDMA_IRQ_PDMA_ABNORMAL_CH0_INTR +
@@ -3392,9 +3377,9 @@ _hal_mt_namchabarwa_pkt_handleTxErrStat(const UI32_T unit,
     }
 
     /* Set the error flag. */
-    osal_takeSemaphore(&ptr_tx_pdma->ring_lock, CLX_SEMAPHORE_WAIT_FOREVER);
+    osal_takeIsrLock(&ptr_tx_pdma->ring_lock, &irg_flags);
     ptr_tx_pdma->err_flag = TRUE;
-    osal_giveSemaphore(&ptr_tx_pdma->ring_lock);
+    osal_giveIsrLock(&ptr_tx_pdma->ring_lock, &irg_flags);
 
     // read err_type
     osal_mdc_readPciReg(unit,
@@ -3608,10 +3593,10 @@ _hal_mt_namchabarwa_pkt_handleTxDoneTask(void *ptr_argv)
             ptr_tx_pdma->free_gpd_num++;
             loop_cnt--;
         }
-
+#if defined(CLX_EN_NETIF)
         /* let the netdev resume Tx */
         _hal_mt_namchabarwa_pkt_resumeAllIntf(unit);
-
+#endif
         /* update ISR and counter */
         ptr_tx_cb->cnt.channel[channel].tx_done++;
 
@@ -3736,18 +3721,15 @@ _hal_mt_namchabarwa_pkt_handleRxDoneTask(void *ptr_argv)
                 _hal_mt_namchabarwa_pkt_unmaskIntr(unit, channel);
                 break;
             }
-
-            ptr_virt_addr = ptr_rx_pdma->pptr_skb_ring[ptr_rx_pdma->pop_idx];
-            ptr_skb = (struct sk_buff *)ptr_virt_addr;
-            phy_addr = CLX_ADDR_32_TO_64(ptr_rx_gpd->d_addr_hi, ptr_rx_gpd->d_addr_lo);
             /* Move HW-GPD to SW-GPD and append to a link-list */
             if (1 == ptr_rx_gpd->sop) {
                 ptr_sw_first_gpd = (HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T *)osal_alloc(
                     sizeof(HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T));
                 ptr_sw_gpd = ptr_sw_first_gpd;
                 if (NULL != ptr_sw_gpd) {
-                    memcpy(&ptr_sw_gpd->rx_gpd, (void *)ptr_rx_gpd,
-                           sizeof(HAL_MT_NAMCHABARWA_PKT_RX_GPD_T));
+                    osal_memset(ptr_sw_gpd, 0x0, sizeof(HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T));
+                    osal_memcpy(&ptr_sw_gpd->rx_gpd, (void *)ptr_rx_gpd,
+                                sizeof(HAL_MT_NAMCHABARWA_PKT_RX_GPD_T));
                 } else {
                     ptr_rx_cb->cnt.no_memory++;
                     OSAL_PRINT((OSAL_DBG_RX | OSAL_DBG_ERR),
@@ -3755,23 +3737,39 @@ _hal_mt_namchabarwa_pkt_handleRxDoneTask(void *ptr_argv)
                                sizeof(HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T));
                     break;
                 }
-
-                /* get pph in skb*/
-                ptr_sw_gpd->ptr_pph_l2 =
-                    (HAL_MT_NAMCHABARWA_PKT_PPH_L2_T *)((UI8_T *)ptr_skb->data +
-                                                        HAL_MT_NAMCHABARWA_PKT_EMAC_SZ);
             } else {
-                ptr_sw_gpd->ptr_next = (HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T *)osal_alloc(
-                    sizeof(HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T));
-                ptr_sw_gpd = ptr_sw_gpd->ptr_next;
-                if (NULL != ptr_sw_gpd) {
-                    memcpy(&ptr_sw_gpd->rx_gpd, (void *)ptr_rx_gpd,
-                           sizeof(HAL_MT_NAMCHABARWA_PKT_RX_GPD_T));
+                if (ptr_sw_first_gpd != NULL) {
+                    ptr_sw_gpd->ptr_next = (HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T *)osal_alloc(
+                        sizeof(HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T));
+                    ptr_sw_gpd = ptr_sw_gpd->ptr_next;
+                    if (NULL != ptr_sw_gpd) {
+                        osal_memset(ptr_sw_gpd, 0x0, sizeof(HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T));
+                        osal_memcpy(&ptr_sw_gpd->rx_gpd, (void *)ptr_rx_gpd,
+                                    sizeof(HAL_MT_NAMCHABARWA_PKT_RX_GPD_T));
+                    } else {
+                        ptr_rx_cb->cnt.no_memory++;
+                        OSAL_PRINT((OSAL_DBG_RX | OSAL_DBG_ERR),
+                                   "u=%u, rxch=%u, alloc mid sw gpd failed, size=%zu\n", unit,
+                                   channel, sizeof(HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T));
+                        break;
+                    }
                 } else {
-                    ptr_rx_cb->cnt.no_memory++;
                     OSAL_PRINT((OSAL_DBG_RX | OSAL_DBG_ERR),
-                               "u=%u, rxch=%u, alloc mid sw gpd failed, size=%zu\n", unit, channel,
-                               sizeof(HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T));
+                               "u=%u, rxch=%u, An incomplete packet was received. \n", unit,
+                               channel);
+                    ptr_virt_addr = ptr_rx_pdma->pptr_skb_ring[ptr_rx_pdma->pop_idx];
+                    ptr_skb = (struct sk_buff *)ptr_virt_addr;
+                    phy_addr = CLX_ADDR_32_TO_64(ptr_rx_gpd->d_addr_hi, ptr_rx_gpd->d_addr_lo);
+                    osal_skb_unmapDma(phy_addr, ptr_skb->len, DMA_FROM_DEVICE);
+                    osal_skb_free(ptr_skb);
+                    while (CLX_E_OK !=
+                           _hal_mt_namchabarwa_pkt_allocRxPayloadBuf(unit, channel,
+                                                                     ptr_rx_pdma->pop_idx)) {
+                        HAL_MT_NAMCHABARWA_PKT_ALLOC_MEM_RETRY_SLEEP();
+                    }
+                    /* update Rx PDMA */
+                    ptr_rx_pdma->pop_idx++;
+                    ptr_rx_pdma->pop_idx %= ptr_rx_pdma->gpd_num;
                     break;
                 }
             }
@@ -3792,6 +3790,7 @@ _hal_mt_namchabarwa_pkt_handleRxDoneTask(void *ptr_argv)
                 ptr_sw_gpd->ptr_next = NULL;
                 ptr_sw_first_gpd->rx_complete = TRUE;
                 _hal_mt_namchabarwa_pkt_rxEnQueue(unit, channel, ptr_sw_first_gpd);
+                ptr_sw_first_gpd = NULL;
             }
 
             // ptr_rx_gpd->size = ptr_rx_cb->buf_len;
@@ -3826,31 +3825,6 @@ _hal_mt_namchabarwa_pkt_handleRxDoneTask(void *ptr_argv)
     osal_exitRunThread();
 }
 
-static void
-_hal_mt_namchabarwa_pkt_net_dev_tx_callback(const UI32_T unit,
-                                            HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_T *ptr_sw_gpd,
-                                            struct sk_buff *ptr_skb)
-{
-    CLX_ADDR_T phy_addr = 0;
-
-    if (NULL == ptr_skb || NULL == ptr_sw_gpd) {
-        OSAL_PRINT(OSAL_DBG_ERR,
-                   "u=%u, _hal_mt_namchabarwa_pkt_net_dev_tx_callback bad parameter\n", unit);
-        return;
-    }
-
-    /* unmap dma */
-    phy_addr = CLX_ADDR_32_TO_64(ptr_sw_gpd->tx_gpd.s_addr_hi, ptr_sw_gpd->tx_gpd.s_addr_lo);
-    osal_skb_unmapDma(phy_addr, ptr_skb->len, DMA_TO_DEVICE);
-
-    /* free skb */
-    osal_skb_free(ptr_skb);
-    ptr_sw_gpd->ptr_cookie = NULL;
-
-    /* free gpd */
-    osal_free(ptr_sw_gpd);
-}
-
 /**
  * @brief To initialize the Task for packet module.
  *
@@ -3874,9 +3848,10 @@ hal_mt_namchabarwa_pkt_initTask(const UI32_T unit, void *ptr_data)
     }
 
     /* Init handleErrorTask */
-    rc = osal_createThread(
-        "ERROR", NETIF_PKT_PKT_ERROR_ISR_THREAD_STACK, NETIF_PKT_PKT_ERROR_ISR_THREAD_PRI,
-        _hal_mt_namchabarwa_pkt_handleErrorTask, (void *)((CLX_HUGE_T)unit), &ptr_cb->err_task_id);
+    rc = osal_createThread("ERROR", NETIF_PKT_PKT_ERROR_ISR_THREAD_STACK,
+                           NETIF_PKT_PKT_ERROR_ISR_THREAD_PRI,
+                           _hal_mt_namchabarwa_pkt_handleErrorTask, (void *)((CLX_HUGE_T)unit),
+                           &ptr_cb->err_task_id);
 
     /* Init handleTxDoneTask */
     for (channel = 0; ((channel < HAL_MT_NAMCHABARWA_PKT_TX_CHANNEL_LAST) && (CLX_E_OK == rc));
@@ -3884,10 +3859,11 @@ hal_mt_namchabarwa_pkt_initTask(const UI32_T unit, void *ptr_data)
         ptr_tx_cb->isr_task_cookie[channel].unit = unit;
         ptr_tx_cb->isr_task_cookie[channel].channel = channel;
 
-        rc = osal_createThread(
-            "TX_ISR", NETIF_PKT_PKT_TX_ISR_THREAD_STACK, NETIF_PKT_PKT_TX_ISR_THREAD_PRI,
-            _hal_mt_namchabarwa_pkt_handleTxDoneTask, (void *)&ptr_tx_cb->isr_task_cookie[channel],
-            &ptr_tx_cb->isr_task_id[channel]);
+        rc = osal_createThread("TX_ISR", NETIF_PKT_PKT_TX_ISR_THREAD_STACK,
+                               NETIF_PKT_PKT_TX_ISR_THREAD_PRI,
+                               _hal_mt_namchabarwa_pkt_handleTxDoneTask,
+                               (void *)&ptr_tx_cb->isr_task_cookie[channel],
+                               &ptr_tx_cb->isr_task_id[channel]);
     }
 
     /* Init handleRxDoneTask */
@@ -3896,10 +3872,11 @@ hal_mt_namchabarwa_pkt_initTask(const UI32_T unit, void *ptr_data)
         ptr_rx_cb->isr_task_cookie[channel].unit = unit;
         ptr_rx_cb->isr_task_cookie[channel].channel = channel;
 
-        rc = osal_createThread(
-            "RX_ISR", NETIF_PKT_PKT_RX_ISR_THREAD_STACK, NETIF_PKT_PKT_RX_ISR_THREAD_PRI,
-            _hal_mt_namchabarwa_pkt_handleRxDoneTask, (void *)&ptr_rx_cb->isr_task_cookie[channel],
-            &ptr_rx_cb->isr_task_id[channel]);
+        rc = osal_createThread("RX_ISR", NETIF_PKT_PKT_RX_ISR_THREAD_STACK,
+                               NETIF_PKT_PKT_RX_ISR_THREAD_PRI,
+                               _hal_mt_namchabarwa_pkt_handleRxDoneTask,
+                               (void *)&ptr_rx_cb->isr_task_cookie[channel],
+                               &ptr_rx_cb->isr_task_id[channel]);
     }
 
     /* Init txTask */
@@ -3912,11 +3889,12 @@ hal_mt_namchabarwa_pkt_initTask(const UI32_T unit, void *ptr_data)
     OSAL_PRINT(OSAL_DBG_COMMON, "u=%u, pkt task init done, init flag=0x%x\n", unit,
                ptr_cb->init_flag);
 
+#if defined(CLX_EN_NETIF)
     /* For some specail case in warmboot, the netifs are not destroyed during sdk deinit
      * but stopped, here we need to resume them with the original carrier status
      */
     _hal_mt_namchabarwa_pkt_resumeAllIntf(unit);
-
+#endif
     ptr_tx_cb->net_tx_allowed = TRUE;
 
     return (rc);
@@ -4247,6 +4225,7 @@ _hal_mt_namchabarwa_pkt_initL1Isr(const UI32_T unit)
     return (CLX_E_OK);
 }
 
+#if defined(CLX_EN_NETIF)
 static CLX_ERROR_NO_T
 _hal_mt_namchabarwa_pkt_addProfToList(HAL_MT_NAMCHABARWA_PKT_NETIF_PROFILE_T *ptr_new_profile,
                                       HAL_MT_NAMCHABARWA_PKT_PROFILE_NODE_T **pptr_profile_list)
@@ -4385,7 +4364,7 @@ _hal_mt_namchabarwa_pkt_delProfFromListById(
     }
 
     if (NULL == ptr_profile) {
-        OSAL_PRINT((OSAL_DBG_PROFILE | OSAL_DBG_ERR), "find prof failed, id=%d\n", id);
+        OSAL_PRINT((OSAL_DBG_PROFILE | OSAL_DBG_INFO), "find prof failed, id=%d\n", id);
     }
 
     return (ptr_profile);
@@ -4519,6 +4498,7 @@ _hal_mt_namchabarwa_pkt_destroyAllProfile(const UI32_T unit)
 
     return (CLX_E_OK);
 }
+#endif
 
 /**
  * @brief To invoke the functions to return pdma ring base info
@@ -4539,8 +4519,8 @@ hal_mt_namchabarwa_pkt_initPktDrvCallback(const UI32_T unit, void *ptr_data)
     HAL_MT_NAMCHABARWA_PKT_IOCTL_RX_COOKIE_T *ptr_cookie = ptr_data;
     HAL_MT_NAMCHABARWA_PKT_IOCTL_RX_COOKIE_T ioctl_data;
     HAL_MT_NAMCHABARWA_PKT_IOCTL_CHANNEL_RING_T
-    channel_ring[HAL_MT_NAMCHABARWA_PKT_RX_CHANNEL_LAST + HAL_MT_NAMCHABARWA_PKT_TX_CHANNEL_LAST] =
-        {0};
+    channel_ring[HAL_MT_NAMCHABARWA_PKT_RX_CHANNEL_LAST + HAL_MT_NAMCHABARWA_PKT_TX_CHANNEL_LAST] = {
+        0};
     CLX_ADDR_T phy_addr = 0;
 
     osal_io_copyFromUser(&ioctl_data, ptr_cookie, sizeof(HAL_MT_NAMCHABARWA_PKT_IOCTL_RX_COOKIE_T));
@@ -4611,29 +4591,31 @@ hal_mt_namchabarwa_pkt_initPktDrv(const UI32_T unit, void *ptr_data)
      *  check is required only in here)
      */
     if (0 != (ptr_cb->init_flag & HAL_MT_NAMCHABARWA_PKT_INIT_DRV)) {
-        OSAL_PRINT(OSAL_DBG_ERR, "u=%u, init pkt drv failed, inited\n", unit);
+        OSAL_PRINT(OSAL_DBG_INFO, "u=%u, init pkt drv failed, inited\n", unit);
 
-        OSAL_PRINT(OSAL_DBG_ERR, "u=%u, stop rx pkt\n", unit);
+        OSAL_PRINT(OSAL_DBG_INFO, "u=%u, stop rx pkt\n", unit);
         _hal_mt_namchabarwa_pkt_rxStop(unit);
 
-        OSAL_PRINT(OSAL_DBG_ERR, "u=%u, stop all intf\n", unit);
+#if defined(CLX_EN_NETIF)
+        OSAL_PRINT(OSAL_DBG_INFO, "u=%u, stop all intf\n", unit);
         _hal_mt_namchabarwa_pkt_stopAllIntf(unit);
-
-        OSAL_PRINT(OSAL_DBG_ERR, "u=%u, deinit pkt task\n", unit);
-
+#endif
+        OSAL_PRINT(OSAL_DBG_INFO, "u=%u, deinit pkt task\n", unit);
         hal_mt_namchabarwa_pkt_deinitTask(unit, NULL);
 
-        OSAL_PRINT(OSAL_DBG_ERR, "u=%u, deinit pkt drv\n", unit);
+        OSAL_PRINT(OSAL_DBG_INFO, "u=%u, deinit pkt drv\n", unit);
         hal_mt_namchabarwa_pkt_deinitPktDrv(unit, NULL);
 
-        OSAL_PRINT(OSAL_DBG_ERR, "u=%u, destroy all prof\n", unit);
+#if defined(CLX_EN_NETIF)
+        OSAL_PRINT(OSAL_DBG_INFO, "u=%u, destroy all prof\n", unit);
         _hal_mt_namchabarwa_pkt_destroyAllProfile(unit);
 
-        OSAL_PRINT(OSAL_DBG_ERR, "u=%u, destroy all netlink\n", unit);
+        OSAL_PRINT(OSAL_DBG_INFO, "u=%u, destroy all netlink\n", unit);
         netif_nl_destroyAllNetlink(unit);
 
-        OSAL_PRINT(OSAL_DBG_ERR, "u=%u, destroy all intf\n", unit);
+        OSAL_PRINT(OSAL_DBG_INFO, "u=%u, destroy all intf\n", unit);
         _hal_mt_namchabarwa_pkt_destroyAllIntf(unit);
+#endif
     }
 
     /* [cold-boot] 1. stop DMA channel
@@ -4687,6 +4669,7 @@ hal_mt_namchabarwa_pkt_initPktDrv(const UI32_T unit, void *ptr_data)
 }
 
 /* ----------------------------------------------------------------------------------- Init: I/O */
+#if defined(CLX_EN_NETIF)
 CLX_ERROR_NO_T
 hal_mt_namchabarwa_pkt_getNetDev(const UI32_T unit,
                                  const UI32_T port,
@@ -4696,6 +4679,7 @@ hal_mt_namchabarwa_pkt_getNetDev(const UI32_T unit,
 
     return (CLX_E_OK);
 }
+#endif
 
 CLX_ERROR_NO_T
 hal_mt_namchabarwa_pkt_prepareGpd(const UI32_T unit,
@@ -4745,6 +4729,7 @@ hal_mt_namchabarwa_pkt_preparePPh(const UI32_T unit,
 
 /* ----------------------------------------------------------------------------------- Init:
  * net_dev_ops */
+#if defined(CLX_EN_NETIF)
 static int
 _hal_mt_namchabarwa_pkt_net_dev_init(struct net_device *ptr_net_dev)
 {
@@ -4772,6 +4757,31 @@ _hal_mt_namchabarwa_pkt_net_dev_ioctl(struct net_device *ptr_net_dev,
                                       int cmd)
 {
     return 0;
+}
+
+static void
+_hal_mt_namchabarwa_pkt_net_dev_tx_callback(const UI32_T unit,
+                                            HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_T *ptr_sw_gpd,
+                                            struct sk_buff *ptr_skb)
+{
+    CLX_ADDR_T phy_addr = 0;
+
+    if (NULL == ptr_skb || NULL == ptr_sw_gpd) {
+        OSAL_PRINT(OSAL_DBG_ERR,
+                   "u=%u, _hal_mt_namchabarwa_pkt_net_dev_tx_callback bad parameter\n", unit);
+        return;
+    }
+
+    /* unmap dma */
+    phy_addr = CLX_ADDR_32_TO_64(ptr_sw_gpd->tx_gpd.s_addr_hi, ptr_sw_gpd->tx_gpd.s_addr_lo);
+    osal_skb_unmapDma(phy_addr, ptr_skb->len, DMA_TO_DEVICE);
+
+    /* free skb */
+    osal_skb_free(ptr_skb);
+    ptr_sw_gpd->ptr_cookie = NULL;
+
+    /* free gpd */
+    osal_free(ptr_sw_gpd);
 }
 
 static netdev_tx_t
@@ -4822,9 +4832,13 @@ _hal_mt_namchabarwa_pkt_net_dev_tx(struct sk_buff *ptr_skb, struct net_device *p
 
     /* prepare buf */
     headroom = skb_headroom(ptr_skb);
-    if (headroom < HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ) {
-        if (pskb_expand_head(ptr_skb, HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ - headroom, 0,
-                             GFP_ATOMIC)) {
+    if (!IS_ALIGNED(headroom, 4) || (headroom < HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ)) {
+        if (headroom < HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ) {
+            headroom = HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ - headroom;
+        } else {
+            headroom = SKB_DATA_ALIGN(headroom) - headroom;
+        }
+        if (pskb_expand_head(ptr_skb, headroom, 0, GFP_ATOMIC)) {
             osal_printf("Failed to expand skb headroom\n");
             ptr_priv->stats.tx_errors++;
             osal_skb_free(ptr_skb);
@@ -4840,11 +4854,13 @@ _hal_mt_namchabarwa_pkt_net_dev_tx(struct sk_buff *ptr_skb, struct net_device *p
 
     /* push 52bytes for pdma header */
     skb_push(ptr_skb, HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ);
-
     ptr_virt_addr = (void *)ptr_skb->data;
-
     // should clear, or maybe cannot send to port
     osal_memset(ptr_virt_addr, 0x0, HAL_MT_NAMCHABARWA_PKT_PDMA_HDR_SZ);
+
+    if (!IS_ALIGNED((unsigned long) ptr_skb->data, 4)) {
+        OSAL_PRINT(OSAL_DBG_ERR, "tx err, skb data addr:0x%lx, not align 4bytes\n", (unsigned long) ptr_skb->data);
+    }
 
     // must prepare pph before mapdma
     hal_mt_namchabarwa_pkt_preparePPh(
@@ -4899,8 +4915,8 @@ _hal_mt_namchabarwa_pkt_net_dev_tx(struct sk_buff *ptr_skb, struct net_device *p
         ptr_priv->stats.tx_packets++;
         ptr_priv->stats.tx_bytes += pkt_len;
     } else {
-        ptr_priv->stats
-            .tx_fifo_errors++; /* to record the extreme cases where packets are dropped */
+        ptr_priv->stats.tx_fifo_errors++; /* to record the extreme cases where packets are dropped
+                                           */
         ptr_priv->stats.tx_dropped++;
         osal_skb_unmapDma(phy_addr, ptr_skb->len, DMA_TO_DEVICE);
         osal_skb_free(ptr_skb);
@@ -5011,8 +5027,8 @@ _hal_mt_namchabarwa_pkt_setup(struct net_device *ptr_net_dev)
     ptr_net_dev->netdev_ops = &_hal_mt_namchabarwa_pkt_net_dev_ops;
     ptr_net_dev->ethtool_ops = &_hal_mt_namchabarwa_pkt_net_dev_ethtool_ops;
     ptr_net_dev->watchdog_timeo = HAL_MT_NAMCHABARWA_PKT_TX_TIMEOUT;
-    ptr_net_dev->mtu =
-        HAL_MT_NAMCHABARWA_PKT_MAX_ETH_FRAME_SIZE; /* This mtu need to be synced to chip's */
+    ptr_net_dev->mtu = HAL_MT_NAMCHABARWA_PKT_MAX_ETH_FRAME_SIZE; /* This mtu need to be synced to
+                                                                     chip's */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)
     ptr_net_dev->min_mtu = 64;
     ptr_net_dev->max_mtu = 65535;
@@ -5266,6 +5282,93 @@ _hal_mt_namchabarwa_pkt_setIntf(const UI32_T unit, void *ptr_data)
     return (CLX_E_OK);
 }
 
+/**
+ * @brief To set the port attributes such as status or speeds.
+ *
+ * @param [in]     unit          - The unit ID
+ * @param [in]     ptr_data      - Pointer of the data
+ * @return         CLX_E_OK    - Successfully set the attributes.
+ */
+CLX_ERROR_NO_T
+hal_mt_namchabarwa_pkt_setPortAttr(const UI32_T unit, void *ptr_data)
+{
+#define HAL_MT_NAMCHABARWA_PKT_PORT_STATUS_UP   (1)
+#define HAL_MT_NAMCHABARWA_PKT_PORT_STATUS_DOWN (0)
+    struct net_device *ptr_net_dev;
+    struct net_device_priv *ptr_priv;
+    UI32_T port;
+    UI32_T status;
+    UI32_T speed;
+    HAL_MT_NAMCHABARWA_PKT_IOCTL_PORT_COOKIE_T *ptr_cookie = ptr_data;
+
+    osal_io_copyFromUser(&port, &ptr_cookie->port, sizeof(UI32_T));
+    osal_io_copyFromUser(&status, &ptr_cookie->status, sizeof(UI32_T));
+    osal_io_copyFromUser(&speed, &ptr_cookie->speed, sizeof(UI32_T));
+
+    /* coverity: port used as an index of _hal_mt_namchabarwa_pkt_port_db[129] */
+    if (HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM > port) {
+        ptr_net_dev = HAL_MT_NAMCHABARWA_PKT_GET_PORT_NETDEV(port);
+    } else {
+        OSAL_PRINT(OSAL_DBG_ERR, "u=%u, port=%u is outof range[0-%d]\n", unit, port,
+                   HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM);
+        return (CLX_E_BAD_PARAMETER);
+    }
+
+    if ((NULL != ptr_net_dev) && (port < HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM)) {
+        if (HAL_MT_NAMCHABARWA_PKT_PORT_STATUS_UP == status) {
+            netif_carrier_on(ptr_net_dev);
+        } else {
+            netif_carrier_off(ptr_net_dev);
+        }
+
+        /* Link speed config */
+        ptr_priv = netdev_priv(ptr_net_dev);
+        ptr_priv->speed = speed;
+    }
+    return (CLX_E_OK);
+}
+
+/**
+ * @brief To get the port attributes such as status or speeds.
+ *
+ * @param [in]     unit          - The unit ID
+ * @param [out]    ptr_data      - Pointer of the data
+ * @return         CLX_E_OK    - Successfully set the attributes.
+ */
+CLX_ERROR_NO_T
+hal_mt_namchabarwa_pkt_getPortAttr(const UI32_T unit, void *ptr_data)
+{
+    HAL_MT_NAMCHABARWA_PKT_IOCTL_PORT_COOKIE_T *ptr_cookie = ptr_data;
+    struct net_device *ptr_net_dev = NULL;
+    struct net_device_priv *ptr_priv;
+    UI32_T port;
+    UI32_T status;
+    UI32_T speed;
+
+    osal_io_copyFromUser(&port, &ptr_cookie->port, sizeof(UI32_T));
+    if (HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM > port) {
+        ptr_net_dev = HAL_MT_NAMCHABARWA_PKT_GET_PORT_NETDEV(port);
+    } else {
+        OSAL_PRINT(OSAL_DBG_ERR, "u=%u, port=%u is outof range[0-%d]\n", unit, port,
+                   HAL_MT_NAMCHABARWA_PKT_MAX_PORT_NUM);
+        return (CLX_E_BAD_PARAMETER);
+    }
+
+    if (NULL == ptr_net_dev) {
+        OSAL_PRINT(OSAL_DBG_ERR, "%s(%d): Failed to get netdev, port %d\n", __FUNCTION__, __LINE__,
+                   port);
+        return (CLX_E_BAD_PARAMETER);
+    }
+    status = netif_carrier_ok(ptr_net_dev);
+
+    ptr_priv = netdev_priv(ptr_net_dev);
+    speed = ptr_priv->speed;
+    osal_io_copyToUser(&ptr_cookie->status, &status, sizeof(UI32_T));
+    osal_io_copyToUser(&ptr_cookie->speed, &speed, sizeof(UI32_T));
+
+    return (CLX_E_OK);
+}
+
 static HAL_MT_NAMCHABARWA_PKT_NETIF_PROFILE_T *
 _hal_mt_namchabarwa_pkt_getProfEntry(const UI32_T id)
 {
@@ -5458,7 +5561,7 @@ _hal_mt_namchabarwa_pkt_clearIntfCnt(const UI32_T unit, void *ptr_data)
 
     return (CLX_E_OK);
 }
-
+#endif
 /* ----------------------------------------------------------------------------------- Init: dev_ops
  */
 static void
@@ -5489,6 +5592,7 @@ hal_mt_namchabarwa_pkt_dev_tx(const UI32_T unit, void *ptr_data)
     HAL_MT_NAMCHABARWA_PKT_IOCTL_TX_GPD_T ioctl_gpd;
     HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_T *ptr_sw_gpd_knl = NULL;
     HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_T *ptr_first_sw_gpd_knl = NULL;
+    HAL_MT_NAMCHABARWA_PKT_IOCTL_TX_COOKIE_T *ptr_cookie = ptr_data;
 
     /* copy the tx-cookie */
     osal_io_copyFromUser(&tx_cookie, ptr_data, sizeof(HAL_MT_NAMCHABARWA_PKT_IOCTL_TX_COOKIE_T));
@@ -5534,10 +5638,10 @@ hal_mt_namchabarwa_pkt_dev_tx(const UI32_T unit, void *ptr_data)
 
     /* coverity: channel used as an offset of HAL_MT_NAMCHABARWA_PKT_TX_PDMA_T pdma[4] */
     if (HAL_MT_NAMCHABARWA_PKT_TX_CHANNEL_LAST > channel) {
-        OSAL_PRINT(
-            OSAL_DBG_TX, "u=%u, channel=%u, s_addr:0x%llx, size:%d\n", unit, channel,
-            CLX_ADDR_32_TO_64(ptr_sw_gpd_knl->tx_gpd.s_addr_hi, ptr_sw_gpd_knl->tx_gpd.s_addr_lo),
-            ptr_sw_gpd_knl->tx_gpd.size);
+        OSAL_PRINT(OSAL_DBG_TX, "u=%u, channel=%u, s_addr:0x%llx, size:%d\n", unit, channel,
+                   CLX_ADDR_32_TO_64(ptr_sw_gpd_knl->tx_gpd.s_addr_hi,
+                                     ptr_sw_gpd_knl->tx_gpd.s_addr_lo),
+                   ptr_sw_gpd_knl->tx_gpd.size);
         ret = hal_mt_namchabarwa_pkt_sendGpd(unit, channel, ptr_first_sw_gpd_knl);
     } else {
         OSAL_PRINT(OSAL_DBG_ERR, "u=%u, channel=%u is outof range[0-3]\n", unit, channel);
@@ -5545,17 +5649,20 @@ hal_mt_namchabarwa_pkt_dev_tx(const UI32_T unit, void *ptr_data)
     }
 
     if (CLX_E_OK != ret) {
+        OSAL_PRINT(OSAL_DBG_ERR, "u=%u, channel=%u fail send pkt, ret:%d \n", unit, channel, ret);
         _hal_mt_namchabarwa_pkt_freeTxGpdList(unit, ptr_first_sw_gpd_knl);
     }
 
     /* return 0 if success */
-    return (ret);
+    osal_io_copyToUser(&ptr_cookie->rc, &ret, sizeof(CLX_ERROR_NO_T));
+    return (CLX_E_OK);
 }
 
 long
 hal_mt_namchabarwa_pkt_dev_ioctl(const UI32_T unit)
 {
     CLX_ERROR_NO_T rc = CLX_E_OK;
+#if defined(CLX_EN_NETIF)
     /* network interface */
     _osal_mdc_registerIoctlCallback(unit, OSAL_MDC_IOCTL_TYPE_NETIF_CREATE_INTF,
                                     _hal_mt_namchabarwa_pkt_createIntf);
@@ -5575,6 +5682,7 @@ hal_mt_namchabarwa_pkt_dev_ioctl(const UI32_T unit)
                                     _hal_mt_namchabarwa_pkt_getIntfCnt);
     _osal_mdc_registerIoctlCallback(unit, OSAL_MDC_IOCTL_TYPE_NETIF_CLEAR_INTF_CNT,
                                     _hal_mt_namchabarwa_pkt_clearIntfCnt);
+#endif
     // TODO_FIXME_PORT
     _osal_mdc_registerIoctlCallback(unit, OSAL_MDC_IOCTL_TYPE_NETIF_WAIT_RX_FREE,
                                     _hal_mt_namchabarwa_pkt_schedRxDeQueue);
@@ -5605,6 +5713,7 @@ hal_mt_namchabarwa_pkt_dev_ioctl(const UI32_T unit)
     _osal_mdc_registerIoctlCallback(unit, OSAL_MDC_IOCTL_TYPE_NETIF_CLEAR_RX_CNT,
                                     hal_mt_namchabarwa_pkt_clearRxKnlCnt);
 
+#if defined(CLX_EN_NETIF)
     _osal_mdc_registerIoctlCallback(unit, OSAL_MDC_IOCTL_TYPE_NETIF_SET_PORT_ATTR,
                                     hal_mt_namchabarwa_pkt_setPortAttr);
     _osal_mdc_registerIoctlCallback(unit, OSAL_MDC_IOCTL_TYPE_NETIF_GET_PORT_ATTR,
@@ -5619,6 +5728,7 @@ hal_mt_namchabarwa_pkt_dev_ioctl(const UI32_T unit)
                                     _hal_mt_namchabarwa_pkt_destroyNetlink);
     _osal_mdc_registerIoctlCallback(unit, OSAL_MDC_IOCTL_TYPE_NETIF_NL_GET_NETLINK,
                                     _hal_mt_namchabarwa_pkt_getNetlink);
+#endif
 
     _osal_mdc_registerIoctlCallback(unit, OSAL_MDC_IOCTL_TYPE_NETIF_DEV_TX,
                                     hal_mt_namchabarwa_pkt_dev_tx);
@@ -5665,8 +5775,10 @@ hal_mt_namchabarwa_pkt_init(const UI32_T unit)
 CLX_ERROR_NO_T
 hal_mt_namchabarwa_pkt_exit(const UI32_T unit)
 {
+#if defined(CLX_EN_NETIF)
     /* 1st. Stop all netdev (if any) to prevent kernel from Tx new packets */
     _hal_mt_namchabarwa_pkt_stopAllIntf(unit);
+#endif
 
     /* 2nd. Stop Rx HW DMA and free all the DMA buffer hooked on the ring */
     _hal_mt_namchabarwa_pkt_rxStop(unit);
@@ -5679,12 +5791,14 @@ hal_mt_namchabarwa_pkt_exit(const UI32_T unit)
     /* 5th. Deinit pkt driver for common database/interrupt source (if required) */
     hal_mt_namchabarwa_pkt_deinitPktDrv(unit, NULL);
 
+#if defined(CLX_EN_NETIF)
     /* 6th destroy all netlink */
     netif_nl_destroyAllNetlink(unit);
 
     /* 7th. Clean up those intf/profiles not been destroyed */
     _hal_mt_namchabarwa_pkt_destroyAllProfile(unit);
     _hal_mt_namchabarwa_pkt_destroyAllIntf(unit);
+#endif
 
     osal_deinit();
 
