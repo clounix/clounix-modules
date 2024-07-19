@@ -66,10 +66,8 @@ DEV_OBJS_TOTAL             := ./osal_mdc.o
 DEV_OBJS_TOTAL             += ./netif/common/netif_osal.o
 DEV_OBJS_TOTAL             += ./netif/common/netif_perf.o
 DEV_OBJS_TOTAL             += ./netif/common/netif_nl.o
-ifeq ($(findstring ENABLED,$(CLX_EN_NETIF)),ENABLED)
 DEV_OBJS_TOTAL             += ./netif/light/dawn/hal_lt_dawn_pkt_knl.o
 DEV_OBJS_TOTAL             += ./netif/light/lightning/hal_lt_lightning_pkt_knl.o
-endif
 DEV_OBJS_TOTAL             += ./netif/mountain/namchabarwa/hal_mt_namchabarwa_pkt_knl.o
 
 obj-m                      := $(DEV_MODULE_NAME).o
