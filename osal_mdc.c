@@ -64,10 +64,9 @@
 #include <osal/osal_mdc.h>
 #include <clx_dev_knl.h>
 #include <netif_pkt_knl.h>
-#if defined(CLX_EN_NETIF)
 #include <netif_osal.h>
 #include <netif_perf.h>
-#endif
+
 #include <light/lightning/hal_lt_lightning_pkt_knl.h>
 #include <light/dawn/hal_lt_dawn_pkt_knl.h>
 #include <mountain/namchabarwa/hal_mt_namchabarwa_pkt_knl.h>
@@ -131,7 +130,8 @@ UI32_T intr_mode = OSAL_INTR_MODE_INTX;
 
 /* MACRO FUNCTION DECLARATIONS
  */
-static CLX_ERROR_NO_T _osal_mdc_initIoctl(void);
+static CLX_ERROR_NO_T
+_osal_mdc_initIoctl(void);
 
 /* DATA TYPE DECLARATIONS
  */
@@ -455,7 +455,6 @@ static AML_DEV_T *_ptr_osal_mdc_dev;
 /* Interface */
 struct pci_dev *_ptr_ext_pci_dev;
 
-#if defined(CLX_EN_NETIF)
 static UI32_T _perf_test_inited = 0;
 
 static CLX_ERROR_NO_T
@@ -464,7 +463,7 @@ _netif_knl_initDevOps(const UI16_T dev_id, NETIF_KNL_DEV_OPS_T *ptr_ops)
     CLX_ERROR_NO_T rc = CLX_E_OK;
 
     if (NETIF_KNL_DEVICE_IS_LIGHTNING(dev_id)) {
-#if defined(CLX_EN_LIGHTNING)
+#if defined(CLX_EN_NETIF)
         OSAL_PRINT(OSAL_DBG_COMMON, "lightning ops hooked\n");
         ptr_ops->init = hal_lt_lightning_pkt_init;
         ptr_ops->exit = hal_lt_lightning_pkt_exit;
@@ -473,7 +472,7 @@ _netif_knl_initDevOps(const UI16_T dev_id, NETIF_KNL_DEV_OPS_T *ptr_ops)
         OSAL_PRINT(OSAL_DBG_COMMON, "lightning detected, but ops not support\n");
 #endif
     } else if (NETIF_KNL_DEVICE_IS_DAWN(dev_id)) {
-#if defined(CLX_EN_DAWN)
+#if defined(CLX_EN_NETIF)
         OSAL_PRINT(OSAL_DBG_COMMON, "dawn ops hooked\n");
         ptr_ops->init = hal_lt_dawn_pkt_init;
         ptr_ops->exit = hal_lt_dawn_pkt_exit;
@@ -482,16 +481,12 @@ _netif_knl_initDevOps(const UI16_T dev_id, NETIF_KNL_DEV_OPS_T *ptr_ops)
         OSAL_PRINT(OSAL_DBG_COMMON, "dawn detected, but ops not support\n");
 #endif
     } else if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(dev_id)) {
-#if defined(CLX_EN_NAMCHABARWA)
         OSAL_PRINT(OSAL_DBG_COMMON, "Namchabarwa ops hooked\n");
         ptr_ops->init = hal_mt_namchabarwa_pkt_init;
         ptr_ops->exit = hal_mt_namchabarwa_pkt_exit;
         ptr_ops->ioctl = hal_mt_namchabarwa_pkt_dev_ioctl;
-#else
-        OSAL_PRINT(OSAL_DBG_COMMON, "namchabarwa detected, but ops not support\n");
-#endif
     } else if (NETIF_KNL_DEVICE_IS_KAWAGARBO(dev_id)) {
-#if defined(CLX_EN_KAWAGARBO)
+#if defined(CLX_EN_NETIF)
         OSAL_PRINT(OSAL_DBG_COMMON, "Kawagarbo ops not hooked\n");
 #else
         OSAL_PRINT(OSAL_DBG_COMMON, "Kawagarbo detected, but ops not support\n");
@@ -503,21 +498,22 @@ _netif_knl_initDevOps(const UI16_T dev_id, NETIF_KNL_DEV_OPS_T *ptr_ops)
 
     return (rc);
 }
-#endif
 
 /* STATIC VARIABLE DECLARATIONS
  */
 /* --------------------------------------------------------------------------- I2C interface */
 #if defined(AML_EN_I2C)
-extern CLX_ERROR_NO_T dev_switch_readBuffer(const UI32_T addr,
-                                            const UI32_T addr_len,
-                                            UI8_T *ptr_buf,
-                                            const UI32_T buf_len);
+extern CLX_ERROR_NO_T
+dev_switch_readBuffer(const UI32_T addr,
+                      const UI32_T addr_len,
+                      UI8_T *ptr_buf,
+                      const UI32_T buf_len);
 
-extern CLX_ERROR_NO_T dev_switch_writeBuffer(const UI32_T addr,
-                                             const UI32_T addr_len,
-                                             const UI8_T *ptr_buf,
-                                             const UI32_T buf_len);
+extern CLX_ERROR_NO_T
+dev_switch_writeBuffer(const UI32_T addr,
+                       const UI32_T addr_len,
+                       const UI8_T *ptr_buf,
+                       const UI32_T buf_len);
 
 static CLX_ERROR_NO_T
 _osal_mdc_readI2cReg(const UI32_T unit, const UI32_T offset, UI32_T *ptr_data, const UI32_T len)
@@ -670,19 +666,19 @@ _osal_mdc_probePciCallback(struct pci_dev *pdev, const struct pci_device_id *id)
     _ptr_osal_mdc_dev->access.write_callback = osal_mdc_writePciReg;
 #endif
     if (NETIF_KNL_DEVICE_IS_LIGHTNING(device_id) || NETIF_KNL_DEVICE_IS_DAWN(device_id)) {
-        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32))) {
+        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(48))) {
             OSAL_PRINT(OSAL_DBG_ERR, "dma_set_mask_and_coherent failed");
         }
         _osal_mdc_cb.dev[_osal_mdc_cb.dev_num].mmio_bar = OSAL_MDC_PCI_BAR0_OFFSET;
         _osal_mdc_cb.dev[_osal_mdc_cb.dev_num].msi_cnt = 1;
     } else if (NETIF_KNL_DEVICE_IS_NAMCHABARWA(device_id)) {
-        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32))) {
+        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(48))) {
             OSAL_PRINT(OSAL_DBG_ERR, "dma_set_mask_and_coherent failed");
         }
         _osal_mdc_cb.dev[_osal_mdc_cb.dev_num].mmio_bar = OSAL_MDC_PCI_BAR2_OFFSET;
         _osal_mdc_cb.dev[_osal_mdc_cb.dev_num].msi_cnt = 21;
     } else if (NETIF_KNL_DEVICE_IS_KAWAGARBO(device_id)) {
-        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32))) {
+        if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(48))) {
             OSAL_PRINT(OSAL_DBG_ERR, "dma_set_mask_and_coherent failed");
         }
         _osal_mdc_cb.dev[_osal_mdc_cb.dev_num].mmio_bar = OSAL_MDC_PCI_BAR0_OFFSET;
@@ -693,14 +689,12 @@ _osal_mdc_probePciCallback(struct pci_dev *pdev, const struct pci_device_id *id)
         return rc;
     }
 
-#if defined(CLX_EN_NETIF)
     rc =
         _netif_knl_initDevOps(device_id, &_osal_mdc_cb.dev[_osal_mdc_cb.dev_num]._netif_knl_cb.ops);
     if (CLX_E_OK != rc) {
         OSAL_MDC_ERR("netif init dev ops error, device id:%x\n", device_id);
         return rc;
     }
-#endif
 
     rc = _osal_mdc_getPciMmioInfo(pdev, _osal_mdc_cb.dev_num);
     if (CLX_E_OK != rc) {
@@ -2140,7 +2134,6 @@ _osal_mdc_getDeviceIdToIoctlData(AML_DEV_T *ptr_dev,
     return (CLX_E_OK);
 }
 
-#if defined(CLX_EN_NETIF)
 static CLX_ERROR_NO_T
 netif_knl_device_init(const UI32_T unit)
 {
@@ -2166,7 +2159,6 @@ netif_knl_device_init(const UI32_T unit)
 
     return rc;
 }
-#endif
 
 static CLX_ERROR_NO_T
 _osal_mdc_ioctl_initDeviceCallback(const UI32_T unit, void *ptr_data)
@@ -2187,13 +2179,11 @@ _osal_mdc_ioctl_initDeviceCallback(const UI32_T unit, void *ptr_data)
             OSAL_PRINT(OSAL_DBG_ERR, "init device failed.\n");
             return rc;
         }
-#if defined(CLX_EN_NETIF)
         rc = netif_knl_device_init(unit);
         if ((_perf_test_inited == 0) && (rc == CLX_E_OK)) {
             perf_test_init();
             _perf_test_inited = 1;
         }
-#endif
     } else {
         /* ptr_cb->dev_num was initialized in osal_mdc_initDevice(); */
         ptr_ioctl_data.dev_num = ptr_cb->dev_num;
@@ -2251,12 +2241,10 @@ _osal_mdc_ioctl_deinitDeviceCallback(const UI32_T unit, void *ptr_data)
 
     if (0 != _osal_mdc_devInited) {
         rc = osal_mdc_deinitDevice();
-#if defined(CLX_EN_NETIF)
         if ((_perf_test_inited == 1) && (rc == CLX_E_OK)) {
             perf_test_exit();
             _perf_test_inited = 0;
         }
-#endif
         _osal_mdc_devInited = 0;
     }
 
@@ -2451,13 +2439,11 @@ osal_mdc_module_exit(void)
 {
     int unit = 0;
 
-#if defined(CLX_EN_NETIF)
     for (unit = 0; unit < OSAL_MDC_MAX_CHIPS_PER_SYSTEM; unit++) {
         if (_osal_mdc_cb.dev[unit]._netif_knl_cb.ops.exit != NULL) {
             _osal_mdc_cb.dev[unit]._netif_knl_cb.ops.exit(unit);
         }
     }
-#endif
 
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(4, 2, 8)
     int linux_rc;
@@ -2494,12 +2480,11 @@ osal_mdc_module_exit(void)
         _osal_mdc_clearSysDmaList(1);
 #endif
         osal_mdc_deinitDevice();
-#if defined(CLX_EN_NETIF)
+
         if (_perf_test_inited == 1) {
             perf_test_exit();
             _perf_test_inited = 0;
         }
-#endif
         _osal_mdc_devInited = 0;
     }
 }

@@ -136,278 +136,319 @@ typedef enum {
 
 /* RX Packet Reasons */
 typedef enum {
-    CLX_PKT_RX_REASON_ECIA_SFLOW = 0,     /* Egress flow-based sflow hit.     */
+    CLX_PKT_RX_REASON_ECIA_SFLOW = 0,     /* Egress flow-based sflow hit. */
     CLX_PKT_RX_REASON_VLAN_MISS_VLAN_CHK, /* VLAN lookup miss or not accepted. */
-    CLX_PKT_RX_REASON_PAR_ERR,            /* Parser error to CPU.            */
-    CLX_PKT_RX_REASON_PAR_WARN,           /* Parser warning to CPU.           */
-    CLX_PKT_RX_REASON_DOS_CHK,            /* DoS checking fail to CPU.            */
-    CLX_PKT_RX_REASON_BFD_CTRL_PKT,       /* BFD control packet to CPU.       */
-    CLX_PKT_RX_REASON_INVALID_BFD_PKT,    /* Invalid BFD control packet to CPU.    */
-    CLX_PKT_RX_REASON_SA_LEARN_FAIL,      /* Add to l2fdb fail to CPU.      */
-    CLX_PKT_RX_REASON_TUNNEL_ECN_CU,  /* The current unused ECN combination defined in RFC6040.   */
-    CLX_PKT_RX_REASON_FCOE_CLASS_2_F, /* Copy FCoE Class 2 packet to cpu when packet is dropped.  */
+    CLX_PKT_RX_REASON_PAR_ERR,            /* Parser error to CPU. */
+    CLX_PKT_RX_REASON_PAR_WARN,           /* Parser warning to CPU. */
+    CLX_PKT_RX_REASON_DOS_CHK,            /* DoS checking fail to CPU. */
+    CLX_PKT_RX_REASON_BFD_CTRL_PKT,       /* BFD control packet to CPU. */
+    CLX_PKT_RX_REASON_INVALID_BFD_PKT,    /* Invalid BFD control packet to CPU. */
+    CLX_PKT_RX_REASON_SA_LEARN_FAIL,      /* Add to l2fdb fail to CPU. */
+    CLX_PKT_RX_REASON_TUNNEL_ECN_CU,   /* The current unused ECN combination defined in RFC6040. */
+    CLX_PKT_RX_REASON_FCOE_CLASS_2_F,  /* Copy FCoE Class 2 packet to cpu when packet is dropped. */
     CLX_PKT_RX_REASON_URPF_CHECK_FAIL, /* L3 URPF check fail to CPU. */
-    CLX_PKT_RX_REASON_L3_LKP_MISS,     /* L3 lookup miss to CPU.     */
-    CLX_PKT_RX_REASON_ICMP_REDIRECT,   /* The same L3 interface for ingress and egress to CPU.   */
+    CLX_PKT_RX_REASON_L3_LKP_MISS,     /* L3 lookup miss to CPU. */
+    CLX_PKT_RX_REASON_ICMP_REDIRECT,   /* The same L3 interface for ingress and egress to CPU. */
     CLX_PKT_RX_REASON_IPV4_HDR_OPTION, /* IPv4 header with option to CPU. */
-    CLX_PKT_RX_REASON_VCLAG_INVALID,   /* VM tag invalid to CPU.   */
-    CLX_PKT_RX_REASON_VM_RPF_FAIL,     /* VM RPF check fail to CPU.     */
+    CLX_PKT_RX_REASON_VCLAG_INVALID,   /* VM tag invalid to CPU. */
+    CLX_PKT_RX_REASON_VM_RPF_FAIL,     /* VM RPF check fail to CPU. */
     /* 16 */
-    CLX_PKT_RX_REASON_VM_L2_FDB_MISS,          /* VM l2fdb lookup miss to CPU.          */
-    CLX_PKT_RX_REASON_IGR_PORT_SFLOW,          /* Ingress port-based sflow hit.          */
-    CLX_PKT_RX_REASON_EGR_PORT_SFLOW,          /* Egress port-based sflow hit.          */
-    CLX_PKT_RX_REASON_IGR_FD_SFLOW,            /* Ingress fd-based sflow hit.            */
-    CLX_PKT_RX_REASON_ICIA_SFLOW,              /* Ingress flow-based sflow hit.              */
-    CLX_PKT_RX_REASON_IPSG_CHK,                /* IPSG check fail to CPU.                */
-    CLX_PKT_RX_REASON_FCOE_IFR_TO_CPU,         /* FCoE extend header include IFR header.         */
-    CLX_PKT_RX_REASON_TTL_EXPIRE,              /* L3 TTL check fail to CPU.              */
-    CLX_PKT_RX_REASON_L3MC_RPF_CHECK,          /* L3MC RPF check fail to CPU          */
+    CLX_PKT_RX_REASON_VM_L2_FDB_MISS,          /* VM l2fdb lookup miss to CPU. */
+    CLX_PKT_RX_REASON_IGR_PORT_SFLOW,          /* Ingress port-based sflow hit. */
+    CLX_PKT_RX_REASON_EGR_PORT_SFLOW,          /* Egress port-based sflow hit. */
+    CLX_PKT_RX_REASON_IGR_FD_SFLOW,            /* Ingress fd-based sflow hit. */
+    CLX_PKT_RX_REASON_ICIA_SFLOW,              /* Ingress flow-based sflow hit. */
+    CLX_PKT_RX_REASON_IPSG_CHK,                /* IPSG check fail to CPU. */
+    CLX_PKT_RX_REASON_FCOE_IFR_TO_CPU,         /* FCoE extend header include IFR header. */
+    CLX_PKT_RX_REASON_TTL_EXPIRE,              /* L3 TTL check fail to CPU. */
+    CLX_PKT_RX_REASON_L3MC_RPF_CHECK,          /* L3MC RPF check fail to CPU */
     CLX_PKT_RX_REASON_IPV6_HOP_BY_HOP_EXT_HDR, /* IPv6 with hop by hop extension header to CPU. */
     CLX_PKT_RX_REASON_VM_PDU, /* Received frames whose E-CID matches the IBR upstream Port's PCID.
                                */
     CLX_PKT_RX_REASON_PIM_REGISTER,         /* For source hit and group miss, send to CPU for
-                                               PIM-registration.   */
+                                               PIM-registration. */
     CLX_PKT_RX_REASON_TUNNEL_TERM_LKP_MISS, /* Tunnel term lookup failed with bank error or entry
-                                               miss.           */
-    CLX_PKT_RX_REASON_EGR_FD_SFLOW,         /* Egress fd-based sflow hit.         */
-    CLX_PKT_RX_REASON_VXLAN_ROUTER_ALERT,   /* VXLAN packet with router alert to CPU.   */
-    CLX_PKT_RX_REASON_NVGRE_ROUTER_ALERT,   /* NVGRE packet with router alert to CPU.   */
+                                               miss. */
+    CLX_PKT_RX_REASON_EGR_FD_SFLOW,         /* Egress fd-based sflow hit. */
+    CLX_PKT_RX_REASON_VXLAN_ROUTER_ALERT,   /* VXLAN packet with router alert to CPU. */
+    CLX_PKT_RX_REASON_NVGRE_ROUTER_ALERT,   /* NVGRE packet with router alert to CPU. */
     /* 32 */
-    CLX_PKT_RX_REASON_EX_PMOD_LIMIT, /* Packet modification is excess PMOD's limitation.        */
+    CLX_PKT_RX_REASON_EX_PMOD_LIMIT,        /* Packet modification is excess PMOD's limitation. */
     CLX_PKT_RX_REASON_L3MC_SPT_READY_UNSET, /* L3MC to CPU to trigger setting Shortest Path Tree
-                                               ready bit.       */
-    CLX_PKT_RX_REASON_IGR_MTU_FAIL,         /* Ingress MTU check fail to CPU.         */
-    CLX_PKT_RX_REASON_EGR_MTU_FAIL,         /* Egress MTU check fail to CPU.         */
-    CLX_PKT_RX_REASON_VXLAN_PING,           /* VXLAN packet to CPU.           */
+                                               ready bit. */
+    CLX_PKT_RX_REASON_IGR_MTU_FAIL,         /* Ingress MTU check fail to CPU. */
+    CLX_PKT_RX_REASON_EGR_MTU_FAIL,         /* Egress MTU check fail to CPU. */
+    CLX_PKT_RX_REASON_VXLAN_PING,           /* VXLAN packet to CPU. */
     CLX_PKT_RX_REASON_REDIRECT_TO_CPU_L2MC, /* L2MC Redirect to CPU. */
     CLX_PKT_RX_REASON_REDIRECT_TO_CPU_L3MC, /* L3MC Redirect to CPU. */
     CLX_PKT_RX_REASON_REDIRECT_TO_CPU_L2UC, /* L2UC Redirect to CPU. */
     CLX_PKT_RX_REASON_REDIRECT_TO_CPU_L3UC, /* L3UC Redirect to CPU. */
-    CLX_PKT_RX_REASON_CIA_0,                /* CIA To CPU. CL8500, CL8300                */
-    CLX_PKT_RX_REASON_CIA_1,                /* CIA To CPU. CL8500, CL8300                */
-    CLX_PKT_RX_REASON_CIA_2,                /* CIA To CPU. CL8500, CL8300                */
-    CLX_PKT_RX_REASON_CIA_3,                /* CIA To CPU. CL8500, CL8300                */
-    CLX_PKT_RX_REASON_CIA_4,                /* CIA To CPU. CL8500, CL8300                */
-    CLX_PKT_RX_REASON_CIA_5,                /* CIA To CPU. CL8500, CL8300                */
-    CLX_PKT_RX_REASON_CIA_6,                /* CIA To CPU. CL8500, CL8300                */
+    CLX_PKT_RX_REASON_CIA_0,                /* CIA To CPU. CL8500, CL8300 */
+    CLX_PKT_RX_REASON_CIA_1,                /* CIA To CPU. CL8500, CL8300 */
+    CLX_PKT_RX_REASON_CIA_2,                /* CIA To CPU. CL8500, CL8300 */
+    CLX_PKT_RX_REASON_CIA_3,                /* CIA To CPU. CL8500, CL8300 */
+    CLX_PKT_RX_REASON_CIA_4,                /* CIA To CPU. CL8500, CL8300 */
+    CLX_PKT_RX_REASON_CIA_5,                /* CIA To CPU. CL8500, CL8300 */
+    CLX_PKT_RX_REASON_CIA_6,                /* CIA To CPU. CL8500, CL8300 */
     /* 48 */
-    CLX_PKT_RX_REASON_CIA_7,         /* CIA To CPU. CL8500, CL8300         */
-    CLX_PKT_RX_REASON_USR_DEFINE_0,  /* user define CL8500, CL8300  */
-    CLX_PKT_RX_REASON_USR_DEFINE_1,  /* user define CL8500, CL8300  */
-    CLX_PKT_RX_REASON_USR_DEFINE_2,  /* user define CL8500, CL8300  */
-    CLX_PKT_RX_REASON_USR_DEFINE_3,  /* user define CL8500, CL8300  */
-    CLX_PKT_RX_REASON_USR_DEFINE_4,  /* user define CL8500, CL8300  */
-    CLX_PKT_RX_REASON_USR_DEFINE_5,  /* user define CL8500, CL8300  */
-    CLX_PKT_RX_REASON_USR_DEFINE_6,  /* user define CL8500, CL8300  */
-    CLX_PKT_RX_REASON_USR_DEFINE_7,  /* user define CL8500, CL8300  */
-    CLX_PKT_RX_REASON_USR_DEFINE_8,  /* user define CL8500, CL8300  */
-    CLX_PKT_RX_REASON_USR_DEFINE_9,  /* user define CL8500, CL8300  */
+    CLX_PKT_RX_REASON_CIA_7,         /* CIA To CPU. CL8500, CL8300 */
+    CLX_PKT_RX_REASON_USR_DEFINE_0,  /* user define CL8500, CL8300 */
+    CLX_PKT_RX_REASON_USR_DEFINE_1,  /* user define CL8500, CL8300 */
+    CLX_PKT_RX_REASON_USR_DEFINE_2,  /* user define CL8500, CL8300 */
+    CLX_PKT_RX_REASON_USR_DEFINE_3,  /* user define CL8500, CL8300 */
+    CLX_PKT_RX_REASON_USR_DEFINE_4,  /* user define CL8500, CL8300 */
+    CLX_PKT_RX_REASON_USR_DEFINE_5,  /* user define CL8500, CL8300 */
+    CLX_PKT_RX_REASON_USR_DEFINE_6,  /* user define CL8500, CL8300 */
+    CLX_PKT_RX_REASON_USR_DEFINE_7,  /* user define CL8500, CL8300 */
+    CLX_PKT_RX_REASON_USR_DEFINE_8,  /* user define CL8500, CL8300 */
+    CLX_PKT_RX_REASON_USR_DEFINE_9,  /* user define CL8500, CL8300 */
     CLX_PKT_RX_REASON_USR_DEFINE_10, /* user define CL8500, CL8300 */
     CLX_PKT_RX_REASON_USR_DEFINE_11, /* user define CL8500, CL8300 */
     CLX_PKT_RX_REASON_USR_DEFINE_12, /* user define CL8500, CL8300 */
     CLX_PKT_RX_REASON_USR_DEFINE_13, /* user define CL8500, CL8300 */
-    CLX_PKT_RX_REASON_L2_LKP_MISS,   /* L2 lookup failed with the bank error or entry miss.   */
+    CLX_PKT_RX_REASON_L2_LKP_MISS,   /* L2 lookup failed with the bank error or entry miss. */
     /* 64 */
-    CLX_PKT_RX_REASON_L2_HDR_MISS,    /* l2 bridge copy without ingress Ethernet header.    */
-    CLX_PKT_RX_REASON_L2_SA_MISS,     /* L2 lookup SA miss.     */
-    CLX_PKT_RX_REASON_L2_SA_MOVE,     /* L2 lookup SA hit but interface move.     */
-    CLX_PKT_RX_REASON_IPV4_VER_ERR,   /* IPv4 packet has bad version.   */
-    CLX_PKT_RX_REASON_IPV4_OPT,       /* IPv4 packet has options.       */
+    CLX_PKT_RX_REASON_L2_HDR_MISS,    /* l2 bridge copy without ingress Ethernet header. */
+    CLX_PKT_RX_REASON_L2_SA_MISS,     /* L2 lookup SA miss. */
+    CLX_PKT_RX_REASON_L2_SA_MOVE,     /* L2 lookup SA hit but interface move. */
+    CLX_PKT_RX_REASON_IPV4_VER_ERR,   /* IPv4 packet has bad version. */
+    CLX_PKT_RX_REASON_IPV4_OPT,       /* IPv4 packet has options. */
     CLX_PKT_RX_REASON_IPV4_LEN_ERR,   /* IPv4 packet Internet Header Length is unmatched to payload
-                                         length. */
+                                           length. */
     CLX_PKT_RX_REASON_IPV4_CHKSM_ERR, /* IPv4 packet checksum error. */
     CLX_PKT_RX_REASON_IPV4_MC_MALFORMED, /* IPv4 multicast packet is malformed from RFC. */
-    CLX_PKT_RX_REASON_IPV4_MC_LKP_MISS,  /* IPv4 multicast packet lookup miss.  */
-    CLX_PKT_RX_REASON_IPV6_VER_ERR,      /* IPv6 packet has bad version.      */
+    CLX_PKT_RX_REASON_IPV4_MC_LKP_MISS,  /* IPv4 multicast packet lookup miss. */
+    CLX_PKT_RX_REASON_IPV6_VER_ERR,      /* IPv6 packet has bad version. */
     CLX_PKT_RX_REASON_IPV6_LEN_ERR, /* IPv6 packet total length does not cover 40-Bytes IPv6 base
                                        header. */
     CLX_PKT_RX_REASON_IPV6_MC_MALFORMED, /* IPv6 multicast packet is malformed from RFC. */
-    CLX_PKT_RX_REASON_IPV6_MC_LKP_MISS,  /* IPv6 multicast packet lookup miss.  */
-    CLX_PKT_RX_REASON_FCOE_VER_ERR,      /* FCoE packet has bad version.      */
-    CLX_PKT_RX_REASON_FCOE_LKP_MISS,     /* FCoE DID lookup failed, bank error or entry miss.     */
-    CLX_PKT_RX_REASON_FCOE_ZONING_FAIL,  /* FCoE zoning check failed to CPU.  */
+    CLX_PKT_RX_REASON_IPV6_MC_LKP_MISS,  /* IPv6 multicast packet lookup miss. */
+    CLX_PKT_RX_REASON_FCOE_VER_ERR,      /* FCoE packet has bad version. */
+    CLX_PKT_RX_REASON_FCOE_LKP_MISS,     /* FCoE DID lookup failed, bank error or entry miss. */
+    CLX_PKT_RX_REASON_FCOE_ZONING_FAIL,  /* FCoE zoning check failed to CPU. */
     /* 80 */
-    CLX_PKT_RX_REASON_MPLS_CTRL_PKT,    /* MPLS control packets to CPU.     */
-    CLX_PKT_RX_REASON_MPLS_INVALID_PKT, /* MPLS packet is illegal from RFC.  */
-    CLX_PKT_RX_REASON_MPLS_LKP_MISS, /* MPLS lookup failed with the bank error or entry miss.     */
-    CLX_PKT_RX_REASON_MPLS_UHP_P2P_MISS,           /* MPLS UHP packet p2p miss */
-    CLX_PKT_RX_REASON_MPLS_UHP_TTL_0,              /* MPLS UHP packet TTL is 0.    */
-    CLX_PKT_RX_REASON_MPLS_UHP_TTL_1,              /* MPLS UHP packet TTL is 1.    */
-    CLX_PKT_RX_REASON_MPLS_TRANSIT_TTL_0,          /* MPLS transit packet TTL is 0.          */
-    CLX_PKT_RX_REASON_MPLS_TRANSIT_TTL_1,          /* MPLS transit packet TTL is 1.          */
-    CLX_PKT_RX_REASON_MPLS_TERM_TTL_0,             /* MPLS term packet TTL is 0.             */
-    CLX_PKT_RX_REASON_MPLS_TERM_TTL_1,             /* MPLS term packet TTL is 1.             */
-    CLX_PKT_RX_REASON_IP_TUNNEL_CTRL_PKT,          /* IP tunnel control packets to CPU.          */
+    CLX_PKT_RX_REASON_MPLS_CTRL_PKT,     /* MPLS control packets to CPU. */
+    CLX_PKT_RX_REASON_MPLS_INVALID_PKT,  /* MPLS packet is illegal from RFC. */
+    CLX_PKT_RX_REASON_MPLS_LKP_MISS,     /* MPLS lookup failed with the bank error or entry miss. */
+    CLX_PKT_RX_REASON_MPLS_UHP_P2P_MISS, /* MPLS UHP packet p2p miss */
+    CLX_PKT_RX_REASON_MPLS_UHP_TTL_0,    /* MPLS UHP packet TTL is 0. */
+    CLX_PKT_RX_REASON_MPLS_UHP_TTL_1,    /* MPLS UHP packet TTL is 1. */
+    CLX_PKT_RX_REASON_MPLS_TRANSIT_TTL_0,          /* MPLS transit packet TTL is 0. */
+    CLX_PKT_RX_REASON_MPLS_TRANSIT_TTL_1,          /* MPLS transit packet TTL is 1. */
+    CLX_PKT_RX_REASON_MPLS_TERM_TTL_0,             /* MPLS term packet TTL is 0. */
+    CLX_PKT_RX_REASON_MPLS_TERM_TTL_1,             /* MPLS term packet TTL is 1. */
+    CLX_PKT_RX_REASON_IP_TUNNEL_CTRL_PKT,          /* IP tunnel control packets to CPU. */
     CLX_PKT_RX_REASON_IP_TUNNEL_INNER_IPV4_UC_LCL, /* IP tunnel packet has inner IPv4 unicast link
-                                                      local address.        */
+                                                      local address. */
     CLX_PKT_RX_REASON_IP_TUNNEL_INNER_IPV6_UC_LCL, /* IP tunnel packet has inner IPv6 unicast link
-                                                      local address.        */
+                                                      local address. */
     CLX_PKT_RX_REASON_IP_TUNNEL_INNER_MC_LCL,   /* IP tunnel packet has inner multicast link local
-                                                   address.           */
-    CLX_PKT_RX_REASON_IP_TUNNEL_INNER_VER_ERR,  /* IP tunnel packet inner is not IPv4 and IPv6.  */
+                                                   address. */
+    CLX_PKT_RX_REASON_IP_TUNNEL_INNER_VER_ERR,  /* IP tunnel packet inner is not IPv4 and IPv6. */
     CLX_PKT_RX_REASON_IP_TUNNEL_INNER_L3_ROUTE, /* Not allow GRE, IPoMPLS or MPLS VPN routed by
-                                                   inner header.         */
+                                                   inner header. */
     /* 96 */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV4_FRAG,  /* IP tunnel packet outer IPv4 fragment offset is
-                                                     not 0.              */
-    CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV4_OPT,   /* IP tunnel packet outer IPv4 has options.   */
+                                                     not 0. */
+    CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV4_OPT,   /* IP tunnel packet outer IPv4 has options. */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV4_AH,    /* IP tunnel packet outer IPv4 has authentication
-                                                     header.             */
+                                                        header. */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV4_TTL_0, /* IP tunnel packet outer IPv4 TTL is 0. */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV4_TTL_1, /* IP tunnel packet outer IPv4 TTL is 1. */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV6_FRAG,  /* IP tunnel packet outer IPv6 fragment offset is
-                                                     not 0.              */
+                                                     not 0. */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV6_OPT, /* IP tunnel packet outer IPv6 has extension header.
                                                  */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV6_AH,  /* IP tunnel packet outer IPv6 has authentication
-                                                   header.             */
-    CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV6_TTL_0,  /* IP tunnel packet outer IPv6 TTL is 0.  */
-    CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV6_TTL_1,  /* IP tunnel packet outer IPv6 TTL is 1.  */
+                                                   header. */
+    CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV6_TTL_0,  /* IP tunnel packet outer IPv6 TTL is 0. */
+    CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_IPV6_TTL_1,  /* IP tunnel packet outer IPv6 TTL is 1. */
     CLX_PKT_RX_REASON_IPUC_TUNNEL_INNER_VLAN_MISS, /* IP unicast tunnel packet inner VLAN miss. */
     CLX_PKT_RX_REASON_IPMC_TUNNEL_INNER_VLAN_MISS, /* IP multicast tunnel packet inner VLAN miss. */
     CLX_PKT_RX_REASON_AUTO_TUNNEL_DIP_MISS,        /* Auto tunnel outer IPv4 and inner IPv6 DIP are
-                                                      unmatched.           */
+                                                      unmatched. */
     CLX_PKT_RX_REASON_AUTO_TUNNEL_SIP_MISS,        /* Auto tunnel outer IPv4 and inner IPv6 SIP are
-                                                      unmatched.           */
+                                                      unmatched. */
     CLX_PKT_RX_REASON_ETHER_IP_VER_ERR, /* Ethernet-within-IP tunnel version is illegal from RFC
-                                           3378.        */
-    CLX_PKT_RX_REASON_GRE_VER_ERR,      /* GRE tunnel version is illegal from RFC 2784.      */
+                                           3378. */
+    CLX_PKT_RX_REASON_GRE_VER_ERR,      /* GRE tunnel version is illegal from RFC 2784. */
     /* 112 */
     CLX_PKT_RX_REASON_GRE_RSVD_NON_ZERO, /* GRE tunnel reserved fields is illegal from RFC 2784. */
     CLX_PKT_RX_REASON_GRE_CTRL_FLAG_ERR, /* GRE tunnel control flag is illegal from RFC 2784. */
     CLX_PKT_RX_REASON_GRE_ERSPAN_TYP2_VER_ERR, /* GRE ERSPAN type II tunnel version is illegal from
-                                                  ERSPAN draft.    */
+                                                  ERSPAN draft. */
     CLX_PKT_RX_REASON_GRE_ERSPAN_TYP3_VER_ERR, /* GRE ERSPAN type III tunnel version is illegal from
-                                                  ERSPAN draft.   */
+                                                  ERSPAN draft. */
     CLX_PKT_RX_REASON_GRE_ERSPAN_TYP3_FT_ERR,  /* GRE ERSPAN type III tunnel frame type is illegal
                                                   from ERSPAN draft.*/
     CLX_PKT_RX_REASON_GRE_ERSPAN_TERM_LKP_MISS, /* GRE ERSPAN tunnel term lookup miss. */
     CLX_PKT_RX_REASON_VXLAN_BAS_RSVD_NON_ZERO, /* VXLAN Basic header reserved fields is illegal from
-                                                  RFC.            */
+                                                  RFC. */
     CLX_PKT_RX_REASON_VXLAN_BAS_VNI_FLAG_ERR, /* VXLAN Basic header VNI flag is illegal from RFC. */
     CLX_PKT_RX_REASON_VXLAN_BAS_CTRL_FLAG_ERR, /* VXLAN Basic header control flag is illegal from
-                                                  RFC.               */
+                                                  RFC. */
     CLX_PKT_RX_REASON_VXLAN_BAS_UDP_CHKSM_ERR, /* VXLAN Basic header UDP checksum is abnormal. */
-    CLX_PKT_RX_REASON_VXLAN_GPE_VNI_FLAG_ERR,  /* VXLAN GRE header VNI flag is illegal from RFC.  */
+    CLX_PKT_RX_REASON_VXLAN_GPE_VNI_FLAG_ERR,  /* VXLAN GRE header VNI flag is illegal from RFC. */
     CLX_PKT_RX_REASON_VXLAN_GPE_CTRL_FLAG_ERR, /* VXLAN GPE header control flag is illegal from RFC.
                                                 */
     CLX_PKT_RX_REASON_VXLAN_GPE_UDP_CHKSM_ERR, /* VXLAN GPE header UDP checksum is abnormal. */
-    CLX_PKT_RX_REASON_TRILL_VER_ERR,           /* TRILL version is illegal from RFC.           */
-    CLX_PKT_RX_REASON_TRILL_MC_FLAG_ERR,       /* TRILL multicast flag is unmatched DMAC.       */
+    CLX_PKT_RX_REASON_TRILL_VER_ERR,           /* TRILL version is illegal from RFC. */
+    CLX_PKT_RX_REASON_TRILL_MC_FLAG_ERR,       /* TRILL multicast flag is unmatched DMAC. */
     CLX_PKT_RX_REASON_TRILL_OPT, /* TRILL packet has option or option header length is illegal. */
     /* 128 */
     CLX_PKT_RX_REASON_TRILL_LKP_MISS, /* TRILL lookup failed with the bank error or entry miss. */
-    CLX_PKT_RX_REASON_TRILL_TRANSIT_TTL_0,   /* TRILL transit packet TTL is 0.   */
-    CLX_PKT_RX_REASON_TRILL_TRANSIT_TTL_1,   /* TRILL transit packet TTL is 1.   */
-    CLX_PKT_RX_REASON_TRILL_TERM_TTL_0,      /* TRILL term packet TTL is 0.      */
-    CLX_PKT_RX_REASON_TRILL_TERM_TTL_1,      /* TRILL term packet TTL is 1.      */
+    CLX_PKT_RX_REASON_TRILL_TRANSIT_TTL_0,   /* TRILL transit packet TTL is 0. */
+    CLX_PKT_RX_REASON_TRILL_TRANSIT_TTL_1,   /* TRILL transit packet TTL is 1. */
+    CLX_PKT_RX_REASON_TRILL_TERM_TTL_0,      /* TRILL term packet TTL is 0. */
+    CLX_PKT_RX_REASON_TRILL_TERM_TTL_1,      /* TRILL term packet TTL is 1. */
     CLX_PKT_RX_REASON_TRILL_MRPF_CHECK_FAIL, /* TRILL multicast RPF check failed. */
-    CLX_PKT_RX_REASON_NSH_CTRL_PKT,          /* NSH control packets to CPU.          */
-    CLX_PKT_RX_REASON_NSH_INVALID_PKT,       /* NSH packet is illegal from RFC.       */
-    CLX_PKT_RX_REASON_NSH_LKP_MISS,   /* NSH lookup failed with the bank error or entry miss.   */
-    CLX_PKT_RX_REASON_ECMP_LKP_MISS,  /* ECMP lookup failed with the bank error or entry miss.  */
-    CLX_PKT_RX_REASON_ACL_LKP_MISS,   /* ACL lookup failed with the bank error or entry miss.   */
-    CLX_PKT_RX_REASON_FLOW_LKP_MISS,  /* Flow lookup failed with the bank error or entry miss.  */
+    CLX_PKT_RX_REASON_NSH_CTRL_PKT,          /* NSH control packets to CPU. */
+    CLX_PKT_RX_REASON_NSH_INVALID_PKT,       /* NSH packet is illegal from RFC. */
+    CLX_PKT_RX_REASON_NSH_LKP_MISS,   /* NSH lookup failed with the bank error or entry miss. */
+    CLX_PKT_RX_REASON_ECMP_LKP_MISS,  /* ECMP lookup failed with the bank error or entry miss. */
+    CLX_PKT_RX_REASON_ACL_LKP_MISS,   /* ACL lookup failed with the bank error or entry miss. */
+    CLX_PKT_RX_REASON_FLOW_LKP_MISS,  /* Flow lookup failed with the bank error or entry miss. */
     CLX_PKT_RX_REASON_IGR_FLOW_SFLOW, /* Ingress flow-based sflow hit. */
     CLX_PKT_RX_REASON_EGR_FLOW_SFLOW, /* Egress flow-based sflow hit. */
-    CLX_PKT_RX_REASON_HW_ERROR,       /* HW error. e.g. ECC.       */
-    CLX_PKT_RX_REASON_1588_RX_PKT,    /* User spcified the 1588 packets.    */
+    CLX_PKT_RX_REASON_HW_ERROR,       /* HW error. e.g. ECC. */
+    CLX_PKT_RX_REASON_1588_RX_PKT,    /* User spcified the 1588 packets. */
     /* 144 */
-    CLX_PKT_RX_REASON_STP_BLOCK,               /* STP block packets to CPU.               */
-    CLX_PKT_RX_REASON_STACKING_NEIGHBOR,       /* The stacking packets from neighbor.       */
-    CLX_PKT_RX_REASON_STACKING_BROADCAST,      /* The stacking broadcast packets.      */
-    CLX_PKT_RX_REASON_STACKING_LOOP,           /* The stacking path is loop.           */
-    CLX_PKT_RX_REASON_STORM_CONTROL,           /* Storm Control packets to CPU.           */
+    CLX_PKT_RX_REASON_STP_BLOCK,               /* STP block packets to CPU. */
+    CLX_PKT_RX_REASON_STACKING_NEIGHBOR,       /* The stacking packets from neighbor. */
+    CLX_PKT_RX_REASON_STACKING_BROADCAST,      /* The stacking broadcast packets. */
+    CLX_PKT_RX_REASON_STACKING_LOOP,           /* The stacking path is loop. */
+    CLX_PKT_RX_REASON_STORM_CONTROL,           /* Storm Control packets to CPU. */
     CLX_PKT_RX_REASON_TUNNEL_INIT_LKP_MISS,    /* Tunnel init lookup failed with bank error or entry
-                                                  miss.           */
-    CLX_PKT_RX_REASON_TUNNEL_INNER_VLAN_MISS,  /* IP Tunnel or TRILL packets miss inner VLAN.  */
+                                                  miss. */
+    CLX_PKT_RX_REASON_TUNNEL_INNER_VLAN_MISS,  /* IP Tunnel or TRILL packets miss inner VLAN. */
     CLX_PKT_RX_REASON_TUNNEL_INNER_VLAN_UNEXP, /* IP Tunnel or TRILL packets not allowed inner VLAN.
                                                 */
-    CLX_PKT_RX_REASON_IGR_L3_MTU_FAIL,         /* Ingress L3 MTU check fail to CPU.         */
-    CLX_PKT_RX_REASON_EGR_L3_MTU_FAIL,         /* Egress L3 MTU check fail to CPU.         */
-    CLX_PKT_RX_REASON_IGR_TUNNEL_MTU_FAIL,     /* Ingress Tunnel MTU check fail to CPU.     */
-    CLX_PKT_RX_REASON_EGR_TUNNEL_MTU_FAIL,     /* Egress Tunnel MTU check fail to CPU.     */
-    CLX_PKT_RX_REASON_EGR_IPV4_TTL_1,          /* Egress IPv4 interface configure TTL 1.          */
-    CLX_PKT_RX_REASON_EGR_IPV6_TTL_1,          /* Egress IPv6 interface configure TTL 1.          */
-    CLX_PKT_RX_REASON_COPY_TO_CPU_L2MC,        /* L2MC Copy to CPU.        */
-    CLX_PKT_RX_REASON_COPY_TO_CPU_L3MC,        /* L3MC Copy to CPU.        */
+    CLX_PKT_RX_REASON_IGR_L3_MTU_FAIL,         /* Ingress L3 MTU check fail to CPU. */
+    CLX_PKT_RX_REASON_EGR_L3_MTU_FAIL,         /* Egress L3 MTU check fail to CPU. */
+    CLX_PKT_RX_REASON_IGR_TUNNEL_MTU_FAIL,     /* Ingress Tunnel MTU check fail to CPU. */
+    CLX_PKT_RX_REASON_EGR_TUNNEL_MTU_FAIL,     /* Egress Tunnel MTU check fail to CPU. */
+    CLX_PKT_RX_REASON_EGR_IPV4_TTL_1,          /* Egress IPv4 interface configure TTL 1. */
+    CLX_PKT_RX_REASON_EGR_IPV6_TTL_1,          /* Egress IPv6 interface configure TTL 1. */
+    CLX_PKT_RX_REASON_COPY_TO_CPU_L2MC,        /* L2MC Copy to CPU. */
+    CLX_PKT_RX_REASON_COPY_TO_CPU_L3MC,        /* L3MC Copy to CPU. */
     /* 160 */
-    CLX_PKT_RX_REASON_COPY_TO_CPU_L2UC,          /* L2UC Copy to CPU.          */
-    CLX_PKT_RX_REASON_COPY_TO_CPU_L3UC,          /* L3UC Copy to CPU.          */
+    CLX_PKT_RX_REASON_COPY_TO_CPU_L2UC,          /* L2UC Copy to CPU. */
+    CLX_PKT_RX_REASON_COPY_TO_CPU_L3UC,          /* L3UC Copy to CPU. */
     CLX_PKT_RX_REASON_FLEX_TUNNEL_UDP_CHKSM_ERR, /* Flex tunnel packet UDP checksum is abnormal. */
-    CLX_PKT_RX_REASON_FLEX_TUNNEL_0_CHK, /* Flex tunnel 0 with sanity, type, or length check fail.
-                                          */
-    CLX_PKT_RX_REASON_FLEX_TUNNEL_1_CHK, /* Flex tunnel 1 with sanity, type, or length check fail.
-                                          */
-    CLX_PKT_RX_REASON_FLEX_TUNNEL_2_CHK, /* Flex tunnel 2 with sanity, type, or length check fail.
-                                          */
-    CLX_PKT_RX_REASON_FLEX_TUNNEL_3_CHK, /* Flex tunnel 3 with sanity, type, or length check fail.
-                                          */
-    CLX_PKT_RX_REASON_EGR_SFLOW_HIGH_LATENCY, /* Sample high latency packet, CL8600 only. */
-    CLX_PKT_RX_REASON_DPP_LOOPBACK,           /* DPP loopback packet, CL8600 only.           */
-    CLX_PKT_RX_REASON_PPPOE_SRV_UNKNOWN,      /* PPPOE service unknown, CL8600 only.      */
-    CLX_PKT_RX_REASON_PPPOE_HDR_ERR,          /* PPPOE header error, CL8600 only.          */
-    CLX_PKT_RX_REASON_PPPOE_ENCAP_ERR,        /* PPPOE encap error, CL8600 only.        */
-    CLX_PKT_RX_REASON_IP_TUNNEL_IPV4_ERR,     /* IP tunnel IPv4 header error, CL8600 only.     */
-    CLX_PKT_RX_REASON_IP_TUNNEL_IPV6_ERR,     /* IP tunnel IPv6 header error, CL8600 only.     */
-    CLX_PKT_RX_REASON_DECAP_NSH_TTL_1,        /* NSH TLL 1 error, CL8600 only.        */
-    CLX_PKT_RX_REASON_TRANSIT_NSH_TTL_1,      /* NSH TLL 1 error, CL8600 only.      */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_0_CHK,  /* Flex tunnel 0 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_1_CHK,  /* Flex tunnel 1 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_2_CHK,  /* Flex tunnel 2 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_3_CHK,  /* Flex tunnel 3 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_4_CHK,  /* Flex tunnel 4 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_5_CHK,  /* Flex tunnel 5 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_6_CHK,  /* Flex tunnel 6 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_7_CHK,  /* Flex tunnel 7 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_8_CHK,  /* Flex tunnel 8 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_9_CHK,  /* Flex tunnel 9 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_10_CHK, /* Flex tunnel 10 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_11_CHK, /* Flex tunnel 11 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_12_CHK, /* Flex tunnel 12 with sanity, type, or length check fail.
+                                           */
     /* 176 */
-    CLX_PKT_RX_REASON_PORT_MTR_DROP, /* Meter over rate drop, CL8600 only.              */
-    CLX_PKT_RX_REASON_WECMP,         /* WECMP config error, CL8600 only.                      */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_13_CHK, /* Flex tunnel 13 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_14_CHK, /* Flex tunnel 14 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_15_CHK, /* Flex tunnel 15 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_16_CHK, /* Flex tunnel 16 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_17_CHK, /* Flex tunnel 17 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_18_CHK, /* Flex tunnel 18 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_19_CHK, /* Flex tunnel 19 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_20_CHK, /* Flex tunnel 20 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_21_CHK, /* Flex tunnel 21 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_22_CHK, /* Flex tunnel 22 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_FLEX_TUNNEL_23_CHK, /* Flex tunnel 23 with sanity, type, or length check fail.
+                                           */
+    CLX_PKT_RX_REASON_EGR_SFLOW_HIGH_LATENCY, /* Sample high latency packet, CL8600 only. */
+    CLX_PKT_RX_REASON_DPP_LOOPBACK,           /* DPP loopback packet, CL8600 only. */
+    CLX_PKT_RX_REASON_PPPOE_SRV_UNKNOWN,      /* PPPOE service unknown, CL8600 only. */
+    CLX_PKT_RX_REASON_PPPOE_HDR_ERR,          /* PPPOE header error, CL8600 only. */
+    CLX_PKT_RX_REASON_PPPOE_ENCAP_ERR,        /* PPPOE encap error, CL8600 only. */
+    /* 192 */
+    CLX_PKT_RX_REASON_IP_TUNNEL_IPV4_ERR,         /* IP tunnel IPv4 header error, CL8600 only. */
+    CLX_PKT_RX_REASON_IP_TUNNEL_IPV6_ERR,         /* IP tunnel IPv6 header error, CL8600 only. */
+    CLX_PKT_RX_REASON_DECAP_NSH_TTL_1,            /* NSH TLL 1 error, CL8600 only. */
+    CLX_PKT_RX_REASON_TRANSIT_NSH_TTL_1,          /* NSH TLL 1 error, CL8600 only. */
+    CLX_PKT_RX_REASON_PORT_MTR_DROP,              /* Meter over rate drop, CL8600 only. */
+    CLX_PKT_RX_REASON_WECMP,                      /* WECMP config error, CL8600 only. */
     CLX_PKT_RX_REASON_IOAM_NODE_LEN_INVALID_IPV6, /* IOAM over IPv6 node len not align, CL8600 only.
                                                    */
     CLX_PKT_RX_REASON_IOAM_NODE_LEN_INVALID_GRE,  /* IOAM over GRE node len not align, CL8600 only.
                                                    */
     CLX_PKT_RX_REASON_IOAM_NODE_LEN_INVALID_GPE,  /* IOAM over GPE node len not align, CL8600 only.
                                                    */
-    CLX_PKT_RX_REASON_TUNNEL_MGO_HIT,  /* IP tunnel (*, G) lookup hit copy to CPU, CL8600 only.  */
+    CLX_PKT_RX_REASON_TUNNEL_MGO_HIT,  /* IP tunnel (*, G) lookup hit copy to CPU, CL8600 only. */
     CLX_PKT_RX_REASON_TUNNEL_MSGO_HIT, /* IP tunnel (S, G) lookup hit copy to CPU, CL8600 only. */
-    CLX_PKT_RX_REASON_TUNNEL_SPT_RDY_UNSET, /* IP tunnel (S, G) ready, notify to update spt ready
-                                               bit,  CL8600 only.  */
-    CLX_PKT_RX_REASON_TUNNEL_INVALID_SA, /* Tunnel header SMAC invalid to CPU, CL8600 only.     */
+    CLX_PKT_RX_REASON_TUNNEL_SPT_RDY_UNSET,  /* IP tunnel (S, G) ready, notify to update spt ready
+                                                bit, CL8600 only. */
+    CLX_PKT_RX_REASON_TUNNEL_INVALID_SA,     /* Tunnel header SMAC invalid to CPU, CL8600 only. */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_TTL_0, /* IP tunnel packet outer TTL is 0 to CPU, CL8600 only.
                                               */
     CLX_PKT_RX_REASON_IP_TUNNEL_OUTER_TTL_1, /* IP tunnel packet outer TTL is 1 to CPU, CL8600 only.
                                               */
-    CLX_PKT_RX_REASON_IP_TUNNEL_IP_HDR_ERR,  /* IP tunnel pacet IP invalid to CPU, CL8600 only.  */
-    CLX_PKT_RX_REASON_TUNNEL_UNK_PLD,    /* IP tunnel unknown payload to CPU, CL8600 only.        */
-    CLX_PKT_RX_REASON_TUNNEL_SPTO_BLOCK, /* Underlay STP block packets to CPU, CL8600 only.     */
-    CLX_PKT_RX_REASON_MPLS_RMAC_MISS,  /* MPLS packtes DMAC not match to CPU, CL8600 only.        */
-    CLX_PKT_RX_REASON_TUNNEL_MGO_MISS, /* IP tunnel (*, G) lookup miss to CPU, CL8600 only.       */
-    /* 192 */
-    CLX_PKT_RX_REASON_TUNNEL_MSGO_MISS, /* IP tunnel (S, G) lookup miss to CPU, CL8600 only. */
+    CLX_PKT_RX_REASON_IP_TUNNEL_IP_HDR_ERR,  /* IP tunnel pacet IP invalid to CPU, CL8600 only. */
+    /* 208 */
+    CLX_PKT_RX_REASON_TUNNEL_UNK_PLD,    /* IP tunnel unknown payload to CPU, CL8600 only. */
+    CLX_PKT_RX_REASON_TUNNEL_SPTO_BLOCK, /* Underlay STP block packets to CPU, CL8600 only. */
+    CLX_PKT_RX_REASON_MPLS_RMAC_MISS,    /* MPLS packtes DMAC not match to CPU, CL8600 only. */
+    CLX_PKT_RX_REASON_TUNNEL_MGO_MISS,   /* IP tunnel (*, G) lookup miss to CPU, CL8600 only. */
+    CLX_PKT_RX_REASON_TUNNEL_MSGO_MISS,  /* IP tunnel (S, G) lookup miss to CPU, CL8600 only. */
     CLX_PKT_RX_REASON_MPLS_LSP_MISS, /* MPLS packets LSP label lookup miss to CPU, CL8600 only. */
     CLX_PKT_RX_REASON_TUNNEL_SA_DA_BIND,  /* IP tunnel SIP and DIP bind check fail to CPU, CL8600
-                                             only.         */
+                                             only. */
     CLX_PKT_RX_REASON_TUNNEL_RPF_CHECK,   /* IP tunnel multicast RPF check fail to CPU, CL8600 only.
                                            */
     CLX_PKT_RX_REASON_GENEVE_VER_ERR,     /* GENEVE packets version is illegal from RFC8926, CL8600
-                                             only.       */
+                                             only. */
     CLX_PKT_RX_REASON_GENEVE_CTRL_FLAG_O, /* GENEVE packets O-bit is illegal form RFC8926, CL8600
-                                             only.         */
+                                             only. */
     CLX_PKT_RX_REASON_GENEVE_CTRL_FLAG_C, /* GENEVE packets C-bit is illegal form RFC8926, CL8600
-                                             only.         */
+                                             only. */
     CLX_PKT_RX_REASON_MPLS_LSP_RSVD,      /* Select RSVD or RSVD1 via the register MPLS_rsvd_excpt,
                                              CL8600 only.*/
     CLX_PKT_RX_REASON_MPLS_LSP_RSVD1,     /* Select RSVD or RSVD1 via the register MPLS_rsvd_excpt,
                                              CL8600 only.*/
-    CLX_PKT_RX_REASON_MPLS_ELI_BOS,       /* ELI label is at the bottom, CL8600 only.       */
-    CLX_PKT_RX_REASON_MPLS_NULL_TOP,      /* NULL label not at the top, CL8600 only.      */
-    CLX_PKT_RX_REASON_MPLS_EXPOSE_TTL0,   /* VPN or Transit label ttl id 0, CL8600 only.   */
-    CLX_PKT_RX_REASON_MPLS_EXPOSE_TTL1,   /* VPN or Transit label ttl id 1, CL8600 only.   */
+    CLX_PKT_RX_REASON_MPLS_ELI_BOS,       /* ELI label is at the bottom, CL8600 only. */
+    CLX_PKT_RX_REASON_MPLS_NULL_TOP,      /* NULL label not at the top, CL8600 only. */
+    CLX_PKT_RX_REASON_MPLS_EXPOSE_TTL0,   /* VPN or Transit label ttl id 0, CL8600 only. */
+    /* 224 */
+    CLX_PKT_RX_REASON_MPLS_EXPOSE_TTL1, /* VPN or Transit label ttl id 1, CL8600 only. */
     CLX_PKT_RX_REASON_MPLS_NULL_IP, /* No VPN labe and have NULL label, the inner layer is not the
                                        IP but the Ether, CL8600 only. */
     CLX_PKT_RX_REASON_MPLS_EL_IP, /* Only have LSP and have entroy label, the inner layer is not the
                                      IP but the Ether, CL8600 only. */
-    CLX_PKT_RX_REASON_MPLS_LSP_IP, /* Only have LSP, the inner is not Ether, CL8600 only. */
-    /* 208 */
+    CLX_PKT_RX_REASON_MPLS_LSP_IP,    /* Only have LSP, the inner is not Ether, CL8600 only. */
     CLX_PKT_RX_REASON_SRV6_FUNC_MISS, /* SRv6 packets function lookup miss to CPU, CL8600 only. */
-    CLX_PKT_RX_REASON_SRH_ERR,        /* SRH is illegal from RFC, CL8600 only.        */
+    CLX_PKT_RX_REASON_SRH_ERR,        /* SRH is illegal from RFC, CL8600 only. */
     CLX_PKT_RX_REASON_SRV6_FUNC_REDIRECT_TO_CPU, /* SRv6 packets function match to CPU, CL8600 only.
                                                   */
-    CLX_PKT_RX_REASON_SRV6_FLAVOR_ERR, /* SRv6 packets flavor invalid to CPU, CL8600 only.    */
-    CLX_PKT_RX_REASON_SRH_SL0_USP,     /* SRv6 USP flavor and SL is 0 to CPU, CL8600 only.        */
+    CLX_PKT_RX_REASON_SRV6_FLAVOR_ERR,    /* SRv6 packets flavor invalid to CPU, CL8600 only. */
+    CLX_PKT_RX_REASON_SRH_SL0_USP,        /* SRv6 USP flavor and SL is 0 to CPU, CL8600 only. */
     CLX_PKT_RX_REASON_SRH_SL0_USP_NO_SRH, /* SRv6 USP flavor and packets has no SRH, CL8600 only. */
     CLX_PKT_RX_REASON_SRH_SL0_USP_TWO_SRH, /* SRv6 USP flavor and packets has two SRH, CL8600 only.
                                             */
@@ -417,83 +458,83 @@ typedef enum {
     CLX_PKT_RX_REASON_SRV6_UNK_PLD_DECAP,   /* SRv6 decapsulation when payload invalid, CL8600 only.
                                              */
     CLX_PKT_RX_REASON_B6_INSERT_RCV_REDUCED,     /* SRv6 packets B6.Insert when DIP is not in SRH,
-                                                    CL8600 only.        */
+                                                    CL8600 only. */
     CLX_PKT_RX_REASON_B6_INSERT_RCV_DIP_UNMATCH, /* SRv6 packets B6.Insert when DIP not match SRH
                                                     current SID, CL8600 only. */
-    CLX_PKT_RX_REASON_SRV6_UNK_BEHAVIOR, /* SRv6 endpoint behavior invalid to CPU, CL8600 only.   */
-    CLX_PKT_RX_REASON_AUTO_TUNNEL_IP_MISS,   /* 6to4 tunnel outer IPv4 and inner IPv6 are unmatched,
-                                                CL8600 only.  */
+    /* 240 */
+    CLX_PKT_RX_REASON_SRV6_UNK_BEHAVIOR,   /* SRv6 endpoint behavior invalid to CPU, CL8600 only. */
+    CLX_PKT_RX_REASON_AUTO_TUNNEL_IP_MISS, /* 6to4 tunnel outer IPv4 and inner IPv6 are unmatched,
+                                              CL8600 only. */
     CLX_PKT_RX_REASON_ISATAP_TUNNEL_IP_MISS, /* ISATAP tunnel outer IPv4 and inner IPv6 are
                                                 unmatched, CL8600 only.*/
-    CLX_PKT_RX_REASON_MPLS_DECAP_BOS, /* No bottom of the labels stack, CL8600 only.        */
-    /* 224 */
-    CLX_PKT_RX_REASON_MPLS_PW_CW,    /* Common PWCW packets, CL8600 only.    */
-    CLX_PKT_RX_REASON_MPLS_PW_ACH,   /* ACH packets, CL8600 only.   */
-    CLX_PKT_RX_REASON_MPLS_PW_UNK,   /* PWCW parsing error, CL8600 only.   */
-    CLX_PKT_RX_REASON_MPLS_L3VPN_IP, /* L3VPN scenario, the inner is ether, CL8600 only. */
-    CLX_PKT_RX_REASON_BDI_HSH_MISS,  /* Hash search for inner bridge domain failed, CL8600 only.  */
+    CLX_PKT_RX_REASON_MPLS_DECAP_BOS,        /* No bottom of the labels stack, CL8600 only. */
+    CLX_PKT_RX_REASON_MPLS_PW_CW,            /* Common PWCW packets, CL8600 only. */
+    CLX_PKT_RX_REASON_MPLS_PW_ACH,           /* ACH packets, CL8600 only. */
+    CLX_PKT_RX_REASON_MPLS_PW_UNK,           /* PWCW parsing error, CL8600 only. */
+    CLX_PKT_RX_REASON_MPLS_L3VPN_IP,         /* L3VPN scenario, the inner is ether, CL8600 only. */
+    CLX_PKT_RX_REASON_BDI_HSH_MISS,  /* Hash search for inner bridge domain failed, CL8600 only. */
     CLX_PKT_RX_REASON_IGMP_SNOOPING, /* IGMP snooping packets, CL8600 only. */
-    CLX_PKT_RX_REASON_MLD_SNOOPING,  /* MLD snooping packets, CL8600 only.  */
-    CLX_PKT_RX_REASON_TUNNEL_ECN,    /* Used Ecn map of tunnel decap: ECT(1) (!), CL8600 only.    */
-    CLX_PKT_RX_REASON_TUNNEL_ECN_2, /* Used Ecn map of tunnel decap: Not-ECT (!!!), CL8600 only.  */
-    CLX_PKT_RX_REASON_TUNNEL_ECN_3, /* Used Ecn map of tunnel decap: drop (!!!), CL8600 only.  */
+    CLX_PKT_RX_REASON_MLD_SNOOPING,  /* MLD snooping packets, CL8600 only. */
+    CLX_PKT_RX_REASON_TUNNEL_ECN,    /* Used Ecn map of tunnel decap: ECT(1) (!), CL8600 only. */
+    CLX_PKT_RX_REASON_TUNNEL_ECN_2,  /* Used Ecn map of tunnel decap: Not-ECT (!!!), CL8600 only. */
+    CLX_PKT_RX_REASON_TUNNEL_ECN_3,  /* Used Ecn map of tunnel decap: drop (!!!), CL8600 only. */
     CLX_PKT_RX_REASON_MPLS_TRANSIT_LBL_MISS, /* MPLS transit label not hit, CL8600 only. */
-    CLX_PKT_RX_REASON_L2_SA_MISS_1,          /* L2 source address miss, CL8600 only.          */
+    CLX_PKT_RX_REASON_L2_SA_MISS_1,          /* L2 source address miss, CL8600 only. */
+    /* 256 */
     CLX_PKT_RX_REASON_INT_SRC_RCV_INT_ENCAP, /* INT sourrc receive igr with INT encap, CL8600 only.
                                               */
-    CLX_PKT_RX_REASON_UC_SOURCE_PRUNING,     /* Unicast source prune, CL8600 only.     */
+    CLX_PKT_RX_REASON_UC_SOURCE_PRUNING,     /* Unicast source prune, CL8600 only. */
     CLX_PKT_RX_REASON_UC_SPLITHORIZON_CHECK, /* Tunnel farward to tunnel by L2UC, CL8600 only. */
-    CLX_PKT_RX_REASON_IP_TTL_0,              /* Ip header TTL is 0, CL8600 only.              */
-    /* 240 */
-    CLX_PKT_RX_REASON_IP_TTL_1, /* Ip header TTL is 0, CL8600 only.                   */
+    CLX_PKT_RX_REASON_IP_TTL_0,              /* Ip header TTL is 0, CL8600 only. */
+    CLX_PKT_RX_REASON_IP_TTL_1,              /* Ip header TTL is 0, CL8600 only. */
     CLX_PKT_RX_REASON_TELM_OVER_UNSUPPORTED_TYPE, /* Source role ingress is not valid L4
                                                      type(TCP/UDP/GRE), and tnl_idx is 0, CL8600
-                                                     only.                                     */
-    CLX_PKT_RX_REASON_EVPN_ESI_FILTER, /* EVPN esi filter to CPU, CL8600 only.            */
-    CLX_PKT_RX_REASON_EVPN_DF_FILTER,  /* EVPN DF filter to CPU, CL8600 only.             */
-    CLX_PKT_RX_REASON_VLAN_HSH_MISS,   /* Hash search for  VLAN editing failed, CL8600 only. */
+                                                     only. */
+    CLX_PKT_RX_REASON_EVPN_ESI_FILTER,            /* EVPN esi filter to CPU, CL8600 only. */
+    CLX_PKT_RX_REASON_EVPN_DF_FILTER,             /* EVPN DF filter to CPU, CL8600 only. */
+    CLX_PKT_RX_REASON_VLAN_HSH_MISS, /* Hash search for VLAN editing failed, CL8600 only. */
     CLX_PKT_RX_REASON_IGR_NOT_PVLAN_PORT_PORT, /* Inbound port is a non PVLAN port, CL8600 only. */
     CLX_PKT_RX_REASON_EGR_PVLAN_PORT_TYPE_CHECK, /* Check PVLAN role on outbound port, CL8600 only.
                                                   */
     CLX_PKT_RX_REASON_INT_OVER_UNSUPPORTED_TYPE, /* INT source ingress is not valid L4
                                                     type(TCP/UDP/GRE), and tnl_idx is 0, CL8600
-                                                    only.                                     */
-    CLX_PKT_RX_REASON_MC_SOURCE_PRUNING,         /* Multicast source prune, CL8600 only.         */
+                                                    only. */
+    CLX_PKT_RX_REASON_MC_SOURCE_PRUNING,         /* Multicast source prune, CL8600 only. */
     CLX_PKT_RX_REASON_MC_SPLITHORIZON_CHECK, /* Tunnel farward to tunnel by L2UC, CL8600 only. */
     CLX_PKT_RX_REASON_MC_L3VPN_PRUNING,      /* L3 VPN source pruning with same l3 interface, CL8600
-                                                only.         */
+                                                only. */
     CLX_PKT_RX_REASON_IOAM_OVER_UNSUPPORTED_TYPE, /* IOAM source ingress is not IPv4/IPv6 and
                                                      tnl_idx is 0, CL8600 only.*/
-    CLX_PKT_RX_REASON_INT_MTU_EXCEED,             /* INT MTU exceed, CL8600 only.             */
+    /* 272 */
+    CLX_PKT_RX_REASON_INT_MTU_EXCEED,  /* INT MTU exceed, CL8600 only. */
     CLX_PKT_RX_REASON_INT_META_INCOMP, /* Ingress packet header is oversize, making it impossible to
                                           fully decap INT, CL8600 only. */
     CLX_PKT_RX_REASON_TELM_NONEXIST_DECAP, /* CUD type is decap action, but ingress packet has no
                                               TELM header, CL8600 only. */
-    CLX_PKT_RX_REASON_INT_OVER_UNSUPPORTED_TNL, /* INT source role cfg encap TNL type is
-                                                   Non-VxlanGpe/Geneve/GRE, CL8600 only. */
-    /* 256 */
+    CLX_PKT_RX_REASON_INT_OVER_UNSUPPORTED_TNL,  /* INT source role cfg encap TNL type is
+                                                     Non-VxlanGpe/Geneve/GRE, CL8600 only. */
     CLX_PKT_RX_REASON_IOAM_OVER_UNSUPPORTED_TNL, /* IOAM source role cfg encap tnl type is
-                                                    Non-Vxlan, CL8600 only.     */
+                                                    Non-Vxlan, CL8600 only. */
     CLX_PKT_RX_REASON_MPLS_PHP_BOS_ETH, /* PHP have no mpls label stack, but inner is not IP, CL8600
-                                           only.    */
+                                           only. */
     CLX_PKT_RX_REASON_EGR_INC_OVERFLOW, /* Egress packet size overflow, CL8600 only. */
     CLX_PKT_RX_REASON_URPF_CHECK_FAIL_DROP, /* L3 URPF check fail drop, CL8600 only. */
-    CLX_PKT_RX_REASON_L3MC_RPF_CHECK_DROP,  /* L3 RPF check fail drop, CL8600 only.  */
-    CLX_PKT_RX_REASON_PORT_HIGH_LATENCY,    /* Port high latency packet, CL8600 only.    */
-    CLX_PKT_RX_REASON_ACL_DROP,             /* ACL drop, CL8600 only.             */
-    CLX_PKT_RX_REASON_IGR_BDI_SPT, /* Ingress bridge domain spanning tree, CL8600 only.          */
-    CLX_PKT_RX_REASON_EGR_BDI_SPT, /* Egress bridge domain spanning tree, CL8600 only.          */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_0, /* ctrl2cpu reason for entry 0, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_1, /* ctrl2cpu reason for entry 1, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_2, /* ctrl2cpu reason for entry 2, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_3, /* ctrl2cpu reason for entry 3, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_4, /* ctrl2cpu reason for entry 4, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_5, /* ctrl2cpu reason for entry 5, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_6, /* ctrl2cpu reason for entry 6, CL8600 only  */
-    /* 272 */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_7,  /* ctrl2cpu reason for entry 7, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_8,  /* ctrl2cpu reason for entry 8, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_9,  /* ctrl2cpu reason for entry 9, CL8600 only.  */
+    CLX_PKT_RX_REASON_L3MC_RPF_CHECK_DROP,  /* L3 RPF check fail drop, CL8600 only. */
+    CLX_PKT_RX_REASON_PORT_HIGH_LATENCY,    /* Port high latency packet, CL8600 only. */
+    CLX_PKT_RX_REASON_ACL_DROP,             /* ACL drop, CL8600 only. */
+    CLX_PKT_RX_REASON_IGR_BDI_SPT,          /* Ingress bridge domain spanning tree, CL8600 only. */
+    CLX_PKT_RX_REASON_EGR_BDI_SPT,          /* Egress bridge domain spanning tree, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_0,  /* ctrl2cpu reason for entry 0, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_1,  /* ctrl2cpu reason for entry 1, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_2,  /* ctrl2cpu reason for entry 2, CL8600 only. */
+    /* 288 */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_3,  /* ctrl2cpu reason for entry 3, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_4,  /* ctrl2cpu reason for entry 4, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_5,  /* ctrl2cpu reason for entry 5, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_6,  /* ctrl2cpu reason for entry 6, CL8600 only */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_7,  /* ctrl2cpu reason for entry 7, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_8,  /* ctrl2cpu reason for entry 8, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_9,  /* ctrl2cpu reason for entry 9, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_10, /* ctrl2cpu reason for entry 10, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_11, /* ctrl2cpu reason for entry 11, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_12, /* ctrl2cpu reason for entry 12, CL8600 only. */
@@ -503,11 +544,11 @@ typedef enum {
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_16, /* ctrl2cpu reason for entry 16, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_17, /* ctrl2cpu reason for entry 17, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_18, /* ctrl2cpu reason for entry 18, CL8600 only. */
+    /* 304 */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_19, /* ctrl2cpu reason for entry 19, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_20, /* ctrl2cpu reason for entry 20, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_21, /* ctrl2cpu reason for entry 21, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_22, /* ctrl2cpu reason for entry 22, CL8600 only. */
-    /* 288 */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_23, /* ctrl2cpu reason for entry 23, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_24, /* ctrl2cpu reason for entry 24, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_25, /* ctrl2cpu reason for entry 25, CL8600 only. */
@@ -520,11 +561,11 @@ typedef enum {
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_32, /* ctrl2cpu reason for entry 32, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_33, /* ctrl2cpu reason for entry 33, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_34, /* ctrl2cpu reason for entry 34, CL8600 only. */
+    /* 320 */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_35, /* ctrl2cpu reason for entry 35, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_36, /* ctrl2cpu reason for entry 36, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_37, /* ctrl2cpu reason for entry 37, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_38, /* ctrl2cpu reason for entry 38, CL8600 only. */
-    /* 304 */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_39, /* ctrl2cpu reason for entry 39, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_40, /* ctrl2cpu reason for entry 40, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_41, /* ctrl2cpu reason for entry 41, CL8600 only. */
@@ -537,11 +578,11 @@ typedef enum {
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_48, /* ctrl2cpu reason for entry 48, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_49, /* ctrl2cpu reason for entry 49, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_50, /* ctrl2cpu reason for entry 50, CL8600 only. */
+    /* 336 */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_51, /* ctrl2cpu reason for entry 51, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_52, /* ctrl2cpu reason for entry 52, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_53, /* ctrl2cpu reason for entry 53, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_54, /* ctrl2cpu reason for entry 54, CL8600 only. */
-    /* 320 */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_55, /* ctrl2cpu reason for entry 55, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_56, /* ctrl2cpu reason for entry 56, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_57, /* ctrl2cpu reason for entry 57, CL8600 only. */
@@ -554,11 +595,11 @@ typedef enum {
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_64, /* ctrl2cpu reason for entry 64, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_65, /* ctrl2cpu reason for entry 65, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_66, /* ctrl2cpu reason for entry 66, CL8600 only. */
+    /* 352 */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_67, /* ctrl2cpu reason for entry 67, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_68, /* ctrl2cpu reason for entry 68, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_69, /* ctrl2cpu reason for entry 69, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_70, /* ctrl2cpu reason for entry 70, CL8600 only. */
-    /* 336 */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_71, /* ctrl2cpu reason for entry 71, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_72, /* ctrl2cpu reason for entry 72, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_73, /* ctrl2cpu reason for entry 73, CL8600 only. */
@@ -571,28 +612,28 @@ typedef enum {
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_80, /* ctrl2cpu reason for entry 80, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_81, /* ctrl2cpu reason for entry 81, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_82, /* ctrl2cpu reason for entry 82, CL8600 only. */
+    /* 368 */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_83, /* ctrl2cpu reason for entry 83, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_84, /* ctrl2cpu reason for entry 84, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_85, /* ctrl2cpu reason for entry 85, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_86, /* ctrl2cpu reason for entry 86, CL8600 only. */
-    /* 352 */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_87,  /* ctrl2cpu reason for entry 87, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_88,  /* ctrl2cpu reason for entry 88, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_89,  /* ctrl2cpu reason for entry 89, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_90,  /* ctrl2cpu reason for entry 90, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_91,  /* ctrl2cpu reason for entry 91, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_92,  /* ctrl2cpu reason for entry 92, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_93,  /* ctrl2cpu reason for entry 93, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_94,  /* ctrl2cpu reason for entry 94, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_95,  /* ctrl2cpu reason for entry 95, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_96,  /* ctrl2cpu reason for entry 96, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_97,  /* ctrl2cpu reason for entry 97, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_98,  /* ctrl2cpu reason for entry 98, CL8600 only.  */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_99,  /* ctrl2cpu reason for entry 99, CL8600 only.  */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_87, /* ctrl2cpu reason for entry 87, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_88, /* ctrl2cpu reason for entry 88, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_89, /* ctrl2cpu reason for entry 89, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_90, /* ctrl2cpu reason for entry 90, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_91, /* ctrl2cpu reason for entry 91, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_92, /* ctrl2cpu reason for entry 92, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_93, /* ctrl2cpu reason for entry 93, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_94, /* ctrl2cpu reason for entry 94, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_95, /* ctrl2cpu reason for entry 95, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_96, /* ctrl2cpu reason for entry 96, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_97, /* ctrl2cpu reason for entry 97, CL8600 only. */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_98, /* ctrl2cpu reason for entry 98, CL8600 only. */
+    /* 384 */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_99,  /* ctrl2cpu reason for entry 99, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_100, /* ctrl2cpu reason for entry 100, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_101, /* ctrl2cpu reason for entry 101, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_102, /* ctrl2cpu reason for entry 102, CL8600 only. */
-    /* 368 */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_103, /* ctrl2cpu reason for entry 103, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_104, /* ctrl2cpu reason for entry 104, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_105, /* ctrl2cpu reason for entry 105, CL8600 only. */
@@ -605,11 +646,11 @@ typedef enum {
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_112, /* ctrl2cpu reason for entry 112, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_113, /* ctrl2cpu reason for entry 113, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_114, /* ctrl2cpu reason for entry 114, CL8600 only. */
+    /* 400 */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_115, /* ctrl2cpu reason for entry 115, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_116, /* ctrl2cpu reason for entry 116, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_117, /* ctrl2cpu reason for entry 117, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_118, /* ctrl2cpu reason for entry 118, CL8600 only. */
-    /* 384 */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_119, /* ctrl2cpu reason for entry 119, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_120, /* ctrl2cpu reason for entry 120, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_121, /* ctrl2cpu reason for entry 121, CL8600 only. */
@@ -619,17 +660,17 @@ typedef enum {
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_125, /* ctrl2cpu reason for entry 125, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_126, /* ctrl2cpu reason for entry 126, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_127, /* ctrl2cpu reason for entry 127, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_COPY_0,            /* cia copy reason 0, CL8600 only.            */
-    CLX_PKT_RX_REASON_CIA_COPY_1,            /* cia copy reason 1, CL8600 only.            */
-    CLX_PKT_RX_REASON_CIA_COPY_2,            /* cia copy reason 2, CL8600 only.            */
-    CLX_PKT_RX_REASON_CIA_COPY_3,            /* cia copy reason 3, CL8600 only.            */
-    CLX_PKT_RX_REASON_CIA_COPY_4,            /* cia copy reason 4, CL8600 only.            */
-    CLX_PKT_RX_REASON_CIA_COPY_5,            /* cia copy reason 5, CL8600 only.            */
-    CLX_PKT_RX_REASON_CIA_COPY_6,            /* cia copy reason 6, CL8600 only.            */
-    /* 400 */
-    CLX_PKT_RX_REASON_CIA_COPY_7,  /* cia copy reason 7, CL8600 only.  */
-    CLX_PKT_RX_REASON_CIA_COPY_8,  /* cia copy reason 8, CL8600 only.  */
-    CLX_PKT_RX_REASON_CIA_COPY_9,  /* cia copy reason 9, CL8600 only.  */
+    CLX_PKT_RX_REASON_CIA_COPY_0,            /* cia copy reason 0, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_1,            /* cia copy reason 1, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_2,            /* cia copy reason 2, CL8600 only. */
+    /* 416 */
+    CLX_PKT_RX_REASON_CIA_COPY_3,  /* cia copy reason 3, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_4,  /* cia copy reason 4, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_5,  /* cia copy reason 5, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_6,  /* cia copy reason 6, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_7,  /* cia copy reason 7, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_8,  /* cia copy reason 8, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_9,  /* cia copy reason 9, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_10, /* cia copy reason 10, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_11, /* cia copy reason 11, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_12, /* cia copy reason 12, CL8600 only. */
@@ -639,36 +680,88 @@ typedef enum {
     CLX_PKT_RX_REASON_CIA_COPY_16, /* cia copy reason 16, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_17, /* cia copy reason 17, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_18, /* cia copy reason 18, CL8600 only. */
+    /* 432 */
     CLX_PKT_RX_REASON_CIA_COPY_19, /* cia copy reason 19, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_20, /* cia copy reason 20, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_21, /* cia copy reason 21, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_22, /* cia copy reason 22, CL8600 only. */
-    /* 416 */
-    CLX_PKT_RX_REASON_CIA_TRAP_0,  /* cia trap reason 0, CL8600 only.  */
-    CLX_PKT_RX_REASON_CIA_TRAP_1,  /* cia trap reason 1, CL8600 only.  */
-    CLX_PKT_RX_REASON_CIA_TRAP_2,  /* cia trap reason 2, CL8600 only.  */
-    CLX_PKT_RX_REASON_CIA_TRAP_3,  /* cia trap reason 3, CL8600 only.  */
-    CLX_PKT_RX_REASON_CIA_TRAP_4,  /* cia trap reason 4, CL8600 only.  */
-    CLX_PKT_RX_REASON_CIA_TRAP_5,  /* cia trap reason 5, CL8600 only.  */
-    CLX_PKT_RX_REASON_CIA_TRAP_6,  /* cia trap reason 6, CL8600 only.  */
-    CLX_PKT_RX_REASON_CIA_TRAP_7,  /* cia trap reason 7, CL8600 only.  */
-    CLX_PKT_RX_REASON_CIA_TRAP_8,  /* cia trap reason 8, CL8600 only.  */
-    CLX_PKT_RX_REASON_CIA_TRAP_9,  /* cia trap reason 9, CL8600 only.  */
-    CLX_PKT_RX_REASON_CIA_TRAP_10, /* cia trap reason 10, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_TRAP_11, /* cia trap reason 11, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_TRAP_12, /* cia trap reason 12, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_TRAP_13, /* cia trap reason 13, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_TRAP_14, /* cia trap reason 14, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_TRAP_15, /* cia trap reason 15, CL8600 only. */
-    /* 432 */
-    CLX_PKT_RX_REASON_CIA_TRAP_16, /* cia trap reason 16, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_TRAP_17, /* cia trap reason 17, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_TRAP_18, /* cia trap reason 18, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_TRAP_19, /* cia trap reason 19, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_TRAP_20, /* cia trap reason 20, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_TRAP_21, /* cia trap reason 21, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_TRAP_22, /* cia trap reason 22, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_TRAP_23, /* cia trap reason 23, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_23, /* cia copy reason 23, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_24, /* cia copy reason 24, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_25, /* cia copy reason 25, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_26, /* cia copy reason 26, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_27, /* cia copy reason 27, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_28, /* cia copy reason 28, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_29, /* cia copy reason 29, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_30, /* cia copy reason 30, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_31, /* cia copy reason 31, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_32, /* cia copy reason 32, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_33, /* cia copy reason 33, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_34, /* cia copy reason 34, CL8600 only. */
+    /* 448 */
+    CLX_PKT_RX_REASON_CIA_COPY_35, /* cia copy reason 35, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_36, /* cia copy reason 36, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_37, /* cia copy reason 37, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_38, /* cia copy reason 38, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_39, /* cia copy reason 39, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_40, /* cia copy reason 40, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_41, /* cia copy reason 41, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_42, /* cia copy reason 42, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_43, /* cia copy reason 43, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_44, /* cia copy reason 44, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_45, /* cia copy reason 45, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_46, /* cia copy reason 46, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_COPY_47, /* cia copy reason 47, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_0,  /* cia trap reason 0. */
+    CLX_PKT_RX_REASON_CIA_TRAP_1,  /* cia trap reason 1. */
+    CLX_PKT_RX_REASON_CIA_TRAP_2,  /* cia trap reason 2. */
+    /* 464 */
+    CLX_PKT_RX_REASON_CIA_TRAP_3,  /* cia trap reason 3. */
+    CLX_PKT_RX_REASON_CIA_TRAP_4,  /* cia trap reason 4. */
+    CLX_PKT_RX_REASON_CIA_TRAP_5,  /* cia trap reason 5. */
+    CLX_PKT_RX_REASON_CIA_TRAP_6,  /* cia trap reason 6. */
+    CLX_PKT_RX_REASON_CIA_TRAP_7,  /* cia trap reason 7. */
+    CLX_PKT_RX_REASON_CIA_TRAP_8,  /* cia trap reason 8. */
+    CLX_PKT_RX_REASON_CIA_TRAP_9,  /* cia trap reason 9. */
+    CLX_PKT_RX_REASON_CIA_TRAP_10, /* cia trap reason 10. */
+    CLX_PKT_RX_REASON_CIA_TRAP_11, /* cia trap reason 11. */
+    CLX_PKT_RX_REASON_CIA_TRAP_12, /* cia trap reason 12. */
+    CLX_PKT_RX_REASON_CIA_TRAP_13, /* cia trap reason 13. */
+    CLX_PKT_RX_REASON_CIA_TRAP_14, /* cia trap reason 14. */
+    CLX_PKT_RX_REASON_CIA_TRAP_15, /* cia trap reason 15. */
+    CLX_PKT_RX_REASON_CIA_TRAP_16, /* cia trap reason 16. */
+    CLX_PKT_RX_REASON_CIA_TRAP_17, /* cia trap reason 17. */
+    CLX_PKT_RX_REASON_CIA_TRAP_18, /* cia trap reason 18. */
+    /* 480 */
+    CLX_PKT_RX_REASON_CIA_TRAP_19, /* cia trap reason 19. */
+    CLX_PKT_RX_REASON_CIA_TRAP_20, /* cia trap reason 20. */
+    CLX_PKT_RX_REASON_CIA_TRAP_21, /* cia trap reason 21. */
+    CLX_PKT_RX_REASON_CIA_TRAP_22, /* cia trap reason 22. */
+    CLX_PKT_RX_REASON_CIA_TRAP_23, /* cia trap reason 23. */
+    CLX_PKT_RX_REASON_CIA_TRAP_24, /* cia trap reason 24, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_25, /* cia trap reason 25, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_26, /* cia trap reason 26, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_27, /* cia trap reason 27, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_28, /* cia trap reason 28, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_29, /* cia trap reason 29, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_30, /* cia trap reason 30, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_31, /* cia trap reason 31, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_32, /* cia trap reason 32, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_33, /* cia trap reason 33, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_34, /* cia trap reason 34, CL8600 only. */
+    /* 496 */
+    CLX_PKT_RX_REASON_CIA_TRAP_35, /* cia trap reason 35, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_36, /* cia trap reason 36, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_37, /* cia trap reason 37, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_38, /* cia trap reason 38, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_39, /* cia trap reason 39, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_40, /* cia trap reason 40, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_41, /* cia trap reason 41, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_42, /* cia trap reason 42, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_43, /* cia trap reason 43, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_44, /* cia trap reason 44, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_45, /* cia trap reason 45, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_46, /* cia trap reason 46, CL8600 only. */
+    CLX_PKT_RX_REASON_CIA_TRAP_47, /* cia trap reason 47, CL8600 only. */
     CLX_PKT_RX_REASON_OTHERS,      /* None of the above reasons */
     CLX_PKT_RX_REASON_LAST
 } CLX_PKT_RX_REASON_T;
@@ -692,14 +785,26 @@ typedef UI32_T CLX_PKT_RX_REASON_BITMAP_T[CLX_PKT_RX_REASON_BITMAP_SIZE];
 /* Packet Drop Reasons */
 typedef enum {
     CLX_PKT_DROP_REASON_NONE = 0,
+    CLX_PKT_DROP_REASON_ECC_ERR,
+    CLX_PKT_DROP_REASON_IPL_ERR_FRM,
+    CLX_PKT_DROP_REASON_IPL_CRC_ERR,
+    CLX_PKT_DROP_REASON_IPL_MAX_LEN_VLT,
+    CLX_PKT_DROP_REASON_IPL_JABBER_FRM,
+    CLX_PKT_DROP_REASON_IPL_LEN_ERR,
+    CLX_PKT_DROP_REASON_IPL_CONST_SOP,
+    CLX_PKT_DROP_REASON_IPL_OVER_MTU,
+    CLX_PKT_DROP_REASON_IPL_EOP_TIME_OUT,
+    CLX_PKT_DROP_REASON_IPL_BUF_OVF,
+    CLX_PKT_DROP_REASON_LBM_FRG_DROP,
+    CLX_PKT_DROP_REASON_LBM_TRUN_ERR,
+    CLX_PKT_DROP_REASON_LBM_RECVD_ERR,
     CLX_PKT_DROP_REASON_L2_IGR_MTU_ERR = 16,
     CLX_PKT_DROP_REASON_L2_EGR_MTU_ERR,
     CLX_PKT_DROP_REASON_L2_MC_SOURCE_PRUNING,
     CLX_PKT_DROP_REASON_L2_UC_SOURCE_PRUNING,
     CLX_PKT_DROP_REASON_L2_BDI_SPT_DROP,
     CLX_PKT_DROP_REASON_L3_LKUP_TYPE_ERR_DROP,
-    CLX_PKT_DROP_REASON_L3_IGR_MTU_ERR,
-    CLX_PKT_DROP_REASON_L3_EGR_MTU_ERR,
+    CLX_PKT_DROP_REASON_L3_MTU_ERR,
     CLX_PKT_DROP_REASON_IP_SG_DROP,
     CLX_PKT_DROP_REASON_MC_L3VPN_PRUNING_DROP,
     CLX_PKT_DROP_REASON_L3_DIP_MISS_DROP,
@@ -724,7 +829,23 @@ typedef enum {
     CLX_PKT_DROP_REASON_ACL_IGR_DROP,
     CLX_PKT_DROP_REASON_ACL_EGR_DROP,
     CLX_PKT_DROP_REASON_PSR_PKT_ERR,
-    CLX_PKT_DROP_REASON_OTHERS,
+    CLX_PKT_DROP_REASON_PDB_WR_ERR,
+    CLX_PKT_DROP_REASON_ASM_PKTSZ_ERR,
+    CLX_PKT_DROP_REASON_REP_MC_CONGEST,
+    CLX_PKT_DROP_REASON_REP_MC_MBR_DROP,
+    CLX_PKT_DROP_REASON_REP_DELETE_PORT,
+    CLX_PKT_DROP_REASON_REP_CHASSIS_PRUN,
+    CLX_PKT_DROP_REASON_REP_INT_PRUN,
+    CLX_PKT_DROP_REASON_REP_BLACKHOLE_DI,
+    CLX_PKT_DROP_REASON_REP_OUTRANGE_DI,
+    CLX_PKT_DROP_REASON_REP_LAG_SIZE_ERR,
+    CLX_PKT_DROP_REASON_REP_FL_SIZE_ERR,
+    CLX_PKT_DROP_REASON_REP_BYPASS_DI,
+    CLX_PKT_DROP_REASON_REP_CODE_ERR,
+    CLX_PKT_DROP_REASON_REP_OQ_OUT_RANGE_ERR,
+    CLX_PKT_DROP_REASON_BAC_SRC_CONGEST,
+    CLX_PKT_DROP_REASON_BAC_DST_CONGEST,
+    CLX_PKT_DROP_REASON_OQ_ENQ_FAIL,
     CLX_PKT_DROP_REASON_LAST = 64,
 } CLX_PKT_DROP_REASON_T;
 
@@ -1049,10 +1170,10 @@ typedef struct {
 
 /* ----------------------------------------------------------------------------------- RX */
 /* Callback Function for Application to Receive Packets  */
-typedef CLX_ERROR_NO_T (*CLX_PKT_RX_FUNC_T)(
-    const UI32_T unit,
-    const CLX_PKT_RX_PKT_T *ptr_pkt, /* Packet to be processed   */
-    void *ptr_cookie);               /* Private data of user     */
+typedef CLX_ERROR_NO_T (*CLX_PKT_RX_FUNC_T)(const UI32_T unit,
+                                            const CLX_PKT_RX_PKT_T *ptr_pkt, /* Packet to be
+                                                                                processed   */
+                                            void *ptr_cookie); /* Private data of user     */
 
 /* RX packet Buffer Allocate Function  */
 typedef void *(*CLX_PKT_RX_ALLOC_FUNC_T)(void);
@@ -1121,6 +1242,7 @@ typedef struct {
     CLX_PKT_TYPE_T pkt_type;   /* The packet type of the packet sent */
 
     CLX_PKT_TX_MODE_T tx_mode; /* The Tx mode of the packet sent     */
+    UI32_T pkj_journal;        /* The pkj journal: 0-disable 1-enable */
     union {
         CLX_PKT_TX_RAW_T raw;  /* RAW mode: metadata of CLX_PKT_TX_MODE_RAW. */
         CLX_PKT_TX_ETH_T eth;  /* ETH mode: metadata of CLX_PKT_TX_MODE_ETH. */
@@ -1221,6 +1343,8 @@ typedef struct {
  *
  * This API can only be invoked once after the device is booted up.
  *
+ * support_chip cl8500, cl8600
+ *
  * @param [in]     unit          - The unit ID
  * @param [in]     ptr_rx_cfg    - The user configuration
  * @return         CLX_E_OK        - Operation is successful.
@@ -1234,6 +1358,8 @@ clx_pkt_setRxConfig(const UI32_T unit, const CLX_PKT_RX_CFG_T *ptr_rx_cfg);
  *
  * This API can only be invoked once after the device is booted up.
  *
+ * support_chip cl8500, cl8600
+ *
  * @param [in]     unit          - The unit ID
  * @param [out]    ptr_rx_cfg    - The user configuration
  * @return         CLX_E_OK        - Operation is successful.
@@ -1244,6 +1370,8 @@ clx_pkt_getRxConfig(const UI32_T unit, CLX_PKT_RX_CFG_T *ptr_rx_cfg);
 
 /**
  * @brief To transmit the specified packet from CPU port.
+ *
+ * support_chip cl8500, cl8600
  *
  * @param [in]     unit       - The unit ID
  * @param [in]     channel    - The channel used for packet transmission
@@ -1256,6 +1384,8 @@ clx_pkt_sendPacket(const UI32_T unit, const UI32_T channel, const CLX_PKT_TX_PKT
 
 /**
  * @brief To prepare tx packet.
+ *
+ * support_chip cl8500, cl8600
  *
  * @param [in]     unit            - The unit ID
  * @param [in]     ptr_pkt         - The packet structure of the TX packet
@@ -1273,6 +1403,8 @@ clx_pkt_prepareTxPkt(const UI32_T unit,
 /**
  * @brief To set the mapping of the RX queue to the RX DMA channel.
  *
+ * support_chip cl8500, cl8600
+ *
  * @param [in]     unit       - The unit ID
  * @param [in]     queue      - The specified queue
  * @param [in]     channel    - The specified RX channel
@@ -1284,6 +1416,8 @@ clx_pkt_setQueueToRxChannel(const UI32_T unit, const UI32_T queue, const UI32_T 
 
 /**
  * @brief To get the RX DMA channel which is mapped to the specified queue.
+ *
+ * support_chip cl8500, cl8600
  *
  * @param [in]     unit           - The unit ID
  * @param [in]     queue          - The specified queue
@@ -1299,6 +1433,8 @@ clx_pkt_getQueueToRxChannel(const UI32_T unit, const UI32_T queue, UI32_T *ptr_c
  *
  * The packet will be truncated to the size of a multiple of 64B.
  *
+ * support_chip cl8500, cl8600
+ *
  * @param [in]     unit             - The unit ID
  * @param [in]     queue            - The specified queue ID
  * @param [in]     truncate_size    - Packet size of the queue
@@ -1310,6 +1446,8 @@ clx_pkt_setRxQueueTruncateSize(const UI32_T unit, const UI32_T queue, const UI32
 
 /**
  * @brief To get the packet truncated size of the target queue.
+ *
+ * support_chip cl8500, cl8600
  *
  * @param [in]     unit                 - The unit ID
  * @param [in]     queue                - The target queue ID
@@ -1323,6 +1461,8 @@ clx_pkt_getRxQueueTruncateSize(const UI32_T unit, const UI32_T queue, UI32_T *pt
 /**
  * @brief To set the expected COS value to the target TX DMA channel.
  *
+ * support_chip cl8500, cl8600
+ *
  * @param [in]     unit          - The unit ID
  * @param [in]     channel       - The specified TX channel
  * @param [in]     cos_bitmap    - The specified CoS values
@@ -1335,6 +1475,8 @@ clx_pkt_setTxChannelCosBitmap(const UI32_T unit, const UI32_T channel, const UI8
 /**
  * @brief To get the COS value mapped to the target TX DMA channel.
  *
+ * support_chip cl8500, cl8600
+ *
  * @param [in]     unit              - The unit ID
  * @param [in]     channel           - The specified TX channel
  * @param [out]    ptr_cos_bitmap    - Pointer for the CoS bitmap
@@ -1346,6 +1488,8 @@ clx_pkt_getTxChannelCosBitmap(const UI32_T unit, const UI32_T channel, UI8_T *pt
 
 /**
  * @brief To set a specific rule applied to the packet.
+ *
+ * support_chip cl8500, cl8600
  *
  * @param [in]     unit         - The unit ID
  * @param [in]     index        - The specified entry index for the rule
@@ -1361,6 +1505,8 @@ clx_pkt_setCtrlToCpuEntry(const UI32_T unit,
 /**
  * @brief To get a specified ctrl-to-CPU entry.
  *
+ * support_chip cl8500, cl8600
+ *
  * @param [in]     unit         - The unit ID
  * @param [in]     index        - The specified entry index
  * @param [out]    ptr_entry    - The value obtained from the entry
@@ -1375,6 +1521,8 @@ clx_pkt_getCtrlToCpuEntry(const UI32_T unit,
 /**
  * @brief To delete all ctrl-to-CPU entries configured.
  *
+ * support_chip cl8500, cl8600
+ *
  * @param [in]     unit    - The unit ID
  * @return         CLX_E_OK        - Operation is successful.
  * @return         CLX_E_OTHERS    - Fail
@@ -1384,6 +1532,8 @@ clx_pkt_delCtrlToCpuEntryAll(const UI32_T unit);
 
 /**
  * @brief To specify a default queue for those packets which mismatch the reason-to-queue mapping.
+ *
+ * support_chip cl8500, cl8600
  *
  * @param [in]     unit     - The unit ID
  * @param [in]     queue    - The specified Queue ID
@@ -1396,6 +1546,8 @@ clx_pkt_setRxDefaultQueue(const UI32_T unit, const UI32_T queue);
 /**
  * @brief To get the default queue for the packets which mismatch the reason-to-queue mapping.
  *
+ * support_chip cl8500, cl8600
+ *
  * @param [in]     unit         - The unit ID
  * @param [out]    ptr_queue    - Pointer for the target Queue ID
  * @return         CLX_E_OK        - Operation is successful.
@@ -1406,6 +1558,8 @@ clx_pkt_getRxDefaultQueue(const UI32_T unit, UI32_T *ptr_queue);
 
 /**
  * @brief To set the CPU reason code to RX queue mapping.
+ *
+ * support_chip cl8500, cl8600
  *
  * @param [in]     unit             - The unit ID
  * @param [in]     queue            - The specified queue
@@ -1420,6 +1574,8 @@ clx_pkt_setRxQueueMapping(const UI32_T unit,
 
 /**
  * @brief To get the CPU reason code to RX queue mapping.
+ *
+ * support_chip cl8500, cl8600
  *
  * @param [in]     unit                 - The unit ID
  * @param [in]     queue                - The specified queue
@@ -1438,6 +1594,8 @@ clx_pkt_getRxQueueMapping(const UI32_T unit,
  * This priority will take effect when the packet has multiple reasons; some reasons
  * are set as "copy to CPU" while others are set as "redirect to CPU".
  *
+ * support_chip cl8500, cl8600
+ *
  * @param [in]     unit    - The unit ID
  * @param [in]     pri     - The priority between "copy to CPU" and "redirect to CPU"
  * @return         CLX_E_OK        - Operation is successful.
@@ -1452,6 +1610,8 @@ clx_pkt_setRxToCpuPri(const UI32_T unit, const CLX_PKT_TO_CPU_PRI_T pri);
  * This priority will take effect when the packet has multiple reasons; some reasons
  * are set as "copy to CPU" while others are set as "redirect to CPU".
  *
+ * support_chip cl8500, cl8600
+ *
  * @param [in]     unit       - The unit ID
  * @param [out]    ptr_pri    - The priority between "copy to CPU" and "redirect to CPU"
  * @return         CLX_E_OK        - Operation is successful.
@@ -1464,6 +1624,8 @@ clx_pkt_getRxToCpuPri(const UI32_T unit, CLX_PKT_TO_CPU_PRI_T *ptr_pri);
  * @brief To set specified reasons to "redirect to CPU".
  *
  * Redirect to CPU means the packet will pass the egress pipeline.
+ *
+ * support_chip cl8500, cl8600
  *
  * @param [in]     unit             - The unit ID
  * @param [in]     reason_bitmap    - The target reason codes to be set
@@ -1480,6 +1642,8 @@ clx_pkt_setRxRedirectToCpu(const UI32_T unit,
 /**
  * @brief To get reasons which will be redirected to CPU.
  *
+ * support_chip cl8500, cl8600
+ *
  * @param [in]     unit                 - The unit ID
  * @param [out]    ptr_reason_bitmap    - Pointer for the redirect to CPU reasons.
  * @return         CLX_E_OK        - Operation is successful.
@@ -1490,6 +1654,8 @@ clx_pkt_getRxRedirectToCpu(const UI32_T unit, CLX_PKT_RX_REASON_BITMAP_T *ptr_re
 
 /**
  * @brief To set the CPU reason code to RX port and queue mapping.
+ *
+ * support_chip cl8500, cl8600
  *
  * @param [in]     unit             - The unit ID
  * @param [in]     port             - The port ID indicating CPU or CPI
@@ -1507,6 +1673,8 @@ clx_pkt_setRxMapping(const UI32_T unit,
 /**
  * @brief To get the CPU reason code to RX port and queue mapping.
  *
+ * support_chip cl8500, cl8600
+ *
  * @param [in]     unit                 - The unit ID
  * @param [in]     port                 - The port ID indicating CPU or CPI
  * @param [in]     queue                - The specified queue
@@ -1523,6 +1691,8 @@ clx_pkt_getRxMapping(const UI32_T unit,
 /**
  * @brief To get the PDMA RX counters of the target channel.
  *
+ * support_chip cl8500, cl8600
+ *
  * @param [in]     unit          - The unit ID
  * @param [in]     channel       - The target channel
  * @param [out]    ptr_rx_cnt    - Pointer for the Rx counter
@@ -1534,6 +1704,8 @@ clx_pkt_getRxCnt(const UI32_T unit, const UI32_T channel, CLX_PKT_RX_CNT_T *ptr_
 
 /**
  * @brief To get the PDMA TX counters of the target channel.
+ *
+ * support_chip cl8500, cl8600
  *
  * @param [in]     unit          - The unit ID
  * @param [in]     channel       - The target channel
@@ -1547,6 +1719,8 @@ clx_pkt_getTxCnt(const UI32_T unit, const UI32_T channel, CLX_PKT_TX_CNT_T *ptr_
 /**
  * @brief To clear the PDMA RX counters of the target channel.
  *
+ * support_chip cl8500, cl8600
+ *
  * @param [in]     unit       - The unit ID
  * @param [in]     channel    - The target channel
  * @return         CLX_E_OK    - Successfully clear the counters.
@@ -1556,6 +1730,8 @@ clx_pkt_clearRxCnt(const UI32_T unit, const UI32_T channel);
 
 /**
  * @brief To clear the PDMA TX counters of the target channel.
+ *
+ * support_chip cl8500, cl8600
  *
  * @param [in]     unit       - The unit ID
  * @param [in]     channel    - The target channel
@@ -1567,6 +1743,8 @@ clx_pkt_clearTxCnt(const UI32_T unit, const UI32_T channel);
 /**
  * @brief To show the PDMA TX counters of the target channel.
  *
+ * support_chip cl8500, cl8600
+ *
  * @param [in]     unit       - The unit ID
  * @param [in]     channel    - The target channel
  * @return         CLX_E_OK    - Successfully clear the counters.
@@ -1576,6 +1754,8 @@ clx_pkt_showTxDbgCnt(const UI32_T unit, const UI32_T channel);
 
 /**
  * @brief To show the PDMA RX counters of the target channel.
+ *
+ * support_chip cl8500, cl8600
  *
  * @param [in]     unit       - The unit ID
  * @param [in]     channel    - The target channel

@@ -971,10 +971,10 @@ typedef enum {
 
 #define HAL_MT_NAMCHABARWA_PKT_TX_CHANNEL(channel_offset) (channel_offset + 4)
 
-typedef void (*HAL_MT_NAMCHABARWA_PKT_TX_FUNC_T)(
-    const UI32_T unit,
-    const void *ptr_sw_gpd, /* SW-GPD to be processed  */
-    void *ptr_coockie);     /* Private data of SDK     */
+typedef void (*HAL_MT_NAMCHABARWA_PKT_TX_FUNC_T)(const UI32_T unit,
+                                                 const void *ptr_sw_gpd, /* SW-GPD to be processed
+                                                                          */
+                                                 void *ptr_coockie); /* Private data of SDK     */
 
 typedef struct HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_S {
     HAL_MT_NAMCHABARWA_PKT_TX_FUNC_T callback; /* (unit, ptr_sw_gpd, ptr_cookie) */
@@ -988,11 +988,7 @@ typedef struct HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_S {
     };
     UI32_T gpd_num;
     struct HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_S *ptr_next;
-
-#if defined(CLX_EN_NETIF)
     UI32_T channel; /* For counter */
-#endif
-
 } HAL_MT_NAMCHABARWA_PKT_TX_SW_GPD_T;
 
 typedef struct {
@@ -1084,9 +1080,7 @@ typedef struct HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_S {
     };
     struct HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_S *ptr_next;
 
-#if defined(CLX_EN_NETIF)
     void *ptr_cookie; /* Pointer of virt-addr */
-#endif
 
 } HAL_MT_NAMCHABARWA_PKT_RX_SW_GPD_T;
 
@@ -1230,6 +1224,8 @@ typedef struct {
 
 } HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_T;
 
+#endif /* End of CLX_EN_NETIF */
+
 typedef struct {
     C8_T name[CLX_NETLINK_NAME_LEN];
     C8_T mc_group_name[CLX_NETLINK_NAME_LEN];
@@ -1293,10 +1289,12 @@ typedef struct {
 
 typedef struct {
     UI32_T unit;
+#if defined(CLX_EN_NETIF)
     HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_T net_intf; /* addIntf[In,Out], delIntf[In]              */
-    HAL_MT_NAMCHABARWA_PKT_NETIF_PROFILE_T
-    net_profile;                                  /* createProfile[In,Out], destroyProfile[In] */
     HAL_MT_NAMCHABARWA_PKT_NETIF_INTF_CNT_T cnt;
+#endif
+    HAL_MT_NAMCHABARWA_PKT_NETIF_PROFILE_T
+    net_profile; /* createProfile[In,Out], destroyProfile[In] */
     CLX_ERROR_NO_T rc;
 
 } HAL_MT_NAMCHABARWA_PKT_IOCTL_NETIF_COOKIE_T;
@@ -1360,8 +1358,6 @@ typedef struct {
     CLX_ERROR_NO_T rc;
 
 } HAL_MT_NAMCHABARWA_PKT_NL_IOCTL_COOKIE_T;
-
-#endif /* End of CLX_EN_NETIF */
 
 /* ----------------------------------------------------------------------------------- pkt_drv */
 #if defined(CLX_LAMP)

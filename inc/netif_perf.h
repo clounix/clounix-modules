@@ -61,7 +61,9 @@ perf_rxCallback(const UI32_T len);
 CLX_ERROR_NO_T
 perf_rxTest(void);
 
-int perf_test_init(void);
-void perf_test_exit(void);
+int
+perf_test_init(void);
+void
+perf_test_exit(void);
 
 #endif /* end of NETIF_PERF_H */

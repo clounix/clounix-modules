@@ -495,11 +495,11 @@ _hal_lt_lightning_pkt_startTxChannelReg(const UI32_T unit,
     tch_cmd.field.tch_gpd_add_no_lo = gpd_num & 0xff;
     tch_cmd.field.tch_gpd_add_no_hi = (gpd_num & 0xff00) >> 8;
 
-    osal_mdc_writePciReg(
-        unit,
-        HAL_LT_LIGHTNING_PKT_GET_PDMA_TCH_REG(
-            HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_TCH_CMD), channel),
-        &tch_cmd.reg, sizeof(HAL_LT_LIGHTNING_PKT_TCH_CMD_REG_T));
+    osal_mdc_writePciReg(unit,
+                         HAL_LT_LIGHTNING_PKT_GET_PDMA_TCH_REG(
+                             HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_TCH_CMD),
+                             channel),
+                         &tch_cmd.reg, sizeof(HAL_LT_LIGHTNING_PKT_TCH_CMD_REG_T));
 
     return (CLX_E_OK);
 }
@@ -525,11 +525,11 @@ _hal_lt_lightning_pkt_startRxChannelReg(const UI32_T unit,
     rch_cmd.field.rch_gpd_add_no_lo = gpd_num & 0xff;
     rch_cmd.field.rch_gpd_add_no_hi = (gpd_num & 0xff00) >> 8;
 
-    osal_mdc_writePciReg(
-        unit,
-        HAL_LT_LIGHTNING_PKT_GET_PDMA_RCH_REG(
-            HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_RCH_CMD), channel),
-        &rch_cmd.reg, sizeof(HAL_LT_LIGHTNING_PKT_RCH_CMD_REG_T));
+    osal_mdc_writePciReg(unit,
+                         HAL_LT_LIGHTNING_PKT_GET_PDMA_RCH_REG(
+                             HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_RCH_CMD),
+                             channel),
+                         &rch_cmd.reg, sizeof(HAL_LT_LIGHTNING_PKT_RCH_CMD_REG_T));
 
     return (CLX_E_OK);
 }
@@ -555,11 +555,11 @@ _hal_lt_lightning_pkt_resumeTxChannelReg(const UI32_T unit,
     tch_cmd.field.tch_gpd_add_no_lo = gpd_num & 0xff;
     tch_cmd.field.tch_gpd_add_no_hi = (gpd_num & 0xff00) >> 8;
 
-    osal_mdc_writePciReg(
-        unit,
-        HAL_LT_LIGHTNING_PKT_GET_PDMA_TCH_REG(
-            HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_TCH_CMD), channel),
-        &tch_cmd.reg, sizeof(HAL_LT_LIGHTNING_PKT_TCH_CMD_REG_T));
+    osal_mdc_writePciReg(unit,
+                         HAL_LT_LIGHTNING_PKT_GET_PDMA_TCH_REG(
+                             HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_TCH_CMD),
+                             channel),
+                         &tch_cmd.reg, sizeof(HAL_LT_LIGHTNING_PKT_TCH_CMD_REG_T));
 
     return (CLX_E_OK);
 }
@@ -585,11 +585,11 @@ _hal_lt_lightning_pkt_resumeRxChannelReg(const UI32_T unit,
     rch_cmd.field.rch_gpd_add_no_lo = gpd_num & 0xff;
     rch_cmd.field.rch_gpd_add_no_hi = (gpd_num & 0xff00) >> 8;
 
-    osal_mdc_writePciReg(
-        unit,
-        HAL_LT_LIGHTNING_PKT_GET_PDMA_RCH_REG(
-            HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_RCH_CMD), channel),
-        &rch_cmd.reg, sizeof(HAL_LT_LIGHTNING_PKT_RCH_CMD_REG_T));
+    osal_mdc_writePciReg(unit,
+                         HAL_LT_LIGHTNING_PKT_GET_PDMA_RCH_REG(
+                             HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_RCH_CMD),
+                             channel),
+                         &rch_cmd.reg, sizeof(HAL_LT_LIGHTNING_PKT_RCH_CMD_REG_T));
 
     return (CLX_E_OK);
 }
@@ -611,11 +611,11 @@ _hal_lt_lightning_pkt_stopTxChannelReg(const UI32_T unit,
     tch_cmd.reg = 0x0;
     tch_cmd.field.tch_stop = 0x1;
 
-    osal_mdc_writePciReg(
-        unit,
-        HAL_LT_LIGHTNING_PKT_GET_PDMA_TCH_REG(
-            HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_TCH_CMD), channel),
-        &tch_cmd.reg, sizeof(HAL_LT_LIGHTNING_PKT_TCH_CMD_REG_T));
+    osal_mdc_writePciReg(unit,
+                         HAL_LT_LIGHTNING_PKT_GET_PDMA_TCH_REG(
+                             HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_TCH_CMD),
+                             channel),
+                         &tch_cmd.reg, sizeof(HAL_LT_LIGHTNING_PKT_TCH_CMD_REG_T));
 
     return (CLX_E_OK);
 }
@@ -637,11 +637,11 @@ _hal_lt_lightning_pkt_stopRxChannelReg(const UI32_T unit,
     rch_cmd.reg = 0x0;
     rch_cmd.field.rch_stop = 0x1;
 
-    osal_mdc_writePciReg(
-        unit,
-        HAL_LT_LIGHTNING_PKT_GET_PDMA_RCH_REG(
-            HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_RCH_CMD), channel),
-        &rch_cmd.reg, sizeof(HAL_LT_LIGHTNING_PKT_RCH_CMD_REG_T));
+    osal_mdc_writePciReg(unit,
+                         HAL_LT_LIGHTNING_PKT_GET_PDMA_RCH_REG(
+                             HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_RCH_CMD),
+                             channel),
+                         &rch_cmd.reg, sizeof(HAL_LT_LIGHTNING_PKT_RCH_CMD_REG_T));
 
     return (CLX_E_OK);
 }
@@ -797,11 +797,11 @@ _hal_lt_lightning_pkt_maskAllTxL2IsrReg(const UI32_T unit,
             HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_DMA_WRITE_ERROR |
             HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_STOP_CMD_CPLT);
 
-    osal_mdc_writePciReg(
-        unit,
-        HAL_LT_LIGHTNING_PKT_GET_PDMA_TCH_REG(
-            HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_TCH_INT_MASK), channel),
-        &reg, sizeof(UI32_T));
+    osal_mdc_writePciReg(unit,
+                         HAL_LT_LIGHTNING_PKT_GET_PDMA_TCH_REG(
+                             HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_TCH_INT_MASK),
+                             channel),
+                         &reg, sizeof(UI32_T));
 
     return (CLX_E_OK);
 }
@@ -835,11 +835,11 @@ _hal_lt_lightning_pkt_maskAllRxL2IsrReg(const UI32_T unit,
                                         HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_CMDQ_OVF_DROP |
                                         HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_FIFO_OVF_DROP);
 
-    osal_mdc_writePciReg(
-        unit,
-        HAL_LT_LIGHTNING_PKT_GET_PDMA_RCH_REG(
-            HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_RCH_INT_MASK), channel),
-        &reg, sizeof(UI32_T));
+    osal_mdc_writePciReg(unit,
+                         HAL_LT_LIGHTNING_PKT_GET_PDMA_RCH_REG(
+                             HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_RCH_INT_MASK),
+                             channel),
+                         &reg, sizeof(UI32_T));
 
     return (CLX_E_OK);
 }
@@ -875,11 +875,11 @@ _hal_lt_lightning_pkt_unmaskAllTxL2IsrReg(const UI32_T unit,
             HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_DMA_WRITE_ERROR |
             HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_STOP_CMD_CPLT);
 
-    osal_mdc_writePciReg(
-        unit,
-        HAL_LT_LIGHTNING_PKT_GET_PDMA_TCH_REG(
-            HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_TCH_INT_MASK), channel),
-        &reg, sizeof(UI32_T));
+    osal_mdc_writePciReg(unit,
+                         HAL_LT_LIGHTNING_PKT_GET_PDMA_TCH_REG(
+                             HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_TCH_INT_MASK),
+                             channel),
+                         &reg, sizeof(UI32_T));
 
     return (CLX_E_OK);
 }
@@ -913,11 +913,11 @@ _hal_lt_lightning_pkt_unmaskAllRxL2IsrReg(const UI32_T unit,
                                         HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_CMDQ_OVF_DROP |
                                         HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_FIFO_OVF_DROP);
 
-    osal_mdc_writePciReg(
-        unit,
-        HAL_LT_LIGHTNING_PKT_GET_PDMA_RCH_REG(
-            HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_RCH_INT_MASK), channel),
-        &reg, sizeof(UI32_T));
+    osal_mdc_writePciReg(unit,
+                         HAL_LT_LIGHTNING_PKT_GET_PDMA_RCH_REG(
+                             HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_RCH_INT_MASK),
+                             channel),
+                         &reg, sizeof(UI32_T));
 
     return (CLX_E_OK);
 }
@@ -940,11 +940,11 @@ _hal_lt_lightning_pkt_clearTxL2IsrStatusReg(
 
     HAL_LT_LIGHTNING_PKT_SET_BITMAP(reg, isr_bitmap);
 
-    osal_mdc_writePciReg(
-        unit,
-        HAL_LT_LIGHTNING_PKT_GET_PDMA_TCH_REG(
-            HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_TCH_INT_CLR), channel),
-        &reg, sizeof(UI32_T));
+    osal_mdc_writePciReg(unit,
+                         HAL_LT_LIGHTNING_PKT_GET_PDMA_TCH_REG(
+                             HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_TCH_INT_CLR),
+                             channel),
+                         &reg, sizeof(UI32_T));
 
     return (CLX_E_OK);
 }
@@ -967,11 +967,11 @@ _hal_lt_lightning_pkt_clearRxL2IsrStatusReg(
 
     HAL_LT_LIGHTNING_PKT_SET_BITMAP(reg, isr_bitmap);
 
-    osal_mdc_writePciReg(
-        unit,
-        HAL_LT_LIGHTNING_PKT_GET_PDMA_RCH_REG(
-            HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_RCH_INT_CLR), channel),
-        &reg, sizeof(UI32_T));
+    osal_mdc_writePciReg(unit,
+                         HAL_LT_LIGHTNING_PKT_GET_PDMA_RCH_REG(
+                             HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_RCH_INT_CLR),
+                             channel),
+                         &reg, sizeof(UI32_T));
 
     return (CLX_E_OK);
 }
@@ -1327,6 +1327,27 @@ _hal_lt_lightning_pkt_getNetlink(const UI32_T unit, void *ptr_data)
 
 /* ----------------------------------------------------------------------------------- independent
  * func */
+/**
+ * @brief To dump the values of fields for the specified RX GPD.
+ *
+ * @param [in]     ptr_virt_addr    - Pointer for the RX PKT buf address
+ * @param [in]     buf_len          - pkt buf_len
+ */
+void
+_hal_lt_lightning_pkt_print_payload(UI8_T *ptr_virt_addr, UI32_T buf_len)
+{
+    UI32_T i = 0;
+
+    osal_printf("==========================  PKT BUF %p %d ====================== \n",
+                ptr_virt_addr, buf_len);
+    while (i < buf_len) {
+        osal_printf("%02x ", *((UI8_T *)ptr_virt_addr + i));
+        i++;
+        if (i % 8 == 0)
+            osal_printf("\n");
+    }
+}
+
 /**
  * @brief To enqueue the target data.
  *
@@ -1742,6 +1763,219 @@ _hal_lt_lightning_pkt_freeRxGpdList(UI32_T unit,
     return (CLX_E_OK);
 }
 
+static void
+_hal_lt_lightning_pkt_printPayload(UI32_T flag, UI8_T *ptr_virt_addr, const UI32_T size)
+{
+    UI8_T buf[64] = {0};
+    UI8_T buf_len = 0;
+    UI8_T buf_size = 0;
+    UI16_T len = 0;
+
+    osal_printf("%s packet length is %d\n", ((OSAL_DBG_RX_PAYLOAD & flag) ? "RX" : "TX"), size);
+    buf_len = sizeof(buf) / sizeof(buf[0]);
+    memset(buf, 0, buf_len);
+    buf_size += snprintf(&buf[buf_size], buf_len, "%04x ", 0);
+    for (len = 0; len < size; len++) {
+        buf_size += snprintf(&buf[buf_size], buf_len, "%02x ", ptr_virt_addr[len]);
+        if (!((len + 1) % 16)) {
+            osal_printf("%s\r\n", buf);
+            memset(buf, 0, buf_len);
+            buf_size = 0;
+            buf_size += snprintf(&buf[buf_size], buf_len, "%04x ", (len + 1));
+        }
+    }
+    if (size % 16) {
+        osal_printf("%s\r\n", buf);
+    }
+}
+
+static CLX_ERROR_NO_T
+_hal_lt_lightning_pkt_showPdmaTmh(const volatile HAL_LT_LIGHTNING_PKT_ITMH_ETH_T *ptr_tmh)
+{
+    osal_printf("[TMH]\n");
+    osal_printf("typ                        : 0x%-10x\n", ptr_tmh->typ);
+    osal_printf("tc                         : 0x%-10x\n", ptr_tmh->tc);
+    osal_printf("color                      : 0x%-10x\n", ptr_tmh->color);
+    osal_printf("srv                        : 0x%-10x\n", ptr_tmh->srv);
+    osal_printf("trig                       : 0x%-10x\n", ptr_tmh->trig);
+    osal_printf("igr_phy_port               : 0x%-10x\n", ptr_tmh->igr_phy_port);
+    osal_printf("hsh_val_w0                 : 0x%-10x\n", ptr_tmh->hsh_val_w0);
+    osal_printf("hsh_val_w1                 : 0x%-10x\n", ptr_tmh->hsh_val_w1);
+    osal_printf("dst_idx                    : 0x%-10x\n", ptr_tmh->dst_idx);
+    osal_printf("src_idx                    : 0x%-10x\n", ptr_tmh->src_idx);
+    osal_printf("intf_fdid                  : 0x%-10x\n", ptr_tmh->intf_fdid);
+    osal_printf("nvo3_mgid_is_transit       : 0x%-10x\n", ptr_tmh->nvo3_mgid_is_transit);
+    osal_printf("skip_epp                   : 0x%-10x\n", ptr_tmh->skip_epp);
+    osal_printf("steer_applied              : 0x%-10x\n", ptr_tmh->steer_applied);
+    osal_printf("nvo3_ip_tnl_decap_prop_ttl : 0x%-10x\n", ptr_tmh->nvo3_ip_tnl_decap_prop_ttl);
+    osal_printf("nvo3_mpls_uhp_prop_ttl     : 0x%-10x\n", ptr_tmh->nvo3_mpls_uhp_prop_ttl);
+    osal_printf("ecn                        : 0x%-10x\n", ptr_tmh->ecn);
+    osal_printf("store_and_forward          : 0x%-10x\n", ptr_tmh->store_and_forward);
+    osal_printf("lag_epoch                  : 0x%-10x\n", ptr_tmh->lag_epoch);
+    osal_printf("src_supp_tag               : 0x%-10x\n", ptr_tmh->src_supp_tag);
+    osal_printf("one_arm_rte_srv_fdid       : 0x%-10x\n", ptr_tmh->one_arm_rte_srv_fdid);
+    osal_printf("fab_one_arm_rte            : 0x%-10x\n", ptr_tmh->fab_one_arm_rte);
+    osal_printf("skip_ipp                   : 0x%-10x\n", ptr_tmh->skip_ipp);
+    osal_printf("nvo3_mgid                  : 0x%-10x\n", ptr_tmh->nvo3_mgid);
+    osal_printf("nvo3_intf                  : 0x%-10x\n", ptr_tmh->nvo3_intf);
+    osal_printf("nvo3_src_supp_tag_w0       : 0x%-10x\n", ptr_tmh->nvo3_src_supp_tag_w0);
+    osal_printf("nvo3_src_supp_tag_w1       : 0x%-10x\n", ptr_tmh->nvo3_src_supp_tag_w1);
+    osal_printf("mir_bmap                   : 0x%-10x\n", ptr_tmh->mir_bmap);
+    osal_printf("cp_to_cpu_code             : 0x%-10x\n", ptr_tmh->cp_to_cpu_code);
+    osal_printf("cp_to_cpu_bmap             : 0x%-10x\n", ptr_tmh->cp_to_cpu_bmap);
+
+    return (CLX_E_OK);
+}
+
+/* FUNCTION NAME: _hal_lt_lightning_pkt_showPdmaPph
+ * PURPOSE:
+ *      To dump the values of fields for the specified GPD PP header.
+ * INPUT:
+ *      ptr_pph     --  Pointer for the PP header.
+ * OUTPUT:
+ *      None
+ * RETURN:
+ *      CLX_E_OK    --  Successfully dump the GPD content.
+ * NOTES:
+ *      None
+ */
+static CLX_ERROR_NO_T
+_hal_lt_lightning_pkt_showPdmaPph(const volatile HAL_LT_LIGHTNING_PKT_PPH_L2_T *ptr_pph)
+{
+    osal_printf("[PPH]\n");
+    osal_printf("decap_act                  : 0x%-10x\n", ptr_pph->decap_act);
+    osal_printf("igr_l2_vid_num             : 0x%-10x\n", ptr_pph->igr_l2_vid_num);
+    osal_printf("nvo3_encap_idx             : 0x%-10x\n", ptr_pph->nvo3_encap_idx);
+    osal_printf("mpls_pw_cw_vld             : 0x%-10x\n", ptr_pph->mpls_pw_cw_vld);
+    osal_printf("hit_idx_w0                 : 0x%-10x\n", ptr_pph->hit_idx_w0);
+    osal_printf("hit_idx_w1                 : 0x%-10x\n", ptr_pph->hit_idx_w1);
+    osal_printf("nvo3_adj_idx               : 0x%-10x\n", ptr_pph->nvo3_adj_idx);
+    osal_printf("seg_vmid_w0                : 0x%-10x\n", ptr_pph->seg_vmid_w0);
+    osal_printf("seg_vmid_w1                : 0x%-10x\n", ptr_pph->seg_vmid_w1);
+    osal_printf("l2_sa_lrn_en_hw_cvs        : 0x%-10x\n", ptr_pph->l2_sa_lrn_en_hw_cvs);
+    osal_printf("l2_sa_lrn_en_hw            : 0x%-10x\n", ptr_pph->l2_sa_lrn_en_hw);
+    osal_printf("vid_ctl                    : 0x%-10x\n", ptr_pph->vid_ctl);
+    osal_printf("vid_1st                    : 0x%-10x\n", ptr_pph->vid_1st);
+    osal_printf("vid_2nd_w0                 : 0x%-10x\n", ptr_pph->vid_2nd_w0);
+    osal_printf("vid_2nd_w1                 : 0x%-10x\n", ptr_pph->vid_2nd_w1);
+    osal_printf("flw_lbl                    : 0x%-10x\n", ptr_pph->flw_lbl);
+    osal_printf("rewr_idx_ctl               : 0x%-10x\n", ptr_pph->rewr_idx_ctl);
+    osal_printf("rewr_idx_0                 : 0x%-10x\n", ptr_pph->rewr_idx_0);
+    osal_printf("rewr_idx_1_w0              : 0x%-10x\n", ptr_pph->rewr_idx_1_w0);
+    osal_printf("rewr_idx_1_w1              : 0x%-10x\n", ptr_pph->rewr_idx_1_w1);
+    osal_printf("mrk_pcp_dei_en             : 0x%-10x\n", ptr_pph->mrk_pcp_dei_en);
+    osal_printf("mrk_pcp_val                : 0x%-10x\n", ptr_pph->mrk_pcp_val);
+    osal_printf("mrk_dei_val                : 0x%-10x\n", ptr_pph->mrk_dei_val);
+    osal_printf("ts_0_7                     : 0x%-10x\n", ptr_pph->ts_0_7);
+    osal_printf("ts_8_15                    : 0x%-10x\n", ptr_pph->ts_8_15);
+
+    return (CLX_E_OK);
+}
+
+/* FUNCTION NAME: hal_lightning_pkt_showTxPdmaGpd
+ * PURPOSE:
+ *      To dump the values of fields for the specified TX GPD.
+ * INPUT:
+ *      unit        --  The unit ID
+ *      ptr_tx_gpd  --  Pointer for the TX GPD
+ * OUTPUT:
+ *      None
+ * RETURN:
+ *      CLX_E_OK    --  Successfully dump the GPD content.
+ * NOTES:
+ *      None
+ */
+CLX_ERROR_NO_T
+hal_lightning_pkt_showTxPdmaGpd(const UI32_T unit,
+                                const volatile HAL_LT_LIGHTNING_PKT_TX_GPD_T *ptr_tx_gpd)
+{
+    UI8_T *ptr_virt_addr = NULL;
+    CLX_ADDR_T phy_addr = 0x0;
+
+    osal_printf("data_buf_addr_hi : 0x%08x\n", ptr_tx_gpd->data_buf_addr_hi);
+    osal_printf("data_buf_addr_lo : 0x%08x\n", ptr_tx_gpd->data_buf_addr_lo);
+    osal_printf("data_buf_size    : 0x%-10x\n", ptr_tx_gpd->data_buf_size);
+    osal_printf("ioc              : 0x%-10x\n", ptr_tx_gpd->ioc);
+    osal_printf("chksum           : 0x%-10x\n", ptr_tx_gpd->chksum);
+    osal_printf("ptp_opcode       : 0x%-10x\n", ptr_tx_gpd->ptp_hdr & 0x3);
+    osal_printf("ptp_seq          : 0x%-10x\n", ptr_tx_gpd->ptp_hdr & 0xFFF0);
+    osal_printf("pkt_len          : 0x%-10x\n", ptr_tx_gpd->pkt_len);
+    osal_printf("prg              : 0x%-10x\n", ptr_tx_gpd->prg);
+    osal_printf("crce             : 0x%-10x\n", ptr_tx_gpd->crce);
+    osal_printf("ipc              : 0x%-10x\n", ptr_tx_gpd->ipc);
+    osal_printf("phc              : 0x%-10x\n", ptr_tx_gpd->phc);
+    osal_printf("cos              : 0x%-10x\n", ptr_tx_gpd->cos);
+    osal_printf("ecce             : 0x%-10x\n", ptr_tx_gpd->ecce);
+    osal_printf("ch               : 0x%-10x\n", ptr_tx_gpd->ch);
+    osal_printf("hwo              : 0x%-10x\n", ptr_tx_gpd->hwo);
+
+    /* cpu header */
+    _hal_lt_lightning_pkt_showPdmaTmh(&ptr_tx_gpd->itmh_eth);
+    _hal_lt_lightning_pkt_showPdmaPph(&ptr_tx_gpd->pph_l2);
+
+    /* gpd buf */
+    if (0 != ptr_tx_gpd->data_buf_size) {
+        phy_addr = CLX_ADDR_32_TO_64(ptr_tx_gpd->data_buf_addr_hi, ptr_tx_gpd->data_buf_addr_lo);
+        ptr_virt_addr = (UI8_T *)osal_dma_convertPhyToVirt(phy_addr);
+        _hal_lt_lightning_pkt_printPayload(OSAL_DBG_TX_PAYLOAD, (UI8_T *)ptr_virt_addr,
+                                           ptr_tx_gpd->data_buf_size);
+    }
+    return (CLX_E_OK);
+}
+
+/* FUNCTION NAME: hal_lightning_pkt_showRxPdmaGpd
+ * PURPOSE:
+ *      To dump the values of fields for the specified RX GPD.
+ * INPUT:
+ *      unit        --  The unit ID
+ *      ptr_rx_gpd  --  Pointer for the RX GPD
+ * OUTPUT:
+ *      None
+ * RETURN:
+ *      CLX_E_OK    --  Successfully show the RX GPD content.
+ * NOTES:
+ *      None
+ */
+CLX_ERROR_NO_T
+hal_lightning_pkt_showRxPdmaGpd(const UI32_T unit,
+                                const volatile HAL_LT_LIGHTNING_PKT_RX_GPD_T *ptr_rx_gpd)
+{
+    UI8_T *ptr_virt_addr = NULL;
+    CLX_ADDR_T phy_addr = 0x0;
+    UI32_T buf_len = 0;
+
+    osal_printf("data_buf_addr_hi : 0x%08x\n", ptr_rx_gpd->data_buf_addr_hi);
+    osal_printf("data_buf_addr_lo : 0x%08x\n", ptr_rx_gpd->data_buf_addr_lo);
+    osal_printf("avbl_buf_len     : 0x%-10x\n", ptr_rx_gpd->avbl_buf_len);
+    osal_printf("ioc              : 0x%-10x\n", ptr_rx_gpd->ioc);
+    osal_printf("chksum           : 0x%-10x\n", ptr_rx_gpd->chksum);
+    osal_printf("cnsm_buf_len     : 0x%-10x\n", ptr_rx_gpd->cnsm_buf_len);
+    osal_printf("queue            : 0x%-10x\n", ptr_rx_gpd->queue);
+    osal_printf("errf             : 0x%-10x\n", ptr_rx_gpd->errf);
+    osal_printf("ecce             : 0x%-10x\n", ptr_rx_gpd->ecce);
+    osal_printf("trn              : 0x%-10x\n", ptr_rx_gpd->trn);
+    osal_printf("ch               : 0x%-10x\n", ptr_rx_gpd->ch);
+    osal_printf("hwo              : 0x%-10x\n", ptr_rx_gpd->hwo);
+
+    /* cpu header */
+    _hal_lt_lightning_pkt_showPdmaTmh(&ptr_rx_gpd->itmh_eth);
+    _hal_lt_lightning_pkt_showPdmaPph(&ptr_rx_gpd->pph_l2);
+
+    /* gpd buf */
+    if (HAL_LT_LIGHTNING_PKT_CH_LAST_GPD == ptr_rx_gpd->ch) {
+        buf_len = ptr_rx_gpd->cnsm_buf_len;
+    } else {
+        buf_len = ptr_rx_gpd->avbl_buf_len;
+    }
+
+    if (0 != buf_len) {
+        phy_addr = CLX_ADDR_32_TO_64(ptr_rx_gpd->data_buf_addr_hi, ptr_rx_gpd->data_buf_addr_lo);
+        ptr_virt_addr = (UI8_T *)osal_dma_convertPhyToVirt(phy_addr);
+        _hal_lt_lightning_pkt_printPayload(OSAL_DBG_RX_PAYLOAD, (UI8_T *)ptr_virt_addr, buf_len);
+    }
+    return (CLX_E_OK);
+}
+
 /* ----------------------------------------------------------------------------------- pkt_drv */
 /**
  * @brief To enqueue numbers of packet in the bulk buffer
@@ -1793,6 +2027,7 @@ _hal_lt_lightning_pkt_strictTxDeQueue(const UI32_T unit, void *ptr_data)
         if (FALSE == ptr_tx_cb->running) {
             rc = CLX_E_OTHERS;
             osal_io_copyToUser(&ptr_cookie->rc, &rc, sizeof(CLX_ERROR_NO_T));
+            OSAL_PRINT(OSAL_DBG_TX | OSAL_DBG_DEBUG, "tx callback no running.\n");
             return (CLX_E_OK); /* deinit */
         }
 
@@ -1822,6 +2057,7 @@ _hal_lt_lightning_pkt_strictTxDeQueue(const UI32_T unit, void *ptr_data)
         /* It may happen at last gpd, return error and do not invoke callback. */
         rc = CLX_E_OTHERS;
         osal_io_copyToUser(&ptr_cookie->rc, &rc, sizeof(CLX_ERROR_NO_T));
+        OSAL_PRINT(OSAL_DBG_TX | OSAL_DBG_DEBUG, "no packet to free.\n");
         return CLX_E_OK;
     }
 
@@ -1983,7 +2219,6 @@ _hal_lt_lightning_pkt_rxCheckPattern(volatile HAL_LT_LIGHTNING_PKT_RX_GPD_T *ptr
         /* Need to compare the payload with at least one of the four patterns */
         /* Pre-assume that the result is positive */
         *ptr_hit_prof = TRUE;
-
         /* If any of the following comparison fails, the result will be changed to negtive */
     } else {
         return;
@@ -1993,9 +2228,10 @@ _hal_lt_lightning_pkt_rxCheckPattern(volatile HAL_LT_LIGHTNING_PKT_RX_GPD_T *ptr
         OSAL_PRINT(OSAL_DBG_PROFILE, "compare pattern id=%d\n", idx);
         if (0 !=
             (ptr_profile->flags & (HAL_LT_LIGHTNING_PKT_NETIF_PROFILE_FLAGS_PATTERN_0 << idx))) {
-            match = _hal_lt_lightning_pkt_comparePatternWithPayload(
-                ptr_rx_gpd, ptr_profile->pattern[idx], ptr_profile->mask[idx],
-                ptr_profile->offset[idx]);
+            match = _hal_lt_lightning_pkt_comparePatternWithPayload(ptr_rx_gpd,
+                                                                    ptr_profile->pattern[idx],
+                                                                    ptr_profile->mask[idx],
+                                                                    ptr_profile->offset[idx]);
             if (TRUE == match) {
                 /* Do nothing */
             } else {
@@ -2061,6 +2297,8 @@ _hal_lt_lightning_pkt_getPacketDest(volatile HAL_LT_LIGHTNING_PKT_RX_GPD_T *ptr_
     } else {
         *ptr_dest = HAL_LT_LIGHTNING_PKT_DEST_NETDEV;
     }
+
+    OSAL_PRINT(OSAL_DBG_PROFILE, "port:%d final dest type:%d\n", port, *ptr_dest);
 }
 
 /**
@@ -2141,7 +2379,9 @@ _hal_lt_lightning_pkt_rxEnQueue(const UI32_T unit,
              * it should be updated later
              */
             osal_skb_unmapDma(phy_addr, ptr_skb->len, DMA_FROM_DEVICE);
-
+            if (verbosity & (OSAL_DBG_RX_PAYLOAD)) {
+                hal_lightning_pkt_showRxPdmaGpd(unit, &ptr_sw_gpd->rx_gpd);
+            }
             ptr_skb->len = len;
 
             /* next */
@@ -2190,8 +2430,8 @@ _hal_lt_lightning_pkt_rxEnQueue(const UI32_T unit,
         if (NULL == ptr_net_dev) {
             ptr_rx_cb->cnt.channel[channel].netdev_miss++;
             osal_skb_free(ptr_skb);
-            OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX), "u=%u, rxch=%u, find netdev failed\n", unit,
-                       channel);
+            OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX), "u=%u, rxch=%u, find netdev failed port:%u \n",
+                       unit, channel, port);
             return;
         }
 
@@ -2395,7 +2635,7 @@ _hal_lt_lightning_pkt_schedRxDeQueue(const UI32_T unit, void *ptr_data)
             return (CLX_E_OK);
         }
     } else {
-        OSAL_PRINT((OSAL_DBG_WARN | OSAL_DBG_RX), "no pkt in queue\n");
+        OSAL_PRINT((OSAL_DBG_DEBUG | OSAL_DBG_RX), "no pkt in queue\n");
         rc = CLX_E_OTHERS;
         osal_io_copyToUser(&ptr_cookie->rc, &rc, sizeof(CLX_ERROR_NO_T));
         return (CLX_E_OK);
@@ -2559,7 +2799,9 @@ hal_lt_lightning_pkt_sendGpd(const UI32_T unit,
                     osal_memcpy((void *)ptr_tx_gpd, &ptr_sw_gpd->tx_gpd,
                                 sizeof(HAL_LT_LIGHTNING_PKT_TX_GPD_T));
                     osal_dma_flushCache((void *)ptr_tx_gpd, sizeof(HAL_LT_LIGHTNING_PKT_TX_GPD_T));
-
+                    if (verbosity & (OSAL_DBG_TX_PAYLOAD)) {
+                        hal_lightning_pkt_showTxPdmaGpd(unit, ptr_tx_gpd);
+                    }
                     /* next */
                     used_idx++;
                     used_idx %= ptr_tx_pdma->gpd_num;
@@ -3136,11 +3378,11 @@ _hal_lt_lightning_pkt_handleTxL2Isr(const UI32_T unit,
     HAL_LT_LIGHTNING_PKT_TX_CHANNEL_L2_ISR_T isr_status = 0x0;
     HAL_LT_LIGHTNING_PKT_TX_CB_T *ptr_tx_cb = HAL_LT_LIGHTNING_PKT_GET_TX_CB_PTR(unit);
 
-    osal_mdc_readPciReg(
-        unit,
-        HAL_LT_LIGHTNING_PKT_GET_PDMA_TCH_REG(
-            HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_TCH_INT_STAT), channel),
-        &isr_status, sizeof(isr_status));
+    osal_mdc_readPciReg(unit,
+                        HAL_LT_LIGHTNING_PKT_GET_PDMA_TCH_REG(
+                            HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_TCH_INT_STAT),
+                            channel),
+                        &isr_status, sizeof(isr_status));
 
     _hal_lt_lightning_pkt_maskAllTxL2IsrReg(unit, channel);
 
@@ -3274,11 +3516,11 @@ _hal_lt_lightning_pkt_handleRxL2Isr(const UI32_T unit,
     HAL_LT_LIGHTNING_PKT_RX_CHANNEL_L2_ISR_T isr_status = 0x0;
     HAL_LT_LIGHTNING_PKT_RX_CB_T *ptr_rx_cb = HAL_LT_LIGHTNING_PKT_GET_RX_CB_PTR(unit);
 
-    osal_mdc_readPciReg(
-        unit,
-        HAL_LT_LIGHTNING_PKT_GET_PDMA_RCH_REG(
-            HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_RCH_INT_STAT), channel),
-        &isr_status, sizeof(isr_status));
+    osal_mdc_readPciReg(unit,
+                        HAL_LT_LIGHTNING_PKT_GET_PDMA_RCH_REG(
+                            HAL_LT_LIGHTNING_PKT_GET_MMIO(HAL_LT_LIGHTNING_PKT_PDMA_RCH_INT_STAT),
+                            channel),
+                        &isr_status, sizeof(isr_status));
 
     _hal_lt_lightning_pkt_maskAllRxL2IsrReg(unit, channel);
 
@@ -3806,9 +4048,10 @@ hal_lt_lightning_pkt_initTask(const UI32_T unit, void *ptr_data)
     }
 
     /* Init handleErrorTask */
-    rc = osal_createThread(
-        "ERROR", NETIF_PKT_PKT_ERROR_ISR_THREAD_STACK, NETIF_PKT_PKT_ERROR_ISR_THREAD_PRI,
-        _hal_lt_lightning_pkt_handleErrorTask, (void *)((CLX_HUGE_T)unit), &ptr_cb->err_task_id);
+    rc = osal_createThread("ERROR", NETIF_PKT_PKT_ERROR_ISR_THREAD_STACK,
+                           NETIF_PKT_PKT_ERROR_ISR_THREAD_PRI,
+                           _hal_lt_lightning_pkt_handleErrorTask, (void *)((CLX_HUGE_T)unit),
+                           &ptr_cb->err_task_id);
 
     /* Init handleTxDoneTask */
     for (channel = 0; ((channel < HAL_LT_LIGHTNING_PKT_TX_CHANNEL_LAST) && (CLX_E_OK == rc));
@@ -3816,10 +4059,11 @@ hal_lt_lightning_pkt_initTask(const UI32_T unit, void *ptr_data)
         ptr_tx_cb->isr_task_cookie[channel].unit = unit;
         ptr_tx_cb->isr_task_cookie[channel].channel = channel;
 
-        rc = osal_createThread(
-            "TX_ISR", NETIF_PKT_PKT_TX_ISR_THREAD_STACK, NETIF_PKT_PKT_TX_ISR_THREAD_PRI,
-            _hal_lt_lightning_pkt_handleTxDoneTask, (void *)&ptr_tx_cb->isr_task_cookie[channel],
-            &ptr_tx_cb->isr_task_id[channel]);
+        rc = osal_createThread("TX_ISR", NETIF_PKT_PKT_TX_ISR_THREAD_STACK,
+                               NETIF_PKT_PKT_TX_ISR_THREAD_PRI,
+                               _hal_lt_lightning_pkt_handleTxDoneTask,
+                               (void *)&ptr_tx_cb->isr_task_cookie[channel],
+                               &ptr_tx_cb->isr_task_id[channel]);
     }
 
     /* Init handleRxDoneTask */
@@ -3828,10 +4072,11 @@ hal_lt_lightning_pkt_initTask(const UI32_T unit, void *ptr_data)
         ptr_rx_cb->isr_task_cookie[channel].unit = unit;
         ptr_rx_cb->isr_task_cookie[channel].channel = channel;
 
-        rc = osal_createThread(
-            "RX_ISR", NETIF_PKT_PKT_RX_ISR_THREAD_STACK, NETIF_PKT_PKT_RX_ISR_THREAD_PRI,
-            _hal_lt_lightning_pkt_handleRxDoneTask, (void *)&ptr_rx_cb->isr_task_cookie[channel],
-            &ptr_rx_cb->isr_task_id[channel]);
+        rc = osal_createThread("RX_ISR", NETIF_PKT_PKT_RX_ISR_THREAD_STACK,
+                               NETIF_PKT_PKT_RX_ISR_THREAD_PRI,
+                               _hal_lt_lightning_pkt_handleRxDoneTask,
+                               (void *)&ptr_rx_cb->isr_task_cookie[channel],
+                               &ptr_rx_cb->isr_task_id[channel]);
     }
 
     /* Init txTask */
@@ -4791,8 +5036,8 @@ _hal_lt_lightning_pkt_net_dev_tx(struct sk_buff *ptr_skb, struct net_device *ptr
                 ptr_priv->stats.tx_packets++;
                 ptr_priv->stats.tx_bytes += ptr_skb->len;
             } else {
-                ptr_priv->stats
-                    .tx_fifo_errors++; /* to record the extreme cases where packets are dropped */
+                ptr_priv->stats.tx_fifo_errors++; /* to record the extreme cases where packets are
+                                                     dropped */
                 ptr_priv->stats.tx_dropped++;
 
                 osal_skb_unmapDma(phy_addr, ptr_skb->len, DMA_TO_DEVICE);
@@ -4905,8 +5150,8 @@ _hal_lt_lightning_pkt_setup(struct net_device *ptr_net_dev)
     ptr_net_dev->netdev_ops = &_hal_lt_lightning_pkt_net_dev_ops;
     ptr_net_dev->ethtool_ops = &_hal_lt_lightning_pkt_net_dev_ethtool_ops;
     ptr_net_dev->watchdog_timeo = HAL_LT_LIGHTNING_PKT_TX_TIMEOUT;
-    ptr_net_dev->mtu =
-        HAL_LT_LIGHTNING_PKT_MAX_ETH_FRAME_SIZE; /* This mtu need to be synced to chip's */
+    ptr_net_dev->mtu = HAL_LT_LIGHTNING_PKT_MAX_ETH_FRAME_SIZE; /* This mtu need to be synced to
+                                                                   chip's */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)
     ptr_net_dev->min_mtu = 64;
     ptr_net_dev->max_mtu = 65535;
@@ -5332,6 +5577,7 @@ hal_lt_lightning_pkt_dev_tx(const UI32_T unit, void *ptr_data)
     HAL_LT_LIGHTNING_PKT_IOCTL_TX_GPD_T ioctl_gpd;
     HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T *ptr_sw_gpd_knl = NULL;
     HAL_LT_LIGHTNING_PKT_TX_SW_GPD_T *ptr_first_sw_gpd_knl = NULL;
+    HAL_LT_LIGHTNING_PKT_IOCTL_TX_COOKIE_T *ptr_cookie = ptr_data;
 
     /* copy the tx-cookie */
     osal_io_copyFromUser(&tx_cookie, (void *)ptr_data,
@@ -5389,7 +5635,8 @@ hal_lt_lightning_pkt_dev_tx(const UI32_T unit, void *ptr_data)
     }
 
     /* return 0 if success */
-    return (ret);
+    osal_io_copyToUser(&ptr_cookie->rc, &ret, sizeof(CLX_ERROR_NO_T));
+    return (CLX_E_OK);
 }
 
 long

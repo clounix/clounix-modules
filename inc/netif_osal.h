@@ -165,18 +165,23 @@ typedef struct {
 } linux_dma_t;
 
 /* ----------------------------------------------------------------------------------- function */
-void *osal_memset(void *ptr_mem, const I32_T value, const UI32_T num);
+void *
+osal_memset(void *ptr_mem, const I32_T value, const UI32_T num);
 
-void *osal_memcpy(void *ptr_dst, const void *ptr_src, const UI32_T num);
+void *
+osal_memcpy(void *ptr_dst, const void *ptr_src, const UI32_T num);
 
 UI32_T
 osal_strlen(const C8_T *ptr_str);
 
-void osal_printf(const C8_T *ptr_fmt, ...);
+void
+osal_printf(const C8_T *ptr_fmt, ...);
 
-void *osal_alloc(const UI32_T size);
+void *
+osal_alloc(const UI32_T size);
 
-void osal_free(const void *ptr_mem);
+void
+osal_free(const void *ptr_mem);
 
 /* thread */
 CLX_ERROR_NO_T
@@ -199,12 +204,14 @@ osal_stopThread(CLX_THREAD_ID_T *ptr_thread_id);
 CLX_ERROR_NO_T
 osal_destroyThread(CLX_THREAD_ID_T *ptr_thread_id);
 
-void osal_initRunThread(void);
+void
+osal_initRunThread(void);
 
 CLX_ERROR_NO_T
 osal_isRunThread(void);
 
-void osal_exitRunThread(void);
+void
+osal_exitRunThread(void);
 
 /* semaphore */
 CLX_ERROR_NO_T
@@ -271,34 +278,47 @@ CLX_ERROR_NO_T
 osal_que_getCount(CLX_HUGE_T *ptr_queue_id, unsigned int *ptr_count);
 
 /* dma */
-void *osal_dma_alloc(const UI32_T size);
+void *
+osal_dma_alloc(const UI32_T size);
 
 CLX_ERROR_NO_T
 osal_dma_free(void *ptr_dma_mem);
 
-dma_addr_t osal_dma_convertVirtToPhy(void *ptr_virt_addr);
+dma_addr_t
+osal_dma_convertVirtToPhy(void *ptr_virt_addr);
 
-void *osal_dma_convertPhyToVirt(const dma_addr_t phy_addr);
+void *
+osal_dma_convertPhyToVirt(const dma_addr_t phy_addr);
 
-int osal_dma_flushCache(void *ptr_virt_addr, const unsigned int size);
+int
+osal_dma_flushCache(void *ptr_virt_addr, const unsigned int size);
 
-int osal_dma_invalidateCache(void *ptr_virt_addr, const unsigned int size);
+int
+osal_dma_invalidateCache(void *ptr_virt_addr, const unsigned int size);
 
 /* skb */
-struct sk_buff *osal_skb_alloc(UI32_T size);
+struct sk_buff *
+osal_skb_alloc(UI32_T size);
 
-void osal_skb_free(struct sk_buff *ptr_skb);
+void
+osal_skb_free(struct sk_buff *ptr_skb);
 
-dma_addr_t osal_skb_mapDma(struct sk_buff *ptr_skb, enum dma_data_direction dir);
+dma_addr_t
+osal_skb_mapDma(struct sk_buff *ptr_skb, enum dma_data_direction dir);
 
-void osal_skb_unmapDma(const dma_addr_t phy_addr, UI32_T size, enum dma_data_direction dir);
+void
+osal_skb_unmapDma(const dma_addr_t phy_addr, UI32_T size, enum dma_data_direction dir);
 
-void osal_skb_send(struct sk_buff *ptr_skb);
+void
+osal_skb_send(struct sk_buff *ptr_skb);
 
-void osal_skb_recv(struct sk_buff *ptr_skb);
+void
+osal_skb_recv(struct sk_buff *ptr_skb);
 
-void osal_skb_syncCpuDma(const dma_addr_t phy_addr, UI32_T size, enum dma_data_direction dir);
+void
+osal_skb_syncCpuDma(const dma_addr_t phy_addr, UI32_T size, enum dma_data_direction dir);
 
-void osal_skb_syncDeviceDma(const dma_addr_t phy_addr, UI32_T size, enum dma_data_direction dir);
+void
+osal_skb_syncDeviceDma(const dma_addr_t phy_addr, UI32_T size, enum dma_data_direction dir);
 
 #endif /* end of NETIF_OSAL_H */
