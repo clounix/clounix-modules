@@ -2790,12 +2790,27 @@ _hal_lightning_pkt_modHdrInsert(
     UI8_T *p = NULL;
     UI32_T  ts_nsec = 0;
     UI32_T  port = 0;
+    UI32_T  headroom = 0;
+    UI32_T  ext_headroom = 0;
     HAL_LIGHTNING_PKT_NETIF_INTF_T  *ptr_netif = NULL;
 
     if (skb == NULL || rx_gpd == NULL)
     {
         return;
     }
+    headroom = skb_headroom(skb);
+    if ((headroom < sizeof(struct mod_hdr))) {
+        ext_headroom = sizeof(struct mod_hdr) - headroom;
+        if (pskb_expand_head(skb, ext_headroom, 0, GFP_ATOMIC)) {
+            HAL_LIGHTNING_PKT_DBG( HAL_LIGHTNING_PKT_DBG_ERR,
+                "Failed to expand MOD header size:%u\n", headroom);
+            osal_skb_free(skb);
+            return ;
+        }
+    }
+    HAL_LIGHTNING_PKT_DBG( HAL_LIGHTNING_PKT_DBG_NETLINK,
+                "expand MOD header size:%u MOD size:%u, ext mod size:%u\n",
+		headroom, sizeof(struct mod_hdr), ext_headroom);
 
     mod = (struct mod_hdr *)skb_push(skb, sizeof(struct mod_hdr));
     mod->ts = ((((UI32_T)rx_gpd->pph_l2.ts_0_7)  << 8) & 0x0000FF00)  |
@@ -3039,7 +3054,7 @@ _hal_lightning_pkt_rxEnQueue(
         ptr_skb->ip_summed = CHECKSUM_UNNECESSARY; /* skip checksum */
 
         /* strip CRC padded by asic for the last gpd segment */
-        ptr_skb->len = len - ETH_FCS_LEN;
+        ptr_skb->len = total_len - ETH_FCS_LEN;
         skb_set_tail_pointer(ptr_skb, ptr_skb->len);
 
         /* send to linux */
