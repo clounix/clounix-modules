@@ -124,6 +124,8 @@ typedef struct {
 /**
  * @brief This API is used to create the Network Interface for Linux TCP/IP stack.
  *
+ * support_chip ALL
+ *
  * @param [in]     unit            - The unit ID
  * @param [in]     ptr_net_intf    - Pointer of the Network Interface
  * @param [out]    ptr_intf_id     - Pointer of the Network Interface ID
@@ -136,6 +138,8 @@ clx_netif_createIntf(const UI32_T unit, CLX_NETIF_INTF_T *ptr_net_intf, UI32_T *
 /**
  * @brief This API is used to destroy the Network Interface for Linux TCP/IP stack.
  *
+ * support_chip ALL
+ *
  * @param [in]     unit       - The unit ID
  * @param [in]     intf_id    - The Network Interface ID
  * @return         CLX_E_OK        - Operation is successful.
@@ -146,6 +150,8 @@ clx_netif_destroyIntf(const UI32_T unit, const UI32_T intf_id);
 
 /**
  * @brief This API get the Network Interface for Linux TCP/IP stack.
+ *
+ * support_chip ALL
  *
  * @param [in]     unit            - The unit ID
  * @param [in]     intf_id         - The Network Interface ID
@@ -159,6 +165,8 @@ clx_netif_getIntf(const UI32_T unit, const UI32_T intf_id, CLX_NETIF_INTF_T *ptr
 /**
  * @brief This API get the Network Profile counter for Linux TCP/IP stack.
  *
+ * support_chip ALL
+ *
  * @param [in]     unit             - The unit ID
  * @param [in]     intf_id          - The Network Interface ID
  * @param [out]    ptr_netif_cnt    - Pointer of the Network Interface counter
@@ -171,6 +179,8 @@ clx_netif_getIntfCnt(const UI32_T unit, const UI32_T intf_id, CLX_NETIF_INTF_CNT
 /**
  * @brief This API clear the Network Profile counter for Linux TCP/IP stack.
  *
+ * support_chip ALL
+ *
  * @param [in]     unit       - The unit ID
  * @param [in]     intf_id    - The Network Interface ID
  * @return         CLX_E_OK        - Operation is successful.
@@ -181,6 +191,8 @@ clx_netif_clearIntfCnt(const UI32_T unit, const UI32_T intf_id);
 
 /**
  * @brief This API is used to create the Network Profile for Rx packets to User Process.
+ *
+ * support_chip ALL
  *
  * @param [in]     unit               - The unit ID
  * @param [in]     ptr_net_profile    - Pointer of the Network Profile
@@ -195,6 +207,8 @@ clx_netif_createProfile(const UI32_T unit,
 
 /**
  * @brief This API is used to destroy the Network Profile for Rx packets to User Process.
+ *
+ * support_chip ALL
  *
  * @param [in]     unit          - The unit ID
  * @param [in]     profile_id    - The Network Profile ID
@@ -220,6 +234,8 @@ typedef enum {
 /**
  * @brief Set Port property.
  *
+ * support_chip ALL
+ *
  * @param [in]     unit        - Device unit number
  * @param [in]     intf_id     - Network Interface ID
  * @param [in]     property    - Property type
@@ -237,6 +253,8 @@ clx_netif_setIntfProperty(const UI32_T unit,
 
 /**
  * @brief Get port property.
+ *
+ * support_chip ALL
  *
  * @param [in]     unit        - Device unit number
  * @param [in]     intf_id     - Network Interface ID
@@ -270,6 +288,8 @@ typedef struct {
 /**
  * @brief Create Netlink.
  *
+ * support_chip ALL
+ *
  * @param [in]     unit              - Device unit number
  * @param [in]     ptr_netlink       - Pointer of the Netlink
  * @param [out]    ptr_netlink_id    - Pointer of the Netlink ID
@@ -284,6 +304,8 @@ clx_netif_createNetlink(const UI32_T unit,
 /**
  * @brief Destroy Netlink.
  *
+ * support_chip ALL
+ *
  * @param [in]     unit          - Device unit number
  * @param [in]     netlink_id    - The Netlink ID
  * @return         CLX_E_OK               - Operation success
@@ -294,6 +316,8 @@ clx_netif_destroyNetlink(const UI32_T unit, const UI32_T netlink_id);
 
 /**
  * @brief Get the Netlink.
+ *
+ * support_chip ALL
  *
  * @param [in]     unit           - Device unit number
  * @param [in]     netlink_id     - The Netlink ID

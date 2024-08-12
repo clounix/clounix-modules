@@ -2293,6 +2293,42 @@ _osal_mdc_ioctl_restorePciConfigCallback(const UI32_T unit, void *ptr_data)
     return _osal_mdc_restorePciConfig(unit);
 }
 
+static CLX_ERROR_NO_T
+_osal_mdc_ioctl_getDeviceInfoCallback(const UI32_T unit, void *ptr_data)
+{
+    OSAL_MDC_CB_T *ptr_cb = &_osal_mdc_cb;
+    OSAL_MDC_DEV_T *ptr_dev_list = _osal_mdc_cb.dev;
+    OSAL_MDC_IOCTL_DEV_DATA_T ptr_ioctl_data;
+
+    /* "dev" is just created for invoking  osal_mdc_initDevice,
+     * it is no use once the device IDs are copy to ptr_ioctl_data.
+     */
+    CLX_ERROR_NO_T rc = CLX_E_OK;
+
+    if (0 == _osal_mdc_devInited) {
+        OSAL_PRINT(OSAL_DBG_ERR, "device not init yet,please init first.\n");
+        return rc;
+    }
+
+    memset(&ptr_ioctl_data, 0, sizeof(OSAL_MDC_IOCTL_DEV_DATA_T));
+    ptr_ioctl_data.dev_num = ptr_cb->dev_num;
+    rc = _osal_mdc_getDeviceIdToIoctlData(_osal_mdc_ioctl_dev, &ptr_ioctl_data,
+                                          ptr_ioctl_data.dev_num);
+    if (CLX_E_OK != rc) {
+        OSAL_PRINT(OSAL_DBG_WARN, "get deviceid to toctl data failed.\n");
+        return rc;
+    }
+
+    rc = _osal_mdc_getPciInfoToIoctlData(ptr_dev_list, &ptr_ioctl_data);
+    if (CLX_E_OK != rc) {
+        OSAL_PRINT(OSAL_DBG_WARN, "get pci info to toctl data failed.\n");
+        return rc;
+    }
+
+    osal_io_copyToUser(ptr_data, &ptr_ioctl_data, sizeof(OSAL_MDC_IOCTL_DEV_DATA_T));
+    return (rc);
+}
+
 CLX_ERROR_NO_T
 _osal_mdc_registerIoctlCallback(const UI32_T unit,
                                 const OSAL_MDC_IOCTL_TYPE_T type,
@@ -2352,6 +2388,9 @@ _osal_mdc_initIoctl(void)
 
     _osal_mdc_registerIoctlCallback(unit, OSAL_MDC_IOCTL_TYPE_MDC_RESTORE_PCI_CONFIG,
                                     _osal_mdc_ioctl_restorePciConfigCallback);
+
+    _osal_mdc_registerIoctlCallback(unit, OSAL_MDC_IOCTL_TYPE_MDC_GET_DEV_INFO,
+                                    _osal_mdc_ioctl_getDeviceInfoCallback);
     return (CLX_E_OK);
 }
 
