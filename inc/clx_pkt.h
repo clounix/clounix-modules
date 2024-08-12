@@ -524,10 +524,11 @@ typedef enum {
     CLX_PKT_RX_REASON_ACL_DROP,             /* ACL drop, CL8600 only. */
     CLX_PKT_RX_REASON_IGR_BDI_SPT,          /* Ingress bridge domain spanning tree, CL8600 only. */
     CLX_PKT_RX_REASON_EGR_BDI_SPT,          /* Egress bridge domain spanning tree, CL8600 only. */
+    CLX_PKT_RX_REASON_PSR_PKT_INC,          /* Parse packet incompatible. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_0,  /* ctrl2cpu reason for entry 0, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_1,  /* ctrl2cpu reason for entry 1, CL8600 only. */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_2,  /* ctrl2cpu reason for entry 2, CL8600 only. */
     /* 288 */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_2,  /* ctrl2cpu reason for entry 2, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_3,  /* ctrl2cpu reason for entry 3, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_4,  /* ctrl2cpu reason for entry 4, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_5,  /* ctrl2cpu reason for entry 5, CL8600 only. */
@@ -543,8 +544,8 @@ typedef enum {
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_15, /* ctrl2cpu reason for entry 15, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_16, /* ctrl2cpu reason for entry 16, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_17, /* ctrl2cpu reason for entry 17, CL8600 only. */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_18, /* ctrl2cpu reason for entry 18, CL8600 only. */
     /* 304 */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_18, /* ctrl2cpu reason for entry 18, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_19, /* ctrl2cpu reason for entry 19, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_20, /* ctrl2cpu reason for entry 20, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_21, /* ctrl2cpu reason for entry 21, CL8600 only. */
@@ -560,8 +561,8 @@ typedef enum {
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_31, /* ctrl2cpu reason for entry 31, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_32, /* ctrl2cpu reason for entry 32, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_33, /* ctrl2cpu reason for entry 33, CL8600 only. */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_34, /* ctrl2cpu reason for entry 34, CL8600 only. */
     /* 320 */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_34, /* ctrl2cpu reason for entry 34, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_35, /* ctrl2cpu reason for entry 35, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_36, /* ctrl2cpu reason for entry 36, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_37, /* ctrl2cpu reason for entry 37, CL8600 only. */
@@ -577,8 +578,8 @@ typedef enum {
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_47, /* ctrl2cpu reason for entry 47, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_48, /* ctrl2cpu reason for entry 48, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_49, /* ctrl2cpu reason for entry 49, CL8600 only. */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_50, /* ctrl2cpu reason for entry 50, CL8600 only. */
     /* 336 */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_50, /* ctrl2cpu reason for entry 50, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_51, /* ctrl2cpu reason for entry 51, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_52, /* ctrl2cpu reason for entry 52, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_53, /* ctrl2cpu reason for entry 53, CL8600 only. */
@@ -594,8 +595,8 @@ typedef enum {
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_63, /* ctrl2cpu reason for entry 63, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_64, /* ctrl2cpu reason for entry 64, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_65, /* ctrl2cpu reason for entry 65, CL8600 only. */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_66, /* ctrl2cpu reason for entry 66, CL8600 only. */
     /* 352 */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_66, /* ctrl2cpu reason for entry 66, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_67, /* ctrl2cpu reason for entry 67, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_68, /* ctrl2cpu reason for entry 68, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_69, /* ctrl2cpu reason for entry 69, CL8600 only. */
@@ -611,8 +612,8 @@ typedef enum {
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_79, /* ctrl2cpu reason for entry 79, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_80, /* ctrl2cpu reason for entry 80, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_81, /* ctrl2cpu reason for entry 81, CL8600 only. */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_82, /* ctrl2cpu reason for entry 82, CL8600 only. */
     /* 368 */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_82, /* ctrl2cpu reason for entry 82, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_83, /* ctrl2cpu reason for entry 83, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_84, /* ctrl2cpu reason for entry 84, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_85, /* ctrl2cpu reason for entry 85, CL8600 only. */
@@ -628,8 +629,8 @@ typedef enum {
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_95, /* ctrl2cpu reason for entry 95, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_96, /* ctrl2cpu reason for entry 96, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_97, /* ctrl2cpu reason for entry 97, CL8600 only. */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_98, /* ctrl2cpu reason for entry 98, CL8600 only. */
     /* 384 */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_98,  /* ctrl2cpu reason for entry 98, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_99,  /* ctrl2cpu reason for entry 99, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_100, /* ctrl2cpu reason for entry 100, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_101, /* ctrl2cpu reason for entry 101, CL8600 only. */
@@ -645,8 +646,8 @@ typedef enum {
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_111, /* ctrl2cpu reason for entry 111, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_112, /* ctrl2cpu reason for entry 112, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_113, /* ctrl2cpu reason for entry 113, CL8600 only. */
-    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_114, /* ctrl2cpu reason for entry 114, CL8600 only. */
     /* 400 */
+    CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_114, /* ctrl2cpu reason for entry 114, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_115, /* ctrl2cpu reason for entry 115, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_116, /* ctrl2cpu reason for entry 116, CL8600 only. */
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_117, /* ctrl2cpu reason for entry 117, CL8600 only. */
@@ -662,8 +663,8 @@ typedef enum {
     CLX_PKT_RX_REASON_CTRL_TO_CPU_ENTRY_127, /* ctrl2cpu reason for entry 127, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_0,            /* cia copy reason 0, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_1,            /* cia copy reason 1, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_COPY_2,            /* cia copy reason 2, CL8600 only. */
     /* 416 */
+    CLX_PKT_RX_REASON_CIA_COPY_2,  /* cia copy reason 2, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_3,  /* cia copy reason 3, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_4,  /* cia copy reason 4, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_5,  /* cia copy reason 5, CL8600 only. */
@@ -679,8 +680,8 @@ typedef enum {
     CLX_PKT_RX_REASON_CIA_COPY_15, /* cia copy reason 15, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_16, /* cia copy reason 16, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_17, /* cia copy reason 17, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_COPY_18, /* cia copy reason 18, CL8600 only. */
     /* 432 */
+    CLX_PKT_RX_REASON_CIA_COPY_18, /* cia copy reason 18, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_19, /* cia copy reason 19, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_20, /* cia copy reason 20, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_21, /* cia copy reason 21, CL8600 only. */
@@ -696,8 +697,8 @@ typedef enum {
     CLX_PKT_RX_REASON_CIA_COPY_31, /* cia copy reason 31, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_32, /* cia copy reason 32, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_33, /* cia copy reason 33, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_COPY_34, /* cia copy reason 34, CL8600 only. */
     /* 448 */
+    CLX_PKT_RX_REASON_CIA_COPY_34, /* cia copy reason 34, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_35, /* cia copy reason 35, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_36, /* cia copy reason 36, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_COPY_37, /* cia copy reason 37, CL8600 only. */
@@ -713,8 +714,8 @@ typedef enum {
     CLX_PKT_RX_REASON_CIA_COPY_47, /* cia copy reason 47, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_TRAP_0,  /* cia trap reason 0. */
     CLX_PKT_RX_REASON_CIA_TRAP_1,  /* cia trap reason 1. */
-    CLX_PKT_RX_REASON_CIA_TRAP_2,  /* cia trap reason 2. */
     /* 464 */
+    CLX_PKT_RX_REASON_CIA_TRAP_2,  /* cia trap reason 2. */
     CLX_PKT_RX_REASON_CIA_TRAP_3,  /* cia trap reason 3. */
     CLX_PKT_RX_REASON_CIA_TRAP_4,  /* cia trap reason 4. */
     CLX_PKT_RX_REASON_CIA_TRAP_5,  /* cia trap reason 5. */
@@ -730,8 +731,8 @@ typedef enum {
     CLX_PKT_RX_REASON_CIA_TRAP_15, /* cia trap reason 15. */
     CLX_PKT_RX_REASON_CIA_TRAP_16, /* cia trap reason 16. */
     CLX_PKT_RX_REASON_CIA_TRAP_17, /* cia trap reason 17. */
-    CLX_PKT_RX_REASON_CIA_TRAP_18, /* cia trap reason 18. */
     /* 480 */
+    CLX_PKT_RX_REASON_CIA_TRAP_18, /* cia trap reason 18. */
     CLX_PKT_RX_REASON_CIA_TRAP_19, /* cia trap reason 19. */
     CLX_PKT_RX_REASON_CIA_TRAP_20, /* cia trap reason 20. */
     CLX_PKT_RX_REASON_CIA_TRAP_21, /* cia trap reason 21. */
@@ -747,8 +748,8 @@ typedef enum {
     CLX_PKT_RX_REASON_CIA_TRAP_31, /* cia trap reason 31, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_TRAP_32, /* cia trap reason 32, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_TRAP_33, /* cia trap reason 33, CL8600 only. */
-    CLX_PKT_RX_REASON_CIA_TRAP_34, /* cia trap reason 34, CL8600 only. */
     /* 496 */
+    CLX_PKT_RX_REASON_CIA_TRAP_34, /* cia trap reason 34, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_TRAP_35, /* cia trap reason 35, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_TRAP_36, /* cia trap reason 36, CL8600 only. */
     CLX_PKT_RX_REASON_CIA_TRAP_37, /* cia trap reason 37, CL8600 only. */
@@ -1343,7 +1344,7 @@ typedef struct {
  *
  * This API can only be invoked once after the device is booted up.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit          - The unit ID
  * @param [in]     ptr_rx_cfg    - The user configuration
@@ -1358,7 +1359,7 @@ clx_pkt_setRxConfig(const UI32_T unit, const CLX_PKT_RX_CFG_T *ptr_rx_cfg);
  *
  * This API can only be invoked once after the device is booted up.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit          - The unit ID
  * @param [out]    ptr_rx_cfg    - The user configuration
@@ -1371,7 +1372,7 @@ clx_pkt_getRxConfig(const UI32_T unit, CLX_PKT_RX_CFG_T *ptr_rx_cfg);
 /**
  * @brief To transmit the specified packet from CPU port.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit       - The unit ID
  * @param [in]     channel    - The channel used for packet transmission
@@ -1385,7 +1386,7 @@ clx_pkt_sendPacket(const UI32_T unit, const UI32_T channel, const CLX_PKT_TX_PKT
 /**
  * @brief To prepare tx packet.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit            - The unit ID
  * @param [in]     ptr_pkt         - The packet structure of the TX packet
@@ -1403,7 +1404,7 @@ clx_pkt_prepareTxPkt(const UI32_T unit,
 /**
  * @brief To set the mapping of the RX queue to the RX DMA channel.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit       - The unit ID
  * @param [in]     queue      - The specified queue
@@ -1417,7 +1418,7 @@ clx_pkt_setQueueToRxChannel(const UI32_T unit, const UI32_T queue, const UI32_T 
 /**
  * @brief To get the RX DMA channel which is mapped to the specified queue.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit           - The unit ID
  * @param [in]     queue          - The specified queue
@@ -1433,7 +1434,7 @@ clx_pkt_getQueueToRxChannel(const UI32_T unit, const UI32_T queue, UI32_T *ptr_c
  *
  * The packet will be truncated to the size of a multiple of 64B.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit             - The unit ID
  * @param [in]     queue            - The specified queue ID
@@ -1447,7 +1448,7 @@ clx_pkt_setRxQueueTruncateSize(const UI32_T unit, const UI32_T queue, const UI32
 /**
  * @brief To get the packet truncated size of the target queue.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit                 - The unit ID
  * @param [in]     queue                - The target queue ID
@@ -1461,7 +1462,7 @@ clx_pkt_getRxQueueTruncateSize(const UI32_T unit, const UI32_T queue, UI32_T *pt
 /**
  * @brief To set the expected COS value to the target TX DMA channel.
  *
- * support_chip cl8500, cl8600
+ * support_chip CL8300 CL8500
  *
  * @param [in]     unit          - The unit ID
  * @param [in]     channel       - The specified TX channel
@@ -1475,7 +1476,7 @@ clx_pkt_setTxChannelCosBitmap(const UI32_T unit, const UI32_T channel, const UI8
 /**
  * @brief To get the COS value mapped to the target TX DMA channel.
  *
- * support_chip cl8500, cl8600
+ * support_chip CL8300 CL8500
  *
  * @param [in]     unit              - The unit ID
  * @param [in]     channel           - The specified TX channel
@@ -1489,7 +1490,7 @@ clx_pkt_getTxChannelCosBitmap(const UI32_T unit, const UI32_T channel, UI8_T *pt
 /**
  * @brief To set a specific rule applied to the packet.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit         - The unit ID
  * @param [in]     index        - The specified entry index for the rule
@@ -1505,7 +1506,7 @@ clx_pkt_setCtrlToCpuEntry(const UI32_T unit,
 /**
  * @brief To get a specified ctrl-to-CPU entry.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit         - The unit ID
  * @param [in]     index        - The specified entry index
@@ -1521,7 +1522,7 @@ clx_pkt_getCtrlToCpuEntry(const UI32_T unit,
 /**
  * @brief To delete all ctrl-to-CPU entries configured.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit    - The unit ID
  * @return         CLX_E_OK        - Operation is successful.
@@ -1531,35 +1532,9 @@ CLX_ERROR_NO_T
 clx_pkt_delCtrlToCpuEntryAll(const UI32_T unit);
 
 /**
- * @brief To specify a default queue for those packets which mismatch the reason-to-queue mapping.
- *
- * support_chip cl8500, cl8600
- *
- * @param [in]     unit     - The unit ID
- * @param [in]     queue    - The specified Queue ID
- * @return         CLX_E_OK        - Operation is successful.
- * @return         CLX_E_OTHERS    - Fail
- */
-CLX_ERROR_NO_T
-clx_pkt_setRxDefaultQueue(const UI32_T unit, const UI32_T queue);
-
-/**
- * @brief To get the default queue for the packets which mismatch the reason-to-queue mapping.
- *
- * support_chip cl8500, cl8600
- *
- * @param [in]     unit         - The unit ID
- * @param [out]    ptr_queue    - Pointer for the target Queue ID
- * @return         CLX_E_OK        - Operation is successful.
- * @return         CLX_E_OTHERS    - Fail.
- */
-CLX_ERROR_NO_T
-clx_pkt_getRxDefaultQueue(const UI32_T unit, UI32_T *ptr_queue);
-
-/**
  * @brief To set the CPU reason code to RX queue mapping.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit             - The unit ID
  * @param [in]     queue            - The specified queue
@@ -1575,7 +1550,7 @@ clx_pkt_setRxQueueMapping(const UI32_T unit,
 /**
  * @brief To get the CPU reason code to RX queue mapping.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit                 - The unit ID
  * @param [in]     queue                - The specified queue
@@ -1589,73 +1564,9 @@ clx_pkt_getRxQueueMapping(const UI32_T unit,
                           CLX_PKT_RX_REASON_BITMAP_T *ptr_reason_bitmap);
 
 /**
- * @brief To set the "to CPU" priority between "copy to CPU" and "redirect to CPU".
- *
- * This priority will take effect when the packet has multiple reasons; some reasons
- * are set as "copy to CPU" while others are set as "redirect to CPU".
- *
- * support_chip cl8500, cl8600
- *
- * @param [in]     unit    - The unit ID
- * @param [in]     pri     - The priority between "copy to CPU" and "redirect to CPU"
- * @return         CLX_E_OK        - Operation is successful.
- * @return         CLX_E_OTHERS    - Fail
- */
-CLX_ERROR_NO_T
-clx_pkt_setRxToCpuPri(const UI32_T unit, const CLX_PKT_TO_CPU_PRI_T pri);
-
-/**
- * @brief To get the "to CPU" priority between "copy to CPU" and "redirect to CPU".
- *
- * This priority will take effect when the packet has multiple reasons; some reasons
- * are set as "copy to CPU" while others are set as "redirect to CPU".
- *
- * support_chip cl8500, cl8600
- *
- * @param [in]     unit       - The unit ID
- * @param [out]    ptr_pri    - The priority between "copy to CPU" and "redirect to CPU"
- * @return         CLX_E_OK        - Operation is successful.
- * @return         CLX_E_OTHERS    - Fail
- */
-CLX_ERROR_NO_T
-clx_pkt_getRxToCpuPri(const UI32_T unit, CLX_PKT_TO_CPU_PRI_T *ptr_pri);
-
-/**
- * @brief To set specified reasons to "redirect to CPU".
- *
- * Redirect to CPU means the packet will pass the egress pipeline.
- *
- * support_chip cl8500, cl8600
- *
- * @param [in]     unit             - The unit ID
- * @param [in]     reason_bitmap    - The target reason codes to be set
- * @param [in]     enable           - To indicate whether the specified reasons will be set to
- * "redirect to CPU" or not.
- * @return         CLX_E_OK        - Operation is successful.
- * @return         CLX_E_OTHERS    - Fail
- */
-CLX_ERROR_NO_T
-clx_pkt_setRxRedirectToCpu(const UI32_T unit,
-                           const CLX_PKT_RX_REASON_BITMAP_T reason_bitmap,
-                           const BOOL_T enable);
-
-/**
- * @brief To get reasons which will be redirected to CPU.
- *
- * support_chip cl8500, cl8600
- *
- * @param [in]     unit                 - The unit ID
- * @param [out]    ptr_reason_bitmap    - Pointer for the redirect to CPU reasons.
- * @return         CLX_E_OK        - Operation is successful.
- * @return         CLX_E_OTHERS    - Fail
- */
-CLX_ERROR_NO_T
-clx_pkt_getRxRedirectToCpu(const UI32_T unit, CLX_PKT_RX_REASON_BITMAP_T *ptr_reason_bitmap);
-
-/**
  * @brief To set the CPU reason code to RX port and queue mapping.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit             - The unit ID
  * @param [in]     port             - The port ID indicating CPU or CPI
@@ -1673,7 +1584,7 @@ clx_pkt_setRxMapping(const UI32_T unit,
 /**
  * @brief To get the CPU reason code to RX port and queue mapping.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit                 - The unit ID
  * @param [in]     port                 - The port ID indicating CPU or CPI
@@ -1691,7 +1602,7 @@ clx_pkt_getRxMapping(const UI32_T unit,
 /**
  * @brief To get the PDMA RX counters of the target channel.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit          - The unit ID
  * @param [in]     channel       - The target channel
@@ -1705,7 +1616,7 @@ clx_pkt_getRxCnt(const UI32_T unit, const UI32_T channel, CLX_PKT_RX_CNT_T *ptr_
 /**
  * @brief To get the PDMA TX counters of the target channel.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit          - The unit ID
  * @param [in]     channel       - The target channel
@@ -1719,7 +1630,7 @@ clx_pkt_getTxCnt(const UI32_T unit, const UI32_T channel, CLX_PKT_TX_CNT_T *ptr_
 /**
  * @brief To clear the PDMA RX counters of the target channel.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit       - The unit ID
  * @param [in]     channel    - The target channel
@@ -1731,7 +1642,7 @@ clx_pkt_clearRxCnt(const UI32_T unit, const UI32_T channel);
 /**
  * @brief To clear the PDMA TX counters of the target channel.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit       - The unit ID
  * @param [in]     channel    - The target channel
@@ -1743,7 +1654,7 @@ clx_pkt_clearTxCnt(const UI32_T unit, const UI32_T channel);
 /**
  * @brief To show the PDMA TX counters of the target channel.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit       - The unit ID
  * @param [in]     channel    - The target channel
@@ -1755,7 +1666,7 @@ clx_pkt_showTxDbgCnt(const UI32_T unit, const UI32_T channel);
 /**
  * @brief To show the PDMA RX counters of the target channel.
  *
- * support_chip cl8500, cl8600
+ * support_chip all
  *
  * @param [in]     unit       - The unit ID
  * @param [in]     channel    - The target channel

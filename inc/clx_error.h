@@ -89,9 +89,12 @@ typedef enum {
 /**
  * @brief To obtain the error string of the specified error code
  *
+ * support_chip all
+ *
  * @param [in]     cause    - The specified error code
  * @return    Pointer to the target error string
  */
-C8_T *clx_error_getString(const CLX_ERROR_NO_T cause);
+C8_T *
+clx_error_getString(const CLX_ERROR_NO_T cause);
 
 #endif /* CLX_ERROR_H */
