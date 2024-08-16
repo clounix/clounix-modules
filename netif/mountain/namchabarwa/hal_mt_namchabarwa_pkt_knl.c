@@ -326,7 +326,6 @@ typedef struct {
     HAL_MT_NAMCHABARWA_PKT_SW_QUEUE_T sw_queue[HAL_MT_NAMCHABARWA_PKT_RX_QUEUE_NUM];
     UI32_T deque_idx;
     CLX_SEMAPHORE_ID_T sync_sema;
-    CLX_SEMAPHORE_ID_T sync_rxstop;
     CLX_THREAD_ID_T task_id;
     CLX_SEMAPHORE_ID_T deinit_sema; /* To sync-up the Rx-stop and thread flush queues */
     BOOL_T running;                 /* TRUE when rxStart
@@ -1474,9 +1473,6 @@ _hal_mt_namchabarwa_pkt_freeRxPayloadBufGpd(const UI32_T unit,
     ptr_skb = ptr_sw_gpd->ptr_cookie;
     osal_skb_free(ptr_skb);
 
-    ptr_sw_gpd->ptr_cookie = NULL;
-    ptr_sw_gpd->ptr_next = NULL;
-
     return (rc);
 }
 
@@ -2611,9 +2607,6 @@ _hal_mt_namchabarwa_pkt_schedRxDeQueue(const UI32_T unit, void *ptr_data)
         OSAL_PRINT((OSAL_DBG_ERR | OSAL_DBG_RX), "ptr_rx_cb->running false\n");
         rc = CLX_E_OTHERS;
         osal_io_copyToUser(&ptr_cookie->rc, &rc, sizeof(CLX_ERROR_NO_T));
-
-        /* signal event to rx stop */
-        osal_triggerEvent(&ptr_rx_cb->sync_rxstop);
         return (CLX_E_OK);
     }
 
@@ -2940,10 +2933,11 @@ _hal_mt_namchabarwa_pkt_rxStop(const UI32_T unit)
         return (CLX_E_OK);
     }
 
-    /* Check if rx deQueue is ready,waiting deQueue event here */
     ptr_rx_cb->running = FALSE;
-    osal_triggerEvent(&ptr_rx_cb->sync_sema);
-    osal_waitEvent(&ptr_rx_cb->sync_rxstop);
+
+    /* pkt queue don't use semaphore because of rx performance ,so should delay 1s here to wait rx
+     * pkt stop*/
+    osal_sleepThread(1000000);
 
     /* Deinit Rx PDMA and free buf for Rx GPD */
     for (channel = 0; channel < HAL_MT_NAMCHABARWA_PKT_RX_CHANNEL_LAST; channel++) {
@@ -2953,13 +2947,6 @@ _hal_mt_namchabarwa_pkt_rxStop(const UI32_T unit)
         _hal_mt_namchabarwa_pkt_stopRxChannelReg(unit, channel);
         _hal_mt_namchabarwa_pkt_resetRxChannelReg(unit, channel);
         rc = _hal_mt_namchabarwa_pkt_deinitRxPdmaRingBuf(unit, channel);
-        if (CLX_E_OK != rc) {
-            /*recover*/
-            ptr_rx_cb->running = TRUE;
-            _hal_mt_namchabarwa_pkt_startRxChannelReg(unit, channel);
-            osal_giveSemaphore(&ptr_rx_pdma->sema);
-            return (rc);
-        }
         osal_giveSemaphore(&ptr_rx_pdma->sema);
     }
 
@@ -3291,7 +3278,6 @@ _hal_mt_namchabarwa_pkt_deinitPktRxCb(const UI32_T unit)
 
     /* Destroy the sync semaphore of rxTask */
     osal_destroyEvent(&ptr_rx_cb->sync_sema);
-    osal_destroyEvent(&ptr_rx_cb->sync_rxstop);
 
     /* Deinitialize Rx GPD-queue (of first SW-GPD) from handleRxDoneTask to rxTask */
     for (queue = 0; queue < HAL_MT_NAMCHABARWA_PKT_RX_QUEUE_NUM; queue++) {
@@ -3320,50 +3306,6 @@ _hal_mt_namchabarwa_pkt_deinitL1Isr(const UI32_T unit)
     }
 
     return (CLX_E_OK);
-}
-
-/**
- * @brief To invoke the functions to de-initialize the control block for each
- *        PDMA subsystem.
- *
- * @param [in]     unit    - The unit ID
- * @param [in]     ptr_data     - The pointer of data
- * @return         CLX_E_OK        - Successfully de-initialize the control blocks.
- * @return         CLX_E_OTHERS    - De-initialize the control blocks failed.
- */
-CLX_ERROR_NO_T
-hal_mt_namchabarwa_pkt_deinitPktDrv(const UI32_T unit, void *ptr_data)
-{
-    HAL_MT_NAMCHABARWA_PKT_DRV_CB_T *ptr_cb = HAL_MT_NAMCHABARWA_PKT_GET_DRV_CB_PTR(unit);
-    CLX_ERROR_NO_T rc = CLX_E_OK;
-
-    if (0 == (ptr_cb->init_flag & HAL_MT_NAMCHABARWA_PKT_INIT_DRV)) {
-        OSAL_PRINT((OSAL_DBG_RX | OSAL_DBG_ERR), "u=%u, pkt drv deinit failed, not inited\n", unit);
-        return (CLX_E_OK);
-    }
-
-    if (CLX_E_OK == rc) {
-        rc = _hal_mt_namchabarwa_pkt_deinitL1Isr(unit);
-    }
-    if (CLX_E_OK == rc) {
-        rc = _hal_mt_namchabarwa_pkt_deinitPktRxCb(unit);
-    }
-    if (CLX_E_OK == rc) {
-        rc = _hal_mt_namchabarwa_pkt_deinitPktTxCb(unit);
-    }
-    if (CLX_E_OK == rc) {
-        rc = _hal_mt_namchabarwa_pkt_deinitPktCb(unit);
-    }
-
-#if defined(CLX_EN_NETIF)
-    netif_nl_destroyAllNetlink(unit);
-#endif
-
-    ptr_cb->init_flag &= (~HAL_MT_NAMCHABARWA_PKT_INIT_DRV);
-
-    OSAL_PRINT(OSAL_DBG_COMMON, "u=%u, pkt drv deinit done, init flag=0x%x\n", unit,
-               ptr_cb->init_flag);
-    return (rc);
 }
 
 /* ----------------------------------------------------------------------------------- Init */
@@ -4183,7 +4125,6 @@ _hal_mt_namchabarwa_pkt_initPktRxCb(const UI32_T unit)
 
     /* Sync semaphore to signal rxTask */
     osal_createEvent("RX_SYNC", &ptr_rx_cb->sync_sema);
-    osal_createEvent("RX_STOP_SYNC", &ptr_rx_cb->sync_rxstop);
 
     /* Initialize Rx GPD-queue (of first SW-GPD) from handleRxDoneTask to rxTask */
     for (queue = 0; ((queue < HAL_MT_NAMCHABARWA_PKT_RX_QUEUE_NUM) && (CLX_E_OK == rc)); queue++) {
@@ -4517,6 +4458,57 @@ _hal_mt_namchabarwa_pkt_destroyAllProfile(const UI32_T unit)
     return (CLX_E_OK);
 }
 #endif
+
+/**
+ * @brief To invoke the functions to de-initialize the control block for each
+ *        PDMA subsystem.
+ *
+ * @param [in]     unit    - The unit ID
+ * @param [in]     ptr_data     - The pointer of data
+ * @return         CLX_E_OK        - Successfully de-initialize the control blocks.
+ * @return         CLX_E_OTHERS    - De-initialize the control blocks failed.
+ */
+CLX_ERROR_NO_T
+hal_mt_namchabarwa_pkt_deinitPktDrv(const UI32_T unit, void *ptr_data)
+{
+    HAL_MT_NAMCHABARWA_PKT_DRV_CB_T *ptr_cb = HAL_MT_NAMCHABARWA_PKT_GET_DRV_CB_PTR(unit);
+    CLX_ERROR_NO_T rc = CLX_E_OK;
+
+    if (0 == (ptr_cb->init_flag & HAL_MT_NAMCHABARWA_PKT_INIT_DRV)) {
+        OSAL_PRINT((OSAL_DBG_RX | OSAL_DBG_ERR), "u=%u, pkt drv deinit failed, not inited\n", unit);
+        return (CLX_E_OK);
+    }
+
+    if (CLX_E_OK == rc) {
+        rc = _hal_mt_namchabarwa_pkt_deinitL1Isr(unit);
+    }
+    if (CLX_E_OK == rc) {
+        rc = _hal_mt_namchabarwa_pkt_deinitPktRxCb(unit);
+    }
+    if (CLX_E_OK == rc) {
+        rc = _hal_mt_namchabarwa_pkt_deinitPktTxCb(unit);
+    }
+    if (CLX_E_OK == rc) {
+        rc = _hal_mt_namchabarwa_pkt_deinitPktCb(unit);
+    }
+
+#if defined(CLX_EN_NETIF)
+    OSAL_PRINT(OSAL_DBG_INFO, "u=%u, destroy all prof\n", unit);
+    _hal_mt_namchabarwa_pkt_destroyAllProfile(unit);
+
+    OSAL_PRINT(OSAL_DBG_INFO, "u=%u, destroy all netlink\n", unit);
+    netif_nl_destroyAllNetlink(unit);
+
+    OSAL_PRINT(OSAL_DBG_INFO, "u=%u, destroy all intf\n", unit);
+    _hal_mt_namchabarwa_pkt_destroyAllIntf(unit);
+#endif
+
+    ptr_cb->init_flag &= (~HAL_MT_NAMCHABARWA_PKT_INIT_DRV);
+
+    OSAL_PRINT(OSAL_DBG_COMMON, "u=%u, pkt drv deinit done, init flag=0x%x\n", unit,
+               ptr_cb->init_flag);
+    return (rc);
+}
 
 /**
  * @brief To invoke the functions to return pdma ring base info
