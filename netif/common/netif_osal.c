@@ -617,8 +617,7 @@ osal_skb_alloc(UI32_T size)
      * note: Eth header is 14-bytes, we reservd 2-bytes to alignment Ip header
      */
     ptr_skb = dev_alloc_skb(size + NET_IP_ALIGN);
-    if (NULL != ptr_skb)
-    {
+    if (NULL != ptr_skb) {
         skb_reserve(ptr_skb, NET_IP_ALIGN);
         skb_put(ptr_skb, size);
     }
